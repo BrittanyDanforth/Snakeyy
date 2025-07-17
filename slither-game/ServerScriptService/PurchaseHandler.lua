@@ -340,6 +340,13 @@ local function handleSkinSelection(player, skinName)
 
 	-- FIXED: Set selected skin attribute using SERVER NAME
 	player:SetAttribute("SelectedSkin", serverSkinName)
+	
+	-- IMPORTANT: Update playerData to persist the selection
+	local playerData = PlayerDataStore[player]
+	if playerData then
+		playerData.selectedSkin = serverSkinName -- Store server name in data
+		print("💾 Updated playerData.selectedSkin to:", serverSkinName)
+	end
 
 	print("✅ Player", player.Name, "selected skin:", skinName, "(server name:", serverSkinName, ")")
 
@@ -378,7 +385,16 @@ local function initializePlayer(player)
 
 	-- FIXED: Set player attributes using JSON for arrays
 	player:SetAttribute("Coins", playerData.coins or 50000)
-	player:SetAttribute("SelectedSkin", playerData.selectedSkin or "Classic") -- Server's default skin name
+	
+	-- IMPORTANT: Only set SelectedSkin if not already set (to prevent overwriting current selection)
+	local currentSelectedSkin = player:GetAttribute("SelectedSkin")
+	if not currentSelectedSkin or currentSelectedSkin == "" then
+		player:SetAttribute("SelectedSkin", playerData.selectedSkin or "Classic") -- Server's default skin name
+	else
+		-- Update playerData to match current selection
+		playerData.selectedSkin = currentSelectedSkin
+		print("🔄 Keeping current skin selection:", currentSelectedSkin)
+	end
 
 	-- Use JSON for arrays to avoid attribute errors
 	local ownedSkinsJson = HttpService:JSONEncode(playerData.ownedSkins or {"Default"})

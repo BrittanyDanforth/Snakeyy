@@ -1,9 +1,11 @@
 -- SERVER SCRIPT: SelectSkin RemoteEvent Handler - FIXED VERSION
 -- This handles skin changes from the shop UI and applies them to the snake system
 -- FIXED: Prevents skin from reverting to Default by not respawning immediately
+-- FIXED: Now properly integrates with PurchaseHandler for data persistence
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 -- Create or get the SelectSkin RemoteEvent
 local SelectSkinRemote = ReplicatedStorage:FindFirstChild("SelectSkin")
@@ -48,6 +50,24 @@ SelectSkinRemote.OnServerEvent:Connect(function(player, skinName)
 	-- Set the SelectedSkin attribute using SERVER NAME
 	player:SetAttribute("SelectedSkin", serverSkinName)
 	print("🔄 Mapped", skinName, "to", serverSkinName)
+	
+	-- DEBUG: Monitor attribute changes to catch what's resetting it
+	local connection
+	connection = player:GetAttributeChangedSignal("SelectedSkin"):Connect(function()
+		local newValue = player:GetAttribute("SelectedSkin")
+		if newValue ~= serverSkinName then
+			warn("⚠️ SelectedSkin changed from", serverSkinName, "to", newValue, "- something is overriding!")
+			warn(debug.traceback())
+			connection:Disconnect()
+		end
+	end)
+	
+	-- Disconnect after 5 seconds
+	task.delay(5, function()
+		if connection and connection.Connected then
+			connection:Disconnect()
+		end
+	end)
 
 	-- FIXED: Update existing snake without respawning
 	local character = player.Character
