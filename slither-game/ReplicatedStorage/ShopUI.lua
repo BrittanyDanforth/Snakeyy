@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 -- SLITHER.IO ULTRA PREMIUM SHOP UI SYSTEM - COMPLETELY FIXED
 -- Modern, beautiful, and performance-optimized
 -- Fully integrated with CharacterPreview and Slither.io Menu
@@ -1992,3 +1993,6 @@ end)
 _G.ShopUI = ShopUI
 
 return ShopUI
+=======
+-- SLITHER.IO ULTRA PREMIUM SHOP UI SYSTEM - COMPLETELY FIXED
+>>>>>>> d216916 (Checkpoint before follow-up message)
