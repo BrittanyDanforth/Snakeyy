@@ -104,7 +104,7 @@ local function getDefaultPlayerData()
 	return {
 		coins = 50000,
 		ownedSkins = {"Default"},
-		selectedSkin = "Default",
+		selectedSkin = "Classic", -- Server's default skin name
 		favorites = {},
 		purchases = {},
 		stats = {
@@ -157,7 +157,20 @@ local function handleSkinPurchase(player, itemName)
 		skinName = skinName:sub(6) -- Remove "skin_" prefix
 	end
 
-	print("🎨 Player", player.Name, "trying to buy skin:", skinName)
+	-- SKIN NAME MAPPING: Map client names to server names
+	local SKIN_NAME_MAP = {
+		["Default"] = "Classic",
+		["Crimson"] = "Lava Red",
+		["Ocean"] = "Ocean Blue",
+		["Cyber"] = "Cyberpunk",
+		["Dragon"] = "Dragon Lord",
+		["Rainbow"] = "Rainbow Prism",
+	}
+	
+	-- Map the skin name if needed
+	local serverSkinName = SKIN_NAME_MAP[skinName] or skinName
+
+	print("🎨 Player", player.Name, "trying to buy skin:", skinName, "->", serverSkinName)
 
 	-- FIXED: Wait for SnakeSkins to load if not available
 	if not SnakeSkins then
@@ -165,9 +178,9 @@ local function handleSkinPurchase(player, itemName)
 		loadSnakeSkins()
 	end
 
-	-- FIXED: Check if skin exists in SnakeSkins module
-	if not SnakeSkins or not SnakeSkins[skinName] then
-		warn("❌ Player", player.Name, "tried to buy non-existent skin:", skinName)
+	-- FIXED: Check if skin exists in SnakeSkins module using server name
+	if not SnakeSkins or not SnakeSkins[serverSkinName] then
+		warn("❌ Player", player.Name, "tried to buy non-existent skin:", skinName, "(server name:", serverSkinName, ")")
 		if SnakeSkins then
 			local availableSkins = {}
 			for skin, _ in pairs(SnakeSkins) do
@@ -178,7 +191,7 @@ local function handleSkinPurchase(player, itemName)
 		return false
 	end
 
-	local skinData = SnakeSkins[skinName]
+	local skinData = SnakeSkins[serverSkinName]
 	local price = skinData.Price or 0
 
 	-- Get player's current data
@@ -275,15 +288,28 @@ end
 local function handleSkinSelection(player, skinName)
 	print("🎨 Player", player.Name, "trying to select skin:", skinName)
 
+	-- SKIN NAME MAPPING: Map client names to server names
+	local SKIN_NAME_MAP = {
+		["Default"] = "Classic",
+		["Crimson"] = "Lava Red",
+		["Ocean"] = "Ocean Blue",
+		["Cyber"] = "Cyberpunk",
+		["Dragon"] = "Dragon Lord",
+		["Rainbow"] = "Rainbow Prism",
+	}
+	
+	-- Map the skin name if needed
+	local serverSkinName = SKIN_NAME_MAP[skinName] or skinName
+
 	-- FIXED: Wait for SnakeSkins to load if not available
 	if not SnakeSkins then
 		print("⏳ SnakeSkins not loaded yet, attempting to load...")
 		loadSnakeSkins()
 	end
 
-	-- FIXED: Check if skin exists
-	if not SnakeSkins or not SnakeSkins[skinName] then
-		warn("❌ Player", player.Name, "tried to select non-existent skin:", skinName)
+	-- FIXED: Check if skin exists using server name
+	if not SnakeSkins or not SnakeSkins[serverSkinName] then
+		warn("❌ Player", player.Name, "tried to select non-existent skin:", skinName, "(server name:", serverSkinName, ")")
 		if SnakeSkins then
 			local availableSkins = {}
 			for skin, _ in pairs(SnakeSkins) do
@@ -312,10 +338,10 @@ local function handleSkinSelection(player, skinName)
 		return false
 	end
 
-	-- FIXED: Set selected skin attribute
-	player:SetAttribute("SelectedSkin", skinName)
+	-- FIXED: Set selected skin attribute using SERVER NAME
+	player:SetAttribute("SelectedSkin", serverSkinName)
 
-	print("✅ Player", player.Name, "selected skin:", skinName)
+	print("✅ Player", player.Name, "selected skin:", skinName, "(server name:", serverSkinName, ")")
 
 	-- FIXED: Respawn player's character to apply new skin
 	if player.Character then
@@ -352,7 +378,7 @@ local function initializePlayer(player)
 
 	-- FIXED: Set player attributes using JSON for arrays
 	player:SetAttribute("Coins", playerData.coins or 50000)
-	player:SetAttribute("SelectedSkin", playerData.selectedSkin or "Default")
+	player:SetAttribute("SelectedSkin", playerData.selectedSkin or "Classic") -- Server's default skin name
 
 	-- Use JSON for arrays to avoid attribute errors
 	local ownedSkinsJson = HttpService:JSONEncode(playerData.ownedSkins or {"Default"})

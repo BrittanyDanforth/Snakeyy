@@ -651,9 +651,9 @@ local function handlePlayer(player)
 	length.Value = 0
 	length.Parent = leaderstats
 
-	-- ENHANCED: Initialize with default skin if not set
+	-- ENHANCED: Initialize with default skin if not set (using server name)
 	if not player:GetAttribute("SelectedSkin") then
-		player:SetAttribute("SelectedSkin", "Default")
+		player:SetAttribute("SelectedSkin", "Classic") -- Server's default skin name
 	end
 
 	local function onCharacterAdded(character)

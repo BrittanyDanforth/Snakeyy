@@ -32,8 +32,22 @@ SelectSkinRemote.OnServerEvent:Connect(function(player, skinName)
 
 	print("🎨 Player", player.Name, "selected skin:", skinName)
 
-	-- Set the SelectedSkin attribute
-	player:SetAttribute("SelectedSkin", skinName)
+	-- SKIN NAME MAPPING: Map client names to server names
+	local SKIN_NAME_MAP = {
+		["Default"] = "Classic",
+		["Crimson"] = "Lava Red",
+		["Ocean"] = "Ocean Blue",
+		["Cyber"] = "Cyberpunk",
+		["Dragon"] = "Dragon Lord",
+		["Rainbow"] = "Rainbow Prism",
+	}
+	
+	-- Map the skin name if needed
+	local serverSkinName = SKIN_NAME_MAP[skinName] or skinName
+
+	-- Set the SelectedSkin attribute using SERVER NAME
+	player:SetAttribute("SelectedSkin", serverSkinName)
+	print("🔄 Mapped", skinName, "to", serverSkinName)
 
 	-- FIXED: Update existing snake without respawning
 	local character = player.Character
@@ -45,7 +59,7 @@ SelectSkinRemote.OnServerEvent:Connect(function(player, skinName)
 				-- Update the skin without respawning
 				print("🎨 Updating skin for existing snake")
 				snake.updateSkin()
-				print("✅ Skin", skinName, "applied to", player.Name, "without respawn")
+				print("✅ Skin", serverSkinName, "applied to", player.Name, "without respawn")
 				return -- Don't respawn!
 			end
 		end
@@ -54,7 +68,7 @@ SelectSkinRemote.OnServerEvent:Connect(function(player, skinName)
 		print("⚠️ No active snake found, will apply skin on next spawn")
 	else
 		-- If no character, just set the attribute - the skin will apply when they spawn
-		print("✅ Skin", skinName, "set for", player.Name, "- will apply on next spawn")
+		print("✅ Skin", serverSkinName, "set for", player.Name, "- will apply on next spawn")
 	end
 end)
 
