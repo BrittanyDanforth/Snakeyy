@@ -655,8 +655,47 @@ local function handlePlayer(player)
 	if not player:GetAttribute("SelectedSkin") then
 		player:SetAttribute("SelectedSkin", "Classic") -- Server's default skin name
 	end
+	
+	-- ENHANCED: Store the selected skin persistently
+	local selectedSkinValue = Instance.new("StringValue")
+	selectedSkinValue.Name = "PersistentSelectedSkin"
+	selectedSkinValue.Value = player:GetAttribute("SelectedSkin") or "Classic"
+	selectedSkinValue.Parent = player
+	
+	-- Monitor for skin changes and sync
+	player:GetAttributeChangedSignal("SelectedSkin"):Connect(function()
+		local newSkin = player:GetAttribute("SelectedSkin")
+		if newSkin and newSkin ~= "" then
+			selectedSkinValue.Value = newSkin
+			print("📝 Skin preference updated for", player.Name, ":", newSkin)
+		end
+	end)
 
 	local function onCharacterAdded(character)
+		-- ENHANCED: Ensure skin persists through respawns
+		task.wait(0.1) -- Small delay to ensure attributes are set
+		
+		-- Double-check skin is still set (in case something reset it)
+		local currentSkin = player:GetAttribute("SelectedSkin")
+		local persistentSkin = selectedSkinValue.Value
+		
+		if not currentSkin or currentSkin == "" then
+			-- Restore from persistent value
+			if persistentSkin and persistentSkin ~= "" then
+				print("⚠️ SelectedSkin was reset, restoring from persistent:", persistentSkin)
+				player:SetAttribute("SelectedSkin", persistentSkin)
+			else
+				print("⚠️ SelectedSkin was reset, using default: Classic")
+				player:SetAttribute("SelectedSkin", "Classic")
+			end
+		else
+			print("✅ Spawning with skin:", currentSkin)
+			-- Update persistent value if different
+			if currentSkin ~= persistentSkin then
+				selectedSkinValue.Value = currentSkin
+			end
+		end
+		
 		taskSpawn(createUltraSmoothSnake, character)
 	end
 
