@@ -96,11 +96,11 @@ local Config = {
 		Color3.fromRGB(255, 0, 150),
 		Color3.fromRGB(180, 0, 255),
 	},
-	FollowSpeed = 0.75, -- Not used anymore but kept for compatibility
-	UpdateRate = 120, -- MAXIMUM update rate for zero gaps
-	MinDistance = 0.001, -- Ultra precise
+	FollowSpeed = 0.96,
+	UpdateRate = 30,
+	MinDistance = 0.02,
 	BoostSpeed = 32,
-	BoostFollowSpeed = 0.85, -- Not used anymore but kept for compatibility
+	BoostFollowSpeed = 0.98,
 	HeadMaterial = Enum.Material.ForceField,
 	BodyMaterial = Enum.Material.Neon,
 	GlowIntensity = 1.5,
@@ -658,64 +658,50 @@ local function createUltraSmoothSnake(character)
 		updateCounter = updateCounter + 1
 
 		local isBoosting = humanoid.WalkSpeed > 16.1
+		local followSpeed = isBoosting and activeConfig.BoostFollowSpeed or activeConfig.FollowSpeed
+
 		local currentPos = rootPart.Position
 		local currentCFrame = rootPart.CFrame
 		local lookVector = currentCFrame.LookVector
-
-		-- HEAD POSITIONING - keep this part
 		local headOffset = lookVector * 1.5
 		local headPos = currentPos + headOffset
+
 		if headParts.head and headParts.head.Parent then
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
-		-- COMPLETELY NEW GAP-FREE MOVEMENT SYSTEM
-		-- NO MORE POSITION HISTORY BULLSHIT!
-		
-		-- First segment follows head directly
-		if segments[1] and segments[1].Parent then
-			local targetPos = headPos - lookVector * activeConfig.SegmentSpacing
-			segments[1].Position = segments[1].Position:Lerp(targetPos, 0.9)
-		end
-		
-		-- Each segment follows the previous one - ZERO GAPS GUARANTEED!
-		for i = 2, currentLength do
-			local segment = segments[i]
-			local prevSegment = segments[i-1]
-			
-			if segment and segment.Parent and prevSegment and prevSegment.Parent then
-				local currentDistance = (prevSegment.Position - segment.Position).Magnitude
-				
-				-- ANTI-GAP ENFORCEMENT
-				if currentDistance > activeConfig.SegmentSpacing * 1.5 then
-					-- TOO FAR! Snap closer immediately
-					local direction = (prevSegment.Position - segment.Position).Unit
-					segment.Position = prevSegment.Position - direction * activeConfig.SegmentSpacing
-				else
-					-- Normal smooth following
-					local direction = (prevSegment.Position - segment.Position).Unit
-					
-					if direction.Magnitude > 0 then
-						-- Target position maintains perfect spacing
-						local targetPos = prevSegment.Position - direction * activeConfig.SegmentSpacing
-						
-						-- AGGRESSIVE lerp speeds for tight following
-						local lerpSpeed = isBoosting and 0.9 or 0.8
-						
-						-- Update position
-						segment.Position = segment.Position:Lerp(targetPos, lerpSpeed)
-					else
-						-- No direction? Place directly behind
-						segment.Position = prevSegment.Position - lookVector * activeConfig.SegmentSpacing
-					end
+		local lastHistoryPoint = getFromHistory(1)
+		local dist = (currentPos - lastHistoryPoint.position).Magnitude
+		if dist > 0.015 then
+			if dist > activeConfig.SegmentSpacing * 0.8 then
+				local numInterpolations = mathMin(mathFloor(dist / (activeConfig.SegmentSpacing * 0.6)), 3)
+				for i = 1, numInterpolations do
+					local fraction = i / (numInterpolations + 1)
+					local interpPos = lastHistoryPoint.position:Lerp(currentPos, fraction)
+					local interpLook = lastHistoryPoint.lookVector:Lerp(lookVector, fraction).Unit
+					addToHistory({ position = interpPos, lookVector = interpLook })
 				end
-				
-				-- Always face previous segment
-				segment.CFrame = CFramelookAt(segment.Position, prevSegment.Position)
 			end
+			addToHistory({ position = currentPos, lookVector = lookVector })
 		end
 
 		local currentTime = tick()
+
+		for i = 1, currentLength do
+			local segment = segments[i]
+			if segment and segment.Parent then
+				local delay = mathFloor(i * 1.15)
+				local targetData = getFromHistory(delay)
+				if targetData then
+					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.08)
+					local currentSegmentPos = segment.Position
+					local newPos = currentSegmentPos:Lerp(segmentPos, followSpeed)
+
+					segment.CFrame = CFramenew(newPos)
+				end
+			end
+		end
+
 		if currentTime - lastNetworkUpdate > 0.1 then
 			lastNetworkUpdate = currentTime
 		end
