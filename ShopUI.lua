@@ -697,15 +697,15 @@ function CharacterPreview.create(viewport)
 		table.insert(CharacterPreview.positionHistory, 1, head.Position)
 
 		-- Keep history limited to prevent memory issues
-		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 3
+		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10 -- Much more history for bigger gaps
 		if #CharacterPreview.positionHistory > maxHistory then
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- SMOOTH SEGMENT FOLLOWING
+		-- SMOOTH SEGMENT FOLLOWING - THIS CONTROLS THE ACTUAL SPACING!
 		for i, seg in ipairs(segments) do
-			-- Each segment follows based on delay
-			local delay = i * 3.5 -- More delay = bigger gaps while moving
+			-- Each segment follows based on delay - THIS IS WHAT ACTUALLY CONTROLS GAPS
+			local delay = i * 6 -- MUCH bigger delay for real gaps in game!
 			local historyIndex = math.floor(delay)
 			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
 
