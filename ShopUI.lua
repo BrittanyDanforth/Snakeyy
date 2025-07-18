@@ -616,22 +616,23 @@ function CharacterPreview.create(viewport)
 		local waveX = math.sin(slitherAngle * 3) * 2
 		head.Position = Vector3.new(headX + waveX, 0, headZ)
 		
-		-- ROTATE HEAD TO FACE MOVEMENT DIRECTION
-		-- Calculate where head will be next to get direction
-		local nextAngle = slitherAngle + 0.1
+		-- Calculate movement direction for eye positioning
+		local nextAngle = slitherAngle + 0.05
 		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * 2
 		local nextZ = math.cos(nextAngle) * radius - 10
+		local moveDir = (Vector3.new(nextX, 0, nextZ) - head.Position).Unit
 		
-		-- Make head face the direction it's moving
-		local lookAtPos = Vector3.new(nextX, 0, nextZ)
-		head.CFrame = CFrame.lookAt(head.Position, lookAtPos)
+		-- Position eyes on the front surface of the head sphere
+		-- Head radius is 1.5 (size 3x3x3), so position eyes at that distance
+		local eyeForward = moveDir * 1.5  -- On surface of sphere
+		local eyeUp = Vector3.new(0, 0.7, 0)
 		
-		-- Eyes positioned on front of head sphere
-		-- Use larger forward offset to ensure visibility
-		leftEye.CFrame = head.CFrame * CFrame.new(-0.6, 0.4, -1.2)
-		rightEye.CFrame = head.CFrame * CFrame.new(0.6, 0.4, -1.2)
-		leftPupil.CFrame = leftEye.CFrame * CFrame.new(0, 0, -0.3)
-		rightPupil.CFrame = rightEye.CFrame * CFrame.new(0, 0, -0.3)
+		leftEye.Position = head.Position + eyeForward + eyeUp + Vector3.new(-0.5, 0, 0)
+		rightEye.Position = head.Position + eyeForward + eyeUp + Vector3.new(0.5, 0, 0)
+		
+		-- Pupils in front of eyes
+		leftPupil.Position = leftEye.Position + moveDir * 0.3
+		rightPupil.Position = rightEye.Position + moveDir * 0.3
 		
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
