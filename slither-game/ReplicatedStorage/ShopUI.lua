@@ -517,8 +517,8 @@ function CharacterPreview.create(viewport)
 	headOutline.Transparency = 1
 	headOutline.Parent = headPart
 
-	-- Create eyes EXACTLY like CharacterSetup
-	local function createEye(name, position)
+	-- Create eyes WITH WELDS - EXACTLY like CharacterSetup
+	local function createEye(name, position, parent)
 		local eye = Instance.new("Part")
 		eye.Name = name
 		eye.Size = Vector3.new(0.6, 0.6, 0.6)
@@ -526,12 +526,21 @@ function CharacterPreview.create(viewport)
 		eye.Color = Color3.fromRGB(255, 255, 255)
 		eye.Shape = Enum.PartType.Ball
 		eye.CanCollide = false
-		eye.Anchored = true
-		eye.Parent = headPart
-		return eye
+		eye.CanQuery = false
+		eye.CanTouch = false
+		eye.Anchored = false -- NOT anchored, will be welded
+		eye.Parent = parent
+		eye.CFrame = parent.CFrame * CFrame.new(position)
+
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = parent
+		weld.Part1 = eye
+		weld.Parent = parent
+
+		return eye, weld
 	end
 
-	local function createPupil(name, parent)
+	local function createPupil(name, position, parent)
 		local pupil = Instance.new("Part")
 		pupil.Name = name
 		pupil.Size = Vector3.new(0.25, 0.25, 0.25)
@@ -539,22 +548,28 @@ function CharacterPreview.create(viewport)
 		pupil.Color = Color3.fromRGB(0, 0, 0)
 		pupil.Shape = Enum.PartType.Ball
 		pupil.CanCollide = false
-		pupil.Anchored = true
+		pupil.CanQuery = false
+		pupil.CanTouch = false
+		pupil.Anchored = false -- NOT anchored, will be welded
 		pupil.Parent = parent
-		return pupil
-	end
+		pupil.CFrame = parent.CFrame * CFrame.new(position)
 
-	local leftEye = createEye("LeftEye", Vector3.new(-0.6, 0.55, 0.8))
-	local rightEye = createEye("RightEye", Vector3.new(0.6, 0.55, 0.8))
-	local leftPupil = createPupil("LeftPupil", leftEye)
-	local rightPupil = createPupil("RightPupil", rightEye)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = parent
+		weld.Part1 = pupil
+		weld.Parent = parent
+
+		return pupil, weld
+	end
 
 	-- Position head
 	headPart.Position = fakeRoot.Position
-	leftEye.Position = headPart.Position + Vector3.new(-0.6, 0.55, 0.8)
-	rightEye.Position = headPart.Position + Vector3.new(0.6, 0.55, 0.8)
-	leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
-	rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
+
+	-- Create eyes with welds EXACTLY like CharacterSetup
+	local leftEye, leftEyeWeld = createEye("LeftEye", Vector3.new(-0.6, 0.55, 0.8), headPart)
+	local rightEye, rightEyeWeld = createEye("RightEye", Vector3.new(0.6, 0.55, 0.8), headPart)
+	local leftPupil, leftPupilWeld = createPupil("LeftPupil", Vector3.new(0, 0, -0.2), leftEye)
+	local rightPupil, rightPupilWeld = createPupil("RightPupil", Vector3.new(0, 0, -0.2), rightEye)
 
 	-- Set primary part
 	snakeModel.PrimaryPart = headPart
@@ -609,7 +624,7 @@ function CharacterPreview.create(viewport)
 		segments[i] = segment
 	end
 	
-	-- Store head parts for update function
+	-- Store head parts for update function - INCLUDING WELDS
 	local headParts = {
 		head = headPart,
 		headLight = headLight,
@@ -617,84 +632,14 @@ function CharacterPreview.create(viewport)
 		leftEye = leftEye,
 		rightEye = rightEye,
 		leftPupil = leftPupil,
-		rightPupil = rightPupil
+		rightPupil = rightPupil,
+		leftEyeWeld = leftEyeWeld,
+		rightEyeWeld = rightEyeWeld,
+		leftPupilWeld = leftPupilWeld,
+		rightPupilWeld = rightPupilWeld
 	}
 
-	-- EPIC VFX CONTAINER
-	local vfxContainer = Instance.new("Folder")
-	vfxContainer.Name = "VFXContainer"
-	vfxContainer.Parent = snakeModel
-
-	-- CREATE AMAZING ORBITAL PARTICLES
-	CharacterPreview.orbitalParticles = {}
-	for i = 1, 6 do
-		local orb = Instance.new("Part")
-		orb.Name = "OrbitalParticle"..i
-		orb.Size = Vector3.new(0.5, 0.5, 0.5)
-		orb.Material = Enum.Material.Neon
-		orb.Shape = Enum.PartType.Ball
-		orb.Color = Color3.fromHSV((i-1)/6, 1, 1)
-		orb.CanCollide = false
-		orb.Anchored = true
-		orb.Parent = vfxContainer
-		
-		-- Add glow
-		local pointLight = Instance.new("PointLight")
-		pointLight.Color = orb.Color
-		pointLight.Brightness = 2
-		pointLight.Range = 3
-		pointLight.Parent = orb
-		
-		-- Add particle emitter for trail
-		local emitter = Instance.new("ParticleEmitter")
-		emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		emitter.Rate = 20
-		emitter.Lifetime = NumberRange.new(0.5, 1)
-		emitter.Speed = NumberRange.new(1)
-		emitter.SpreadAngle = Vector2.new(10, 10)
-		emitter.Color = ColorSequence.new(orb.Color)
-		emitter.LightEmission = 1
-		emitter.LightInfluence = 0
-		emitter.Size = NumberSequence.new{
-			NumberSequenceKeypoint.new(0, 0.3),
-			NumberSequenceKeypoint.new(0.5, 0.2),
-			NumberSequenceKeypoint.new(1, 0)
-		}
-		emitter.Transparency = NumberSequence.new{
-			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(0.7, 0.3),
-			NumberSequenceKeypoint.new(1, 1)
-		}
-		emitter.Parent = orb
-		
-		table.insert(CharacterPreview.orbitalParticles, orb)
-	end
-
-	-- CREATE ENERGY RINGS
-	CharacterPreview.energyRings = {}
-	for i = 1, 3 do
-		local ring = Instance.new("Part")
-		ring.Name = "EnergyRing"..i
-		ring.Size = Vector3.new(0.2, 0.2, 0.2)
-		ring.Transparency = 1
-		ring.CanCollide = false
-		ring.Anchored = true
-		ring.Parent = vfxContainer
-		
-		local mesh = Instance.new("SpecialMesh")
-		mesh.MeshId = "rbxassetid://3270017"
-		mesh.Scale = Vector3.new(4 + i * 2, 4 + i * 2, 0.5)
-		mesh.Parent = ring
-		
-		local decal = Instance.new("Decal")
-		decal.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		decal.Face = Enum.NormalId.Top
-		decal.Color3 = config.HeadColor
-		decal.Transparency = 0.7
-		decal.Parent = ring
-		
-		table.insert(CharacterPreview.energyRings, ring)
-	end
+	-- NO VFX - Keep it clean and lag-free like the original
 
 	-- Position camera for cinematic view
 	camera.CFrame = CFrame.new(Vector3.new(12, 8, -5), Vector3.new(0, 0, -10))
@@ -706,12 +651,10 @@ function CharacterPreview.create(viewport)
 	CharacterPreview.currentHeadParts = headParts
 	CharacterPreview.currentBody = segments
 	CharacterPreview.currentCamera = camera
-	CharacterPreview.vfxContainer = vfxContainer
 	CharacterPreview.currentSkinName = "Default"
 
-	-- Start animations
+	-- Start animations (NO VFX)
 	CharacterPreview.startRotation()
-	CharacterPreview.startVFXAnimations()
 	CharacterPreview.startBodyWave()
 
 	return snakeModel
@@ -774,31 +717,11 @@ function CharacterPreview.startRotation()
 		if CharacterPreview.currentModel and CharacterPreview.currentModel.Parent and CharacterPreview.currentModel.PrimaryPart then
 			local time = tick() * 0.5
 			pcall(function()
-				-- Rotate the whole model
+				-- Rotate the whole model smoothly
 				CharacterPreview.currentModel:SetPrimaryPartCFrame(
 					CFrame.new(0, math.sin(time) * 0.5, -10) * CFrame.Angles(0, time, 0)
 				)
-				
-				-- Update eye positions to follow head
-				if CharacterPreview.currentHeadParts then
-					local head = CharacterPreview.currentHeadParts.head
-					if head then
-						local headCF = head.CFrame
-						
-						if CharacterPreview.currentHeadParts.leftEye then
-							CharacterPreview.currentHeadParts.leftEye.CFrame = headCF * CFrame.new(-0.6, 0.55, 0.8)
-						end
-						if CharacterPreview.currentHeadParts.rightEye then
-							CharacterPreview.currentHeadParts.rightEye.CFrame = headCF * CFrame.new(0.6, 0.55, 0.8)
-						end
-						if CharacterPreview.currentHeadParts.leftPupil and CharacterPreview.currentHeadParts.leftEye then
-							CharacterPreview.currentHeadParts.leftPupil.CFrame = CharacterPreview.currentHeadParts.leftEye.CFrame * CFrame.new(0, 0, -0.2)
-						end
-						if CharacterPreview.currentHeadParts.rightPupil and CharacterPreview.currentHeadParts.rightEye then
-							CharacterPreview.currentHeadParts.rightPupil.CFrame = CharacterPreview.currentHeadParts.rightEye.CFrame * CFrame.new(0, 0, -0.2)
-						end
-					end
-				end
+				-- Eyes are WELDED - they follow automatically!
 			end)
 		else
 			rotationConnection:Disconnect()
@@ -806,72 +729,7 @@ function CharacterPreview.startRotation()
 	end)
 end
 
--- AMAZING VFX ANIMATIONS
-function CharacterPreview.startVFXAnimations()
-	if not CharacterPreview.orbitalParticles then return end
-	
-	local vfxConnection
-	vfxConnection = RunService.Heartbeat:Connect(function()
-		local time = tick()
-		
-		-- Animate orbital particles
-		if CharacterPreview.currentHead and CharacterPreview.orbitalParticles then
-			for i, orb in ipairs(CharacterPreview.orbitalParticles) do
-				if orb and orb.Parent then
-					local angle = (time * 2) + ((i-1) * math.pi * 2 / #CharacterPreview.orbitalParticles)
-					local radius = 4 + math.sin(time * 3 + i) * 0.5
-					local height = math.sin(time * 4 + i * 0.5) * 1
-					local headPos = CharacterPreview.currentHead.Position
-					
-					orb.Position = headPos + Vector3.new(
-						math.cos(angle) * radius,
-						height,
-						math.sin(angle) * radius
-					)
-					
-					-- Pulse effect
-					local scale = 1 + math.sin(time * 5 + i) * 0.2
-					orb.Size = Vector3.new(0.5, 0.5, 0.5) * scale
-					
-					-- Color shift for VIP skins
-					if CharacterPreview.currentSkinName and CharacterPreview.currentSkinName:match("VIP") then
-						orb.Color = Color3.fromHSV((time * 0.5 + i/6) % 1, 1, 1)
-						local light = orb:FindFirstChild("PointLight")
-						if light then
-							light.Color = orb.Color
-						end
-					end
-				end
-			end
-		else
-			vfxConnection:Disconnect()
-		end
-		
-		-- Animate energy rings
-		if CharacterPreview.currentHead and CharacterPreview.energyRings then
-			for i, ring in ipairs(CharacterPreview.energyRings) do
-				if ring and ring.Parent then
-					local headPos = CharacterPreview.currentHead.Position
-					ring.Position = headPos
-					ring.CFrame = CFrame.new(headPos) * CFrame.Angles(
-						math.rad(90),
-						time * (i * 0.5),
-						math.sin(time * 2 + i) * 0.2
-					)
-					
-					-- Pulse transparency
-					local transparency = 0.5 + math.sin(time * 3 + i) * 0.3
-					local decal = ring:FindFirstChild("Decal")
-					if decal then
-						decal.Transparency = transparency
-					end
-				end
-			end
-		end
-	end)
-	
-	CharacterPreview.vfxConnection = vfxConnection
-end
+-- VFX REMOVED - No lag, clean preview
 
 -- SMOOTH SNAKE BODY WAVE
 function CharacterPreview.startBodyWave()
@@ -892,12 +750,7 @@ function CharacterPreview.startBodyWave()
 						-10 - (i * 2.2)
 					)
 					segment.Position = basePos + Vector3.new(offset, 0, 0)
-					
-					-- Subtle size pulse for premium skins
-					if CharacterPreview.currentSkinName and ShopUI.SKIN_DATA and ShopUI.SKIN_DATA[CharacterPreview.currentSkinName] and ShopUI.SKIN_DATA[CharacterPreview.currentSkinName].robux then
-						local scale = 1 + math.sin(time * 4 - i * 0.3) * 0.05
-						segment.Size = Vector3.new(2.5, 2.5, 2.5) * scale
-					end
+					-- NO SIZE PULSING - Keep it clean
 				end
 			end
 		else
@@ -915,10 +768,7 @@ function CharacterPreview.destroy(viewport)
 		end
 	end
 	
-	-- Clean up all connections
-	if CharacterPreview.vfxConnection then
-		CharacterPreview.vfxConnection:Disconnect()
-	end
+	-- Clean up connections
 	if CharacterPreview.waveConnection then
 		CharacterPreview.waveConnection:Disconnect()
 	end
@@ -928,9 +778,7 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.currentHeadParts = nil
 	CharacterPreview.currentBody = nil
 	CharacterPreview.currentCamera = nil
-	CharacterPreview.orbitalParticles = nil
-	CharacterPreview.energyRings = nil
-	CharacterPreview.vfxContainer = nil
+	CharacterPreview.currentSkinName = nil
 end
 
 -- UI State (moved to top to be accessible everywhere)
