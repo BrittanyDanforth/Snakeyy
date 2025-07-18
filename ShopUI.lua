@@ -44,18 +44,8 @@ pcall(function()
 	RespawnSnakeRemote = ReplicatedStorage:WaitForChild("RespawnSnake", 5)
 end)
 
--- FIXED: Using new high-quality CharacterPreview module
-local CharacterPreviewModule = nil
-local CharacterPreview = nil -- Will be instantiated when needed
-
--- Try to load CharacterPreview, but don't break if it's missing
-local loadCharacterPreview = pcall(function()
-	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 5))
-end)
-
-if not loadCharacterPreview then
-	warn("⚠️ CharacterPreview module not found - using legacy preview system")
-end
+-- FIXED: Character Preview using YOUR EXACT CharacterSetup functions
+local CharacterPreview = {}
 
 -- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
@@ -451,66 +441,7 @@ local SnakeSkinsData = {
 	}
 }
 
--- Wrapper functions for the new CharacterPreview module
-local function createCharacterPreview(viewport)
-	if CharacterPreviewModule then
-		if CharacterPreview then
-			CharacterPreview:destroy()
-		end
-		CharacterPreview = CharacterPreviewModule.new(viewport)
-	else
-		-- Fallback to legacy system
-		warn("Using legacy preview system")
-		return
-	end
-end
-
-local function updateCharacterPreview(skinName)
-	if CharacterPreview and CharacterPreviewModule then
-		CharacterPreview:updateSkin(skinName)
-	end
-end
-
-local function destroyCharacterPreview()
-	if CharacterPreview and CharacterPreviewModule then
-		CharacterPreview:destroy()
-		CharacterPreview = nil
-	end
-end
-
--- LEGACY: Create compatibility table for old function calls
-CharacterPreview = {
-	create = function(viewport)
-		createCharacterPreview(viewport)
-	end,
-	
-	update = function(skinName)
-		updateCharacterPreview(skinName)
-	end,
-	
-	destroy = function(viewport)
-		destroyCharacterPreview()
-	end,
-	
-	-- Legacy properties (no longer used)
-	startRotation = function() end,
-	startVFXAnimations = function() end,
-	startBodyWave = function() end,
-	currentModel = nil,
-	currentHead = nil,
-	currentHeadParts = nil,
-	currentBody = nil,
-	currentCamera = nil,
-	orbitalParticles = nil,
-	energyRings = nil,
-	vfxContainer = nil,
-	currentSkinName = "Default",
-	vfxConnection = nil,
-	waveConnection = nil
-}
-
--- Remove old implementation (will be handled by new module)
---[[ OLD IMPLEMENTATION REMOVED
+-- ULTRA PREMIUM PREVIEW with AMAZING VFX
 function CharacterPreview.create(viewport)
 	if not viewport then return end
 
@@ -1001,7 +932,6 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.energyRings = nil
 	CharacterPreview.vfxContainer = nil
 end
---]] -- END OF OLD IMPLEMENTATION
 
 -- UI State (moved to top to be accessible everywhere)
 local uiState = {
