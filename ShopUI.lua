@@ -616,35 +616,11 @@ function CharacterPreview.create(viewport)
 		local waveX = math.sin(slitherAngle * 3) * 2
 		head.Position = Vector3.new(headX + waveX, 0, headZ)
 		
-		-- Calculate smooth direction (where snake is heading)
-		-- Use velocity for smoother eye tracking
-		if not CharacterPreview.lastHeadPos then
-			CharacterPreview.lastHeadPos = head.Position
-		end
-		
-		local velocity = (head.Position - CharacterPreview.lastHeadPos)
-		CharacterPreview.lastHeadPos = head.Position
-		
-		-- Only update eyes if moving
-		if velocity.Magnitude > 0.01 then
-			-- Smooth out the direction
-			local lookDirection = velocity.Unit
-			
-			-- Position eyes in direction of movement (but not too extreme)
-			local eyeForwardOffset = lookDirection * 0.6
-			leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0) + eyeForwardOffset
-			rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0) + eyeForwardOffset
-			
-			-- Pupils look slightly more forward
-			leftPupil.Position = leftEye.Position + lookDirection * 0.3
-			rightPupil.Position = rightEye.Position + lookDirection * 0.3
-		else
-			-- Default position when not moving
-			leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
-			rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
-			leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
-			rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
-		end
+		-- Eyes are simply positioned relative to head - they automatically face forward
+		leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
+		rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
+		leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
+		rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
 		
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
