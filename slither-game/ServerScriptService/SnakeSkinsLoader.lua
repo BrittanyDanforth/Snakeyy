@@ -66,7 +66,7 @@ return {
 		Description = "Burn with crimson fire!"
 	},
 	
-	["Arctic"] = {
+	["Arctic"] = { -- Same name for Arctic
 		HeadColor = Color3.fromRGB(200, 230, 255),
 		BodyColors = {
 			Color3.fromRGB(150, 200, 240),
@@ -86,7 +86,7 @@ return {
 		Description = "Cool as the arctic winds!"
 	},
 	
-	["Emerald"] = {
+	["Emerald"] = { -- Same name for Emerald
 		HeadColor = Color3.fromRGB(50, 200, 100),
 		BodyColors = {
 			Color3.fromRGB(30, 150, 80),

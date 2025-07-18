@@ -1,6 +1,8 @@
 -- UNIFIED SKIN SYSTEM
 -- Handles all skin operations in one place to prevent conflicts
 
+print("🚀 UnifiedSkinSystem starting up...")
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")

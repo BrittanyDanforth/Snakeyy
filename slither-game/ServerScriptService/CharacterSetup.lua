@@ -671,7 +671,8 @@ local function createUltraSmoothSnake(character)
 	end)
 	table.insert(connections, heartbeatConn)
 
-	local snakeInstance = {
+	local snakeInstance
+	snakeInstance = {
 		segments = segments,
 		headParts = headParts,
 		cleanup = cleanup,
@@ -699,19 +700,26 @@ end
 
 -- ENHANCED: Handle player with skin monitoring
 local function handlePlayer(player)
-	local leaderstats = Instance.new("Folder")
-	leaderstats.Name = "leaderstats"
-	leaderstats.Parent = player
-
-	local length = Instance.new("NumberValue")
-	length.Name = "Length"
-	length.Value = 0
-	length.Parent = leaderstats
-
-	-- ENHANCED: Initialize with default skin if not set (using server name)
-	if not player:GetAttribute("SelectedSkin") then
-		player:SetAttribute("SelectedSkin", "Classic") -- Server's default skin name
+	-- Check if UnifiedSkinSystem already created leaderstats
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if not leaderstats then
+		leaderstats = Instance.new("Folder")
+		leaderstats.Name = "leaderstats"
+		leaderstats.Parent = player
 	end
+
+	local length = leaderstats:FindFirstChild("Length")
+	if not length then
+		length = Instance.new("NumberValue")
+		length.Name = "Length"
+		length.Value = 0
+		length.Parent = leaderstats
+	end
+
+	-- REMOVED: Let UnifiedSkinSystem handle skin initialization
+	-- if not player:GetAttribute("SelectedSkin") then
+	-- 	player:SetAttribute("SelectedSkin", "Classic") -- Server's default skin name
+	-- end
 	
 	-- ENHANCED: Store the selected skin persistently
 	local selectedSkinValue = Instance.new("StringValue")
@@ -742,8 +750,8 @@ local function handlePlayer(player)
 				print("⚠️ SelectedSkin was reset, restoring from persistent:", persistentSkin)
 				player:SetAttribute("SelectedSkin", persistentSkin)
 			else
-				print("⚠️ SelectedSkin was reset, using default: Classic")
-				player:SetAttribute("SelectedSkin", "Classic")
+				print("⚠️ SelectedSkin was reset, waiting for UnifiedSkinSystem")
+				-- Don't set it here, let UnifiedSkinSystem handle it
 			end
 		else
 			print("✅ Spawning with skin:", currentSkin)
