@@ -467,17 +467,22 @@ function CharacterPreview.create(viewport)
 	-- Clear viewport efficiently
 	viewport:ClearAllChildren()
 	
+	-- Create WorldModel for proper rendering
+	local worldModel = Instance.new("WorldModel")
+	worldModel.Parent = viewport
+	
 	-- Create camera with proper field of view
 	local camera = Instance.new("Camera")
-	camera.FieldOfView = 50 -- Wider FOV to show snake better
+	camera.FieldOfView = 70 -- Standard FOV
 	camera.CameraType = Enum.CameraType.Scriptable
+	camera.CFrame = CFrame.new(0, 10, 30) * CFrame.Angles(-0.3, 0, 0) -- Fixed position
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 	
-	-- Create model
+	-- Create model inside WorldModel
 	local model = Instance.new("Model")
 	model.Name = "SnakePreview"
-	model.Parent = viewport
+	model.Parent = worldModel
 	
 	-- Get skin data
 	local skin = SnakeSkinsData["Default"] or {
@@ -508,7 +513,7 @@ function CharacterPreview.create(viewport)
 	head.CanQuery = false
 	head.CanTouch = false
 	head.Anchored = true
-	head.Position = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
+	head.Position = Vector3.new(0, 0, 0) -- Simple center position
 	head.Parent = model
 	
 	-- Head glow
@@ -602,36 +607,27 @@ function CharacterPreview.create(viewport)
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
 		
-		-- Camera rotation with proper positioning
-		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
-		local focusPoint = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
+		-- Simple camera orbit
+		local camAngle = time * 0.3
+		camera.CFrame = CFrame.new(
+			math.sin(camAngle) * 25,
+			10,
+			math.cos(camAngle) * 25
+		) * CFrame.Angles(-0.4, 0, 0)
 		
-		camera.CFrame = CFrame.lookAt(
-			focusPoint + Vector3.new(
-				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
-				PREVIEW_CONFIG.CAMERA_HEIGHT,
-				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
-			),
-			focusPoint
+		-- Simple circular movement
+		local angle = time * 0.8
+		local radius = 6
+		local finalPos = Vector3.new(
+			math.sin(angle) * radius,
+			0,
+			math.cos(angle) * radius
 		)
 		
-		-- Ensure camera type is scriptable
-		camera.CameraType = Enum.CameraType.Scriptable
-		
-		-- Head movement - continuous circular slithering pattern
-		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
-		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
-		local headX = math.sin(slitherAngle) * radius
-		local headZ = math.cos(slitherAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
-		
-		-- Add wave motion for more natural movement
-		local waveX = math.sin(slitherAngle * 3) * 2
-		local finalPos = Vector3.new(headX + waveX, 0, headZ)
-		
 		-- Calculate direction snake is moving
-		local nextAngle = slitherAngle + 0.1
-		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-		local nextZ = math.cos(nextAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
+		local nextAngle = angle + 0.1
+		local nextX = math.sin(nextAngle) * radius
+		local nextZ = math.cos(nextAngle) * radius
 		
 		-- Set head CFrame to face movement direction
 		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
