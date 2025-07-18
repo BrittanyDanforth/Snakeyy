@@ -14,7 +14,14 @@ local TweenService = game:GetService("TweenService")
 
 -- Load skins data
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SnakeSkinsData = require(ReplicatedStorage:WaitForChild("SnakeSkins"))
+
+-- Get skins data from parent module (ShopUI will provide this)
+local SnakeSkinsData = nil
+
+-- This will be set by ShopUI when it loads
+function CharacterPreview.setSkinData(skinData)
+	SnakeSkinsData = skinData
+end
 
 local CharacterPreview = {}
 CharacterPreview.__index = CharacterPreview
@@ -75,7 +82,25 @@ function CharacterPreview:initialize()
 end
 
 function CharacterPreview:createSnake()
-	local skinData = SnakeSkinsData[self.currentSkin] or SnakeSkinsData["Default"]
+	-- Default skin data if SnakeSkinsData not loaded
+	local defaultSkin = {
+		HeadColor = Color3.fromRGB(76, 217, 100),
+		BodyColors = {
+			Color3.fromRGB(60, 180, 80),
+			Color3.fromRGB(80, 200, 100),
+			Color3.fromRGB(100, 220, 120),
+			Color3.fromRGB(80, 200, 100),
+			Color3.fromRGB(60, 180, 80),
+		},
+		HeadSize = Vector3.new(3, 3, 3),
+		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 1.5,
+		GlowRange = 4,
+	}
+	
+	local skinData = (SnakeSkinsData and SnakeSkinsData[self.currentSkin]) or defaultSkin
 	
 	-- Create head (exactly like CharacterSetup)
 	local head = Instance.new("Part")
@@ -331,13 +356,29 @@ function CharacterPreview:startAnimations()
 end
 
 function CharacterPreview:updateSkin(skinName)
-	if not SnakeSkinsData[skinName] then
-		warn("Skin not found:", skinName)
-		return
-	end
-	
 	self.currentSkin = skinName
-	local skinData = SnakeSkinsData[skinName]
+	
+	-- Get skin data or use default
+	local skinData = nil
+	if SnakeSkinsData and SnakeSkinsData[skinName] then
+		skinData = SnakeSkinsData[skinName]
+	else
+		-- Use default colors if skin not found
+		skinData = {
+			HeadColor = Color3.fromRGB(76, 217, 100),
+			BodyColors = {
+				Color3.fromRGB(60, 180, 80),
+				Color3.fromRGB(80, 200, 100),
+				Color3.fromRGB(100, 220, 120),
+				Color3.fromRGB(80, 200, 100),
+				Color3.fromRGB(60, 180, 80),
+			},
+			HeadMaterial = Enum.Material.ForceField,
+			BodyMaterial = Enum.Material.Neon,
+			GlowIntensity = 1.5,
+			GlowRange = 4,
+		}
+	end
 	
 	-- Update head
 	self.head.Color = skinData.HeadColor

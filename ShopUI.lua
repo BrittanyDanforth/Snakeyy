@@ -44,8 +44,25 @@ pcall(function()
 	RespawnSnakeRemote = ReplicatedStorage:WaitForChild("RespawnSnake", 5)
 end)
 
--- FIXED: Character Preview using YOUR EXACT CharacterSetup functions
-local CharacterPreview = {}
+-- FIXED: Using external CharacterPreview module
+local CharacterPreviewModule = nil
+local CharacterPreview = nil
+
+-- Try to load the external CharacterPreview module
+pcall(function()
+	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 2))
+	if CharacterPreviewModule then
+		-- Pass our skin data to the module
+		CharacterPreviewModule.setSkinData(SnakeSkinsData)
+		print("✅ CharacterPreview module loaded successfully")
+	end
+end)
+
+-- If no external module, use built-in preview
+if not CharacterPreviewModule then
+	print("⚠️ Using built-in preview system")
+	CharacterPreview = {}
+end
 
 -- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
@@ -441,8 +458,46 @@ local SnakeSkinsData = {
 	}
 }
 
--- ULTRA PREMIUM PREVIEW with AMAZING VFX
-function CharacterPreview.create(viewport)
+-- Create wrapper functions for CharacterPreview
+if CharacterPreviewModule then
+	-- Use external module
+	CharacterPreview = {
+		instance = nil,
+		create = function(viewport)
+			if CharacterPreview.instance then
+				CharacterPreview.instance:destroy()
+			end
+			CharacterPreview.instance = CharacterPreviewModule.new(viewport)
+		end,
+		update = function(skinName)
+			if CharacterPreview.instance then
+				CharacterPreview.instance:updateSkin(skinName)
+			end
+		end,
+		destroy = function(viewport)
+			if CharacterPreview.instance then
+				CharacterPreview.instance:destroy()
+				CharacterPreview.instance = nil
+			end
+		end,
+		-- Legacy properties for compatibility
+		startRotation = function() end,
+		startVFXAnimations = function() end,
+		startBodyWave = function() end,
+		currentModel = nil,
+		currentHead = nil,
+		currentHeadParts = nil,
+		currentBody = nil,
+		currentCamera = nil,
+		orbitalParticles = nil,
+		energyRings = nil,
+		vfxContainer = nil,
+		currentSkinName = "Default"
+	}
+else
+	-- Use built-in preview system
+	-- ULTRA PREMIUM PREVIEW with AMAZING VFX
+	function CharacterPreview.create(viewport)
 	if not viewport then return end
 
 	-- Clear existing content
@@ -932,6 +987,7 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.energyRings = nil
 	CharacterPreview.vfxContainer = nil
 end
+end -- End of built-in preview system
 
 -- UI State (moved to top to be accessible everywhere)
 local uiState = {
