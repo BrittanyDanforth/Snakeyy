@@ -1876,6 +1876,24 @@ local function createCategoryButton(category, index)
 
 		uiState.currentCategory = index
 		ShopUI.updateSkinGrid()
+		
+		-- Hide/show preview based on category
+		local isGamepass = SKIN_CATEGORIES[index].name == "Gamepasses"
+		if ShopUI.uiElements.viewport then
+			ShopUI.uiElements.viewport.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.applyBtn then
+			ShopUI.uiElements.applyBtn.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.purchaseBtn then
+			ShopUI.uiElements.purchaseBtn.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.robuxBtn then
+			ShopUI.uiElements.robuxBtn.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.favoriteBtn then
+			ShopUI.uiElements.favoriteBtn.Visible = not isGamepass
+		end
 
 		-- Update indicators
 		for _, child in pairs(ShopUI.uiElements.sidebar:GetChildren()) do
