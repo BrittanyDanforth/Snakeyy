@@ -614,25 +614,28 @@ function CharacterPreview.create(viewport)
 		
 		-- Add wave motion for more natural movement
 		local waveX = math.sin(slitherAngle * 3) * 2
-		head.Position = Vector3.new(headX + waveX, 0, headZ)
+		local finalPos = Vector3.new(headX + waveX, 0, headZ)
 		
-		-- Calculate movement direction for eye positioning
-		local nextAngle = slitherAngle + 0.05
+		-- Calculate direction snake is moving
+		local nextAngle = slitherAngle + 0.1
 		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * 2
 		local nextZ = math.cos(nextAngle) * radius - 10
-		local moveDir = (Vector3.new(nextX, 0, nextZ) - head.Position).Unit
 		
-		-- Position eyes on the front surface of the head sphere
-		-- Head radius is 1.5 (size 3x3x3), so position eyes at that distance
-		local eyeForward = moveDir * 1.5  -- On surface of sphere
-		local eyeUp = Vector3.new(0, 0.7, 0)
+		-- Set head CFrame to face movement direction
+		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
 		
-		leftEye.Position = head.Position + eyeForward + eyeUp + Vector3.new(-0.5, 0, 0)
-		rightEye.Position = head.Position + eyeForward + eyeUp + Vector3.new(0.5, 0, 0)
+		-- Position eyes properly on the FRONT of the head
+		-- The -Z direction is forward when using CFrame
+		local eyeHeight = 0.6
+		local eyeForward = -1.4 -- Negative Z is forward
+		local eyeSeparation = 0.7
 		
-		-- Pupils in front of eyes
-		leftPupil.Position = leftEye.Position + moveDir * 0.3
-		rightPupil.Position = rightEye.Position + moveDir * 0.3
+		leftEye.CFrame = head.CFrame * CFrame.new(-eyeSeparation, eyeHeight, eyeForward)
+		rightEye.CFrame = head.CFrame * CFrame.new(eyeSeparation, eyeHeight, eyeForward)
+		
+		-- Pupils slightly in front of eyes
+		leftPupil.CFrame = leftEye.CFrame * CFrame.new(0, 0, -0.25)
+		rightPupil.CFrame = rightEye.CFrame * CFrame.new(0, 0, -0.25)
 		
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
