@@ -3,7 +3,8 @@
 -- Includes: Featured, Classic, Premium, VIP Elite, Special, and Gamepasses
 
 local SnakeSkinsData = {
-	["Classic"] = {
+	-- FREE DEFAULT SKIN
+	["Default"] = {
 		HeadColor = Color3.fromRGB(76, 217, 100),
 		BodyColors = {
 			Color3.fromRGB(60, 180, 80),
@@ -19,18 +20,20 @@ local SnakeSkinsData = {
 		BodyMaterial = Enum.Material.Neon,
 		GlowIntensity = 1.5,
 		GlowRange = 4,
-		Price = 0,
+		price = 0,
+		tag = "FREE",
 		Description = "The original slither.io look!"
 	},
 
-	["Lava Red"] = {
-		HeadColor = Color3.fromRGB(220, 50, 50),
+	-- CLASSIC TIER (100-200 coins)
+	["Crimson"] = {
+		HeadColor = Color3.fromRGB(255, 20, 20),
 		BodyColors = {
-			Color3.fromRGB(180, 30, 30),
-			Color3.fromRGB(200, 50, 50),
-			Color3.fromRGB(220, 70, 70),
-			Color3.fromRGB(200, 50, 50),
-			Color3.fromRGB(180, 30, 30),
+			Color3.fromRGB(200, 0, 0),
+			Color3.fromRGB(255, 40, 40),
+			Color3.fromRGB(220, 20, 20),
+			Color3.fromRGB(255, 60, 60),
+			Color3.fromRGB(180, 0, 0),
 		},
 		HeadSize = Vector3.new(3, 3, 3),
 		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
@@ -39,8 +42,9 @@ local SnakeSkinsData = {
 		BodyMaterial = Enum.Material.Neon,
 		GlowIntensity = 2.0,
 		GlowRange = 6,
-		Price = 150,
-		Description = "Burn with crimson fire!"
+		price = 100,
+		tag = "Popular",
+		Description = "Blood red serpent of power!"
 	},
 
 	["Ocean Blue"] = {

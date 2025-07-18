@@ -1038,35 +1038,35 @@ local SKIN_CATEGORIES = {
 		description = "Hot & Trending",
 		icon = "",
 		color = Color3.fromRGB(255, 100, 0),
-		skins = {"Default", "Plasma", "Cyber", "Rainbow"}
+		skins = {"Default", "Plasma", "Cyber", "Rainbow", "Phoenix"}
 	},
 	{
 		name = "Classic",
 		description = "Timeless Designs",
 		icon = "",
 		color = Color3.fromRGB(100, 200, 255),
-		skins = {"Default", "Crimson", "Arctic", "Emerald"}
+		skins = {"Default", "Crimson", "Arctic", "Emerald", "Golden"}
 	},
 	{
 		name = "Premium",
 		description = "Enhanced Effects",
 		icon = "",
 		color = Color3.fromRGB(200, 100, 255),
-		skins = {"Void", "Plasma", "Galaxy", "Ocean", "Shadow", "Cyber", "Dragon"}
+		skins = {"Void", "Plasma", "Galaxy", "Ocean", "Shadow", "Cyber", "Dragon", "Phoenix", "Toxic", "Lightning"}
 	},
 	{
 		name = "VIP Elite",
 		description = "Ultimate Power",
 		icon = "👑",
 		color = Color3.fromRGB(255, 215, 0),
-		skins = {"VIP Diamond", "VIP Inferno", "VIP Cosmic"}
+		skins = {"VIP Diamond", "VIP Inferno", "VIP Nebula", "VIP Crystal"}
 	},
 	{
 		name = "Special",
 		description = "Limited Edition",
 		icon = "",
 		color = Color3.fromRGB(255, 0, 255),
-		skins = {"Rainbow"}
+		skins = {"Rainbow", "Quantum", "Prismatic"}
 	},
 	{
 		name = "Gamepasses",
@@ -1102,7 +1102,16 @@ ShopUI.SKIN_DATA = {
 	-- VIP EXCLUSIVE (Robux only - insane effects)
 	["VIP Diamond"] = {price = 0, robux = 299, tag = "VIP"},
 	["VIP Inferno"] = {price = 0, robux = 399, tag = "VIP"},
-	["VIP Cosmic"] = {price = 0, robux = 499, tag = "VIP"},
+	["VIP Nebula"] = {price = 0, robux = 599, tag = "VIP"},
+	["VIP Crystal"] = {price = 0, robux = 699, tag = "VIP"},
+	
+	-- NEW ADDITIONS
+	["Golden"] = {price = 200, robux = nil, tag = "Shiny"},
+	["Phoenix"] = {price = 8000, robux = 150, tag = "Legendary"},
+	["Toxic"] = {price = 3000, robux = 65, tag = "Dangerous"},
+	["Lightning"] = {price = 4500, robux = 85, tag = "Electric"},
+	["Quantum"] = {price = 25000, robux = 249, tag = "Special"},
+	["Prismatic"] = {price = 30000, robux = 299, tag = "Special"},
 }
 
 -- Gamepass data
