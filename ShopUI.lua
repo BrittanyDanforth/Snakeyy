@@ -626,11 +626,12 @@ function CharacterPreview.create(viewport)
 		local lookAtPos = Vector3.new(nextX, 0, nextZ)
 		head.CFrame = CFrame.lookAt(head.Position, lookAtPos)
 		
-		-- Eyes are simply positioned relative to head - they automatically face forward
-		leftEye.CFrame = head.CFrame * CFrame.new(-0.6, 0.5, -0.8)
-		rightEye.CFrame = head.CFrame * CFrame.new(0.6, 0.5, -0.8)
-		leftPupil.CFrame = leftEye.CFrame * CFrame.new(0, 0, -0.2)
-		rightPupil.CFrame = rightEye.CFrame * CFrame.new(0, 0, -0.2)
+		-- Eyes positioned on front of head sphere
+		-- Use larger forward offset to ensure visibility
+		leftEye.CFrame = head.CFrame * CFrame.new(-0.6, 0.4, -1.2)
+		rightEye.CFrame = head.CFrame * CFrame.new(0.6, 0.4, -1.2)
+		leftPupil.CFrame = leftEye.CFrame * CFrame.new(0, 0, -0.3)
+		rightPupil.CFrame = rightEye.CFrame * CFrame.new(0, 0, -0.3)
 		
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
