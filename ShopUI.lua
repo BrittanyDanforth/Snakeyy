@@ -1928,7 +1928,7 @@ local function createCategoryButton(category, index)
 			if uiState.selectedSkin then
 				task.spawn(function()
 					task.wait(0.05) -- Small delay to let UI update
-					updatePreviewForSkin(uiState.selectedSkin)
+					ShopUI.updatePreviewForSkin(uiState.selectedSkin)
 				end)
 			end
 		end
@@ -2321,7 +2321,7 @@ function ShopUI.updatePreview()
 end
 
 -- Update preview for selected skin (with full UI update)
-local function updatePreviewForSkin(skinName)
+function ShopUI.updatePreviewForSkin(skinName)
 	if not skinName then return end
 	
 	-- Wait for UI to be ready
