@@ -167,7 +167,7 @@ local function createMenu(onPlay)
 	-- Dark share button
 	local shareButton = Instance.new("TextButton")
 	shareButton.Size = UDim2.new(0.08, 0, 0.08, 0)
-	shareButton.Position = UDim2.new(0.81, 0, 0.05, 0)
+	shareButton.Position = UDim2.new(0.72, 0, 0.05, 0)
 	shareButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 	shareButton.Text = "🔗"
 	shareButton.Font = Enum.Font.SourceSans
@@ -179,6 +179,22 @@ local function createMenu(onPlay)
 	local shareCorner = Instance.new("UICorner")
 	shareCorner.CornerRadius = UDim.new(0.15, 0)
 	shareCorner.Parent = shareButton
+
+	-- Shop button
+	local shopButton = Instance.new("TextButton")
+	shopButton.Size = UDim2.new(0.08, 0, 0.08, 0)
+	shopButton.Position = UDim2.new(0.81, 0, 0.05, 0)
+	shopButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	shopButton.Text = "🛒"
+	shopButton.Font = Enum.Font.SourceSans
+	shopButton.TextScaled = true
+	shopButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+	shopButton.AutoButtonColor = false
+	shopButton.Parent = bgFrame
+
+	local shopCorner = Instance.new("UICorner")
+	shopCorner.CornerRadius = UDim.new(0.15, 0)
+	shopCorner.Parent = shopButton
 
 	-- Dark graphics button
 	local graphicsButton = Instance.new("TextButton")
@@ -492,7 +508,7 @@ local function createMenu(onPlay)
 	end)
 
 	-- Enhanced icon button hover effects
-	for _, btn in {settingsButton, shareButton} do
+	for _, btn in {settingsButton, shareButton, shopButton} do
 		btn.MouseEnter:Connect(function()
 			TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}):Play()
 		end)
@@ -505,6 +521,19 @@ local function createMenu(onPlay)
 	-- Settings button opens settings panel
 	settingsButton.MouseButton1Click:Connect(function()
 		openSettingsPanel()
+	end)
+
+	-- Shop button opens shop UI
+	shopButton.MouseButton1Click:Connect(function()
+		-- Wait for the shop to be loaded
+		task.wait(0.1)
+		if _G.ShowShop then
+			_G.ShowShop()
+			-- Hide the menu when shop opens
+			screenGui.Enabled = false
+		else
+			warn("Shop system not loaded yet. Please try again.")
+		end
 	end)
 
 	-- Share button opens share panel

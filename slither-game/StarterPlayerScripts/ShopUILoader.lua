@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
 
+-- Load the ShopUI module
 local success, ShopUI = pcall(function()
     return require(ReplicatedStorage:WaitForChild("ShopUI"))
 end)
@@ -12,9 +13,18 @@ if not success or type(ShopUI) ~= "table" then
     return
 end
 
-if typeof(ShopUI.Show) == "function" then
-    ShopUI.Show()
-else
-    warn("❌ ShopUI ModuleScript does not have a Show() function. Please add a Show() function to display the UI.")
+-- Create a global function to show the shop
+_G.ShowShop = function()
+    if typeof(ShopUI.Show) == "function" then
+        ShopUI.Show()
+    else
+        warn("❌ ShopUI ModuleScript does not have a Show() function.")
+    end
 end
+
+-- Also expose the module for other scripts
+_G.ShopUI = ShopUI
+
+-- Shop will now only open when _G.ShowShop() is called
+print("✅ Shop system loaded. Use _G.ShowShop() to open the shop.")
 

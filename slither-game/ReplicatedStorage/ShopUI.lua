@@ -1971,6 +1971,12 @@ function ShopUI.close()
 		ShopUI.uiElements = {}
 		uiState.animations = {}
 		uiState.particles = {}
+		
+		-- Re-enable the SlitherIOMenu if it exists
+		local menuGui = Players.LocalPlayer.PlayerGui:FindFirstChild("SlitherIOMenu")
+		if menuGui then
+			menuGui.Enabled = true
+		end
 	end
 end
 
