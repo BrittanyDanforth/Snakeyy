@@ -1,5 +1,5 @@
 --[[
-ULTRA-SMOOTH & HIGH-PERFORMANCE SLITHER.IO SNAKE SYSTEM V5.1 - LAG FIXED WITH SKIN SYSTEM
+ULTRA-SMOOTH & HIGH-PERFORMANCE SLITHER.IO SNAKE SYSTEM V5.2 - SKIN SYSTEM INTEGRATED
 - Fixed segment pooling to remove segments from workspace
 - Added periodic cleanup for orphaned segments
 - Optimized memory management
@@ -81,20 +81,20 @@ local mathFloor = math.floor
 local taskSpawn = task.spawn
 local taskWait = task.wait
 
--- OPTIMIZED: Base config with performance settings from V5.1
+-- ENHANCED: Base config with skin override capability (Classic green colors)
 local Config = {
 	HeadSize = Vector3new(3, 3, 3),
 	SegmentSize = Vector3new(2.5, 2.5, 2.5),
 	SegmentSpacing = 2.2,
 	InitialLength = 15,
 	MaxSegments = 2450,
-	HeadColor = Color3.fromRGB(180, 0, 255), -- Default purple (will be overridden by skins)
+	HeadColor = Color3.fromRGB(76, 217, 100), -- Classic green
 	BodyColors = {
-		Color3.fromRGB(180, 0, 255),
-		Color3.fromRGB(255, 0, 150),
-		Color3.fromRGB(255, 80, 200),
-		Color3.fromRGB(255, 0, 150),
-		Color3.fromRGB(180, 0, 255),
+		Color3.fromRGB(60, 180, 80),
+		Color3.fromRGB(80, 200, 100),
+		Color3.fromRGB(100, 220, 120),
+		Color3.fromRGB(80, 200, 100),
+		Color3.fromRGB(60, 180, 80),
 	},
 	FollowSpeed = 0.96,
 	UpdateRate = 30,
@@ -400,8 +400,46 @@ if not _G.PlayerSnakes then
 	_G.PlayerSnakes = {}
 end
 
--- REMOVED: Apply skin changes function to improve performance
--- Skins are now only applied on spawn
+-- ENHANCED: Apply skin changes to existing snake without recreating
+local function applySkinToExistingSnake(player, snakeInstance)
+	if not snakeInstance or not snakeInstance.isActive() then return end
+
+	local activeConfig = getActiveConfig(player)
+
+	-- Update head appearance
+	if snakeInstance.headParts and snakeInstance.headParts.head then
+		snakeInstance.headParts.head.Color = activeConfig.HeadColor
+		snakeInstance.headParts.head.Material = activeConfig.HeadMaterial
+
+		-- Update head light
+		if snakeInstance.headParts.headLight then
+			snakeInstance.headParts.headLight.Color = activeConfig.HeadColor
+			snakeInstance.headParts.headLight.Brightness = activeConfig.GlowIntensity + 1
+			snakeInstance.headParts.headLight.Range = activeConfig.GlowRange + 2
+		end
+	end
+
+	-- Update segment appearances
+	if snakeInstance.segments then
+		for i, segment in pairs(snakeInstance.segments) do
+			if segment and segment.Parent then
+				local colorIndex = ((i - 1) % #activeConfig.BodyColors) + 1
+				segment.Color = activeConfig.BodyColors[colorIndex]
+				segment.Material = activeConfig.BodyMaterial
+
+				-- Update segment light
+				local light = segment:FindFirstChild("Glow")
+				if light then
+					light.Color = activeConfig.BodyColors[colorIndex]
+					light.Brightness = activeConfig.GlowIntensity
+					light.Range = activeConfig.GlowRange
+				end
+			end
+		end
+	end
+
+	print("🎨 Applied skin changes to existing snake for", player.Name)
+end
 
 local function createUltraSmoothSnake(character)
 	print("🐍 Creating snake for character:", character.Name)
@@ -505,8 +543,6 @@ local function createUltraSmoothSnake(character)
 	end
 
 	local currentLength = activeConfig.InitialLength
-
-	-- RESTORE POSITION HISTORY SYSTEM
 	local maxHistorySize = mathMin(mathFloor(activeConfig.MaxSegments * 1.1) + 10, 2000)
 	local positionHistory = table.create(maxHistorySize)
 	local historyHead = 1
@@ -533,7 +569,6 @@ local function createUltraSmoothSnake(character)
 	local updateCounter = 0
 	local networkUpdateInterval = 2
 	local lastNetworkUpdate = 0
-	local vfxParts = {} -- Store VFX parts for cleanup
 
 	local function growSnake(amount)
 		amount = amount or 5
@@ -579,13 +614,6 @@ local function createUltraSmoothSnake(character)
 			if lengthValue then
 				lengthValue.Value = currentLength
 			end
-
-			-- Award coins for growth (1 coin per 5 segments)
-			if currentLength % 5 == 0 then
-				local currentCoins = player:GetAttribute("Coins") or 0
-				player:SetAttribute("Coins", currentCoins + 1)
-				print("💰 Awarded 1 coin for reaching length", currentLength)
-			end
 		end
 	end
 
@@ -596,15 +624,6 @@ local function createUltraSmoothSnake(character)
 		for _, conn in connections do
 			if typeof(conn) == "RBXScriptConnection" then
 				conn:Disconnect()
-			end
-		end
-
-		-- Clean up VFX parts
-		if vfxParts then
-			for _, vfxPart in pairs(vfxParts) do
-				if vfxPart and vfxPart.Parent then
-					vfxPart:Destroy()
-				end
 			end
 		end
 
@@ -672,7 +691,6 @@ local function createUltraSmoothSnake(character)
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
-		-- ADD TO HISTORY
 		local lastHistoryPoint = getFromHistory(1)
 		local dist = (currentPos - lastHistoryPoint.position).Magnitude
 		if dist > 0.015 then
@@ -690,7 +708,6 @@ local function createUltraSmoothSnake(character)
 
 		local currentTime = tick()
 
-		-- POSITION HISTORY BASED MOVEMENT WITH ANTI-GAP FOR BOOSTING
 		for i = 1, currentLength do
 			local segment = segments[i]
 			if segment and segment.Parent then
@@ -699,21 +716,8 @@ local function createUltraSmoothSnake(character)
 				if targetData then
 					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.08)
 					local currentSegmentPos = segment.Position
-					
-					-- BOOSTING ANTI-GAP ONLY
-					local dynamicFollowSpeed = followSpeed
-					if isBoosting and i > 1 then
-						local prevSegment = segments[i - 1]
-						if prevSegment and prevSegment.Parent then
-							local gap = (currentSegmentPos - prevSegment.Position).Magnitude
-							-- Only apply correction if gap is significantly large
-							if gap > activeConfig.SegmentSpacing * 1.5 then
-								dynamicFollowSpeed = mathMin(followSpeed + 0.03, 0.99)
-							end
-						end
-					end
-					
-					local newPos = currentSegmentPos:Lerp(segmentPos, dynamicFollowSpeed)
+					local newPos = currentSegmentPos:Lerp(segmentPos, followSpeed)
+
 					segment.CFrame = CFramenew(newPos)
 				end
 			end
@@ -725,117 +729,29 @@ local function createUltraSmoothSnake(character)
 	end)
 	table.insert(connections, heartbeatConn)
 
-	local snakeInstance = {
+	local snakeInstance
+	snakeInstance = {
 		segments = segments,
 		headParts = headParts,
 		cleanup = cleanup,
 		grow = growSnake,
 		model = snakeModel,
 		isActive = function() return isActive end,
+		-- ENHANCED: Add skin update capability
+		updateSkin = function()
+			applySkinToExistingSnake(player, snakeInstance)
+		end,
 	}
 	playerSnakes[player] = snakeInstance
 	_G.PlayerSnakes[player] = snakeInstance
 
-	-- ENHANCED: Apply VFX based on skin (after snake is fully created)
-	local function applyVFX()
-		-- Only apply VFX if skin has VFX data and it's not causing performance issues
-		local skinData = activeConfig.VFX
-		if not skinData or not skinData.Type then return end
-
-		-- Limit VFX to prevent lag
-		-- Using the outer vfxParts variable for cleanup
-
-		-- Apply VFX to head only (not every segment to prevent lag)
-		if skinData.Type == "Fire" and headParts.head then
-			-- Simple fire effect on head
-			local fire = Instance.new("Fire")
-			fire.Size = 5
-			fire.Heat = 5
-			fire.Color = skinData.Color or Color3.fromRGB(255, 0, 0)
-			fire.SecondaryColor = Color3.new(
-				math.min(fire.Color.R * 0.7, 1),
-				math.min(fire.Color.G * 0.7, 1),
-				math.min(fire.Color.B * 0.7, 1)
-			)
-			fire.Parent = headParts.head
-			table.insert(vfxParts, fire)
-
-		elseif skinData.Type == "Frost" and headParts.head then
-			-- Frost particles on head
-			local attachment = Instance.new("Attachment")
-			attachment.Parent = headParts.head
-
-			local emitter = Instance.new("ParticleEmitter")
-			emitter.Texture = skinData.ParticleTexture or "rbxasset://textures/particles/sparkles_main.dds"
-			emitter.Rate = 20
-			emitter.Lifetime = NumberRange.new(1, 2)
-			emitter.Speed = NumberRange.new(2, 4)
-			emitter.VelocitySpread = 180
-			emitter.Color = ColorSequence.new(skinData.Color or Color3.fromRGB(150, 220, 255))
-			emitter.LightEmission = 0.8
-			emitter.Size = NumberSequence.new{
-				NumberSequenceKeypoint.new(0, 0.5),
-				NumberSequenceKeypoint.new(1, 0)
-			}
-			emitter.Parent = attachment
-			table.insert(vfxParts, attachment)
-
-		elseif skinData.Type == "Energy" then
-			-- Energy glow on first few segments only
-			for i = 1, math.min(3, #segments) do
-				local segment = segments[i]
-				if segment then
-					local light = Instance.new("PointLight")
-					light.Color = skinData.Color or activeConfig.HeadColor
-					light.Brightness = activeConfig.GlowIntensity * 2
-					light.Range = activeConfig.GlowRange * 1.5
-					light.Parent = segment
-					table.insert(vfxParts, light)
-				end
-			end
-
-		elseif skinData.Type == "Lightning" and headParts.head then
-			-- Electric effect on head
-			local attachment = Instance.new("Attachment")
-			attachment.Parent = headParts.head
-
-			local beam = Instance.new("Beam")
-			beam.Texture = "rbxasset://textures/particles/sparkle_main.dds"
-			beam.Width0 = 0.5
-			beam.Width1 = 0.1
-			beam.Color = ColorSequence.new(skinData.Color or Color3.fromRGB(255, 255, 0))
-			beam.LightEmission = 1
-			beam.Transparency = NumberSequence.new{
-				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.5, 0.3),
-				NumberSequenceKeypoint.new(1, 1)
-			}
-			beam.Attachment0 = attachment
-
-			-- Create second attachment for beam
-			local attachment2 = Instance.new("Attachment")
-			attachment2.Parent = segments[1] or headParts.head
-			attachment2.Position = Vector3.new(0, 2, 0)
-			beam.Attachment1 = attachment2
-
-			beam.Parent = headParts.head
-			table.insert(vfxParts, beam)
-			table.insert(vfxParts, attachment)
-			table.insert(vfxParts, attachment2)
-		end
-
-		-- VFX parts are stored in the local vfxParts variable for cleanup
-	end
-
-	-- Apply VFX after a short delay to ensure snake is fully created
-	task.spawn(function()
-		task.wait(0.1)
-		if isActive and headParts.head and headParts.head.Parent then
-			applyVFX()
+	-- ENHANCED: Monitor skin changes for real-time updates
+	local skinChangeConn = player.AttributeChanged:Connect(function(attributeName)
+		if attributeName == "SelectedSkin" and isActive then
+			applySkinToExistingSnake(player, snakeInstance)
 		end
 	end)
-
-	-- Cleanup function
+	table.insert(connections, skinChangeConn)
 
 	return snakeInstance
 end
@@ -856,21 +772,6 @@ local function handlePlayer(player)
 		length.Name = "Length"
 		length.Value = 0
 		length.Parent = leaderstats
-	end
-
-	local coins = leaderstats:FindFirstChild("Coins")
-	if not coins then
-		coins = Instance.new("NumberValue")
-		coins.Name = "Coins"
-		coins.Value = player:GetAttribute("Coins") or 100
-		coins.Parent = leaderstats
-
-		-- Update coins when attribute changes
-		player.AttributeChanged:Connect(function(name)
-			if name == "Coins" then
-				coins.Value = player:GetAttribute("Coins") or 0
-			end
-		end)
 	end
 
 	-- REMOVED: Let UnifiedSkinSystem handle skin initialization
@@ -989,7 +890,7 @@ task.spawn(function()
 end)
 
 local function initialize()
-	print("SLITHER.IO SYSTEM V5.1 - LAG FIXED WITH SKIN SYSTEM")
+	print("SLITHER.IO SYSTEM V5.2 - SKIN SYSTEM INTEGRATED")
 	for _, player in Players:GetPlayers() do
 		handlePlayer(player)
 	end
@@ -1019,7 +920,15 @@ task.spawn(function()
 	end
 end)
 
--- REMOVED: Global skin update function to improve performance
--- Skins now only apply on spawn/respawn
+-- ENHANCED: Global skin update function for external calls
+_G.UpdatePlayerSkin = function(player, skinName)
+	if player and skinName then
+		player:SetAttribute("SelectedSkin", skinName)
+		local snakeInstance = playerSnakes[player] or _G.PlayerSnakes[player]
+		if snakeInstance and snakeInstance.updateSkin then
+			snakeInstance.updateSkin()
+		end
+	end
+end
 
 taskSpawn(initialize)
