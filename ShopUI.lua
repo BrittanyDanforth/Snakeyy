@@ -441,23 +441,23 @@ local SnakeSkinsData = {
 	}
 }
 
--- SMOOTH SLITHER.IO PREVIEW - NO LAG
+-- EXTREME MASSIVE PREVIEW FOR REAL GAME VISIBILITY
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 20, -- More segments for smoother look
-	SEGMENT_SPACING = 1.5, -- Closer spacing for smooth appearance
-	HEAD_SIZE = Vector3.new(3, 3, 3),
-	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8), -- Slightly bigger for no gaps
-	SIZE_REDUCTION = 0.98, -- Slight taper for natural look
-	CAMERA_DISTANCE = 25,
-	CAMERA_HEIGHT = 8,
-	ROTATION_SPEED = 0.4,
+	SEGMENT_COUNT = 50, -- TONS of segments for massive snake
+	SEGMENT_SPACING = 4, -- HUGE spacing for bigger snake
+	HEAD_SIZE = Vector3.new(12, 12, 12), -- GIGANTIC head
+	SEGMENT_SIZE = Vector3.new(10, 10, 10), -- MASSIVE segments
+	SIZE_REDUCTION = 0.985, -- Very gradual taper
+	CAMERA_DISTANCE = 100, -- Camera WAY back
+	CAMERA_HEIGHT = 30, -- Much higher view
+	ROTATION_SPEED = 0.3,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 3,
+	SLITHER_AMPLITUDE = 10, -- Bigger movements
 	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.08,
+	SLITHER_SPEED = 1.0,
+	SEGMENT_DELAY = 0.06,
 	-- Snake positioning
-	SNAKE_RADIUS = 8,
+	SNAKE_RADIUS = 30, -- HUGE movement radius
 	SNAKE_CENTER_Z = -5,
 }
 
@@ -471,11 +471,11 @@ function CharacterPreview.create(viewport)
 	local worldModel = Instance.new("WorldModel")
 	worldModel.Parent = viewport
 	
-	-- Create camera with proper field of view
+	-- Create camera with WIDE field of view for massive snake
 	local camera = Instance.new("Camera")
-	camera.FieldOfView = 70 -- Standard FOV
+	camera.FieldOfView = 90 -- Maximum FOV for huge view
 	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = CFrame.new(0, 10, 30) * CFrame.Angles(-0.3, 0, 0) -- Fixed position
+	camera.CFrame = CFrame.new(0, 50, 120) * CFrame.Angles(-0.3, 0, 0) -- Way back for massive snake
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 	
@@ -516,17 +516,25 @@ function CharacterPreview.create(viewport)
 	head.Position = Vector3.new(0, 0, 0) -- Simple center position
 	head.Parent = model
 	
-	-- Head glow
+	-- Super bright head glow for massive snake
 	local headGlow = Instance.new("PointLight")
-	headGlow.Brightness = skin.GlowIntensity * 1.5
-	headGlow.Range = skin.GlowRange * 1.5
+	headGlow.Brightness = 5 -- Very bright
+	headGlow.Range = 30 -- Huge range
 	headGlow.Color = skin.HeadColor
 	headGlow.Parent = head
 	
-	-- Create eyes
+	-- Add surface light for extra visibility
+	local surfaceGlow = Instance.new("SurfaceLight")
+	surfaceGlow.Brightness = 3
+	surfaceGlow.Range = 20
+	surfaceGlow.Color = skin.HeadColor
+	surfaceGlow.Face = Enum.NormalId.Front
+	surfaceGlow.Parent = head
+	
+	-- Create HUGE eyes
 	local function createEye(xOffset)
 		local eye = Instance.new("Part")
-		eye.Size = Vector3.new(0.6, 0.6, 0.6)
+		eye.Size = Vector3.new(2.5, 2.5, 2.5) -- Massive eyes
 		eye.Shape = Enum.PartType.Ball
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
@@ -571,10 +579,10 @@ function CharacterPreview.create(viewport)
 		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
 		segment.Color = skin.BodyColors[colorIndex]
 		
-		-- Segment glow
+		-- Bright segment glow for massive visibility
 		local glow = Instance.new("PointLight")
-		glow.Brightness = skin.GlowIntensity
-		glow.Range = skin.GlowRange
+		glow.Brightness = 3 -- Bright segments
+		glow.Range = 20 -- Large glow range
 		glow.Color = segment.Color
 		glow.Parent = segment
 		
@@ -613,17 +621,17 @@ function CharacterPreview.create(viewport)
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
 		
-		-- Simple camera orbit
-		local camAngle = time * 0.3
+		-- Camera orbit for massive snake
+		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
 		camera.CFrame = CFrame.new(
-			math.sin(camAngle) * 25,
-			10,
-			math.cos(camAngle) * 25
+			math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
+			PREVIEW_CONFIG.CAMERA_HEIGHT,
+			math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
 		) * CFrame.Angles(-0.4, 0, 0)
 		
-		-- Simple circular movement
-		local angle = time * 0.8
-		local radius = 6
+		-- Massive circular movement
+		local angle = time * PREVIEW_CONFIG.SLITHER_SPEED
+		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
 		local finalPos = Vector3.new(
 			math.sin(angle) * radius,
 			0,
@@ -1558,9 +1566,11 @@ local function createMainShop()
 	viewport.Position = UDim2.new(0.05, 0, 0.11, 0)
 	viewport.BackgroundColor3 = SHOP_CONFIG.COLORS.BACKGROUND
 	viewport.BackgroundTransparency = 0.6
-	viewport.Ambient = Color3.new(0.5, 0.5, 0.5)
+	viewport.Ambient = Color3.new(0.8, 0.8, 0.8) -- Brighter ambient
 	viewport.LightColor = Color3.new(1, 1, 1)
-	viewport.LightDirection = Vector3.new(-1, -1, -1)
+	viewport.LightDirection = Vector3.new(-1, -1, -1).Unit
+	viewport.ImageColor3 = Color3.new(1, 1, 1) -- Ensure no tinting
+	viewport.ImageTransparency = 0 -- Full opacity
 	viewport.Parent = previewContainer
 
 	createCorner(viewport, 8)
