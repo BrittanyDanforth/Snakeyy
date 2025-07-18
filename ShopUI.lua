@@ -441,23 +441,23 @@ local SnakeSkinsData = {
 	}
 }
 
--- EXTREME MASSIVE PREVIEW FIX FOR REAL GAME BUG
+-- FIX FOR LENGTH COMPRESSION IN REAL GAME
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 80, -- TONS of segments for massive snake
-	SEGMENT_SPACING = 15, -- HUGE spacing between segments
-	HEAD_SIZE = Vector3.new(60, 60, 60), -- ABSOLUTELY GIGANTIC HEAD
-	SEGMENT_SIZE = Vector3.new(50, 50, 50), -- MASSIVE STARTING SEGMENT
-	SIZE_REDUCTION = 0.995, -- Very gradual size reduction
-	CAMERA_DISTANCE = 400, -- Camera SUPER far back
-	CAMERA_HEIGHT = 150, -- Very high camera
-	ROTATION_SPEED = 0.2,
+	SEGMENT_COUNT = 30, -- More segments for better length
+	SEGMENT_SPACING = 3.5, -- Increased spacing to prevent compression
+	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
+	SIZE_REDUCTION = 0.98, -- Normal taper
+	CAMERA_DISTANCE = 60, -- Further back to see full snake
+	CAMERA_HEIGHT = 20, -- Higher for better view
+	ROTATION_SPEED = 0.3,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 50, -- HUGE wave movements
+	SLITHER_AMPLITUDE = 4,
 	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 0.6,
-	SEGMENT_DELAY = 0.04,
+	SLITHER_SPEED = 1.0,
+	SEGMENT_DELAY = 0.08,
 	-- Snake positioning
-	SNAKE_RADIUS = 100, -- MASSIVE movement radius
+	SNAKE_RADIUS = 12, -- Larger movement circle
 	SNAKE_CENTER_Z = 0,
 }
 
@@ -481,10 +481,11 @@ function CharacterPreview.create(viewport)
 	scaleReference.CanCollide = false
 	scaleReference.Parent = worldModel
 
-	-- Create camera with EXTREME settings
+	-- Create camera with proper FOV for viewport
 	local camera = Instance.new("Camera")
-	camera.FieldOfView = 120 -- MAXIMUM FOV
+	camera.FieldOfView = 70 -- Standard FOV that works well in ViewportFrames
 	camera.CameraType = Enum.CameraType.Scriptable
+	camera.Focus = CFrame.new(0, 0, 0) -- Set focus point
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 
@@ -525,44 +526,17 @@ function CharacterPreview.create(viewport)
 	head.Position = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 	head.Parent = model
 
-	-- EXTREME HEAD LIGHTING FOR VISIBILITY
-	local headGlow1 = Instance.new("PointLight")
-	headGlow1.Brightness = 10 -- MAXIMUM BRIGHTNESS
-	headGlow1.Range = 100 -- HUGE RANGE
-	headGlow1.Color = skin.HeadColor
-	headGlow1.Parent = head
-	
-	-- Add SpotLight for extra visibility
-	local headSpot = Instance.new("SpotLight")
-	headSpot.Brightness = 10
-	headSpot.Range = 150
-	headSpot.Angle = 180
-	headSpot.Face = Enum.NormalId.Front
-	headSpot.Color = skin.HeadColor
-	headSpot.Parent = head
-	
-	-- Add SurfaceLight on all faces
-	for _, face in pairs(Enum.NormalId:GetEnumItems()) do
-		local surfaceLight = Instance.new("SurfaceLight")
-		surfaceLight.Brightness = 5
-		surfaceLight.Range = 50
-		surfaceLight.Face = face
-		surfaceLight.Color = skin.HeadColor
-		surfaceLight.Parent = head
-	end
-	
-	-- Add SelectionBox for outline visibility
-	local headOutline = Instance.new("SelectionBox")
-	headOutline.Adornee = head
-	headOutline.Color3 = skin.HeadColor
-	headOutline.LineThickness = 0.2
-	headOutline.Transparency = 0.3
-	headOutline.Parent = head
+	-- Head glow
+	local headGlow = Instance.new("PointLight")
+	headGlow.Brightness = skin.GlowIntensity * 1.5
+	headGlow.Range = skin.GlowRange * 1.5
+	headGlow.Color = skin.HeadColor
+	headGlow.Parent = head
 
-	-- Create MASSIVE eyes
+	-- Create eyes
 	local function createEye(xOffset)
 		local eye = Instance.new("Part")
-		eye.Size = Vector3.new(10, 10, 10) -- HUGE EYES
+		eye.Size = Vector3.new(0.6, 0.6, 0.6)
 		eye.Shape = Enum.PartType.Ball
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
@@ -578,7 +552,7 @@ function CharacterPreview.create(viewport)
 		eyeGlow.Parent = eye
 
 		local pupil = Instance.new("Part")
-		pupil.Size = Vector3.new(4, 4, 4) -- Scaled up pupil
+		pupil.Size = Vector3.new(0.3, 0.3, 0.3)
 		pupil.Shape = Enum.PartType.Ball
 		pupil.Material = Enum.Material.Neon
 		pupil.Color = Color3.fromRGB(0, 0, 0)
@@ -609,6 +583,9 @@ function CharacterPreview.create(viewport)
 		segment.CanTouch = false
 		segment.Anchored = true
 		segment.Parent = model
+		
+		-- Initial position - spread out in Z axis
+		segment.Position = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING * 3)
 
 		-- Color pattern
 		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
@@ -621,10 +598,10 @@ function CharacterPreview.create(viewport)
 		glow.Color = segment.Color
 		glow.Parent = segment
 
-		-- Store segment data
+		-- Store segment data with PROPER Z offset
 		table.insert(segments, {
 			part = segment,
-			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING),
+			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING * 2), -- Double spacing in Z
 			size = currentSize,
 			colorIndex = colorIndex
 		})
@@ -712,14 +689,19 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- Update segments to follow the trail
+		-- Update segments to follow the trail with PROPER SPACING
 		for i, seg in ipairs(segments) do
-			local historyIndex = math.floor(i * 4) -- MORE SPACING IN HISTORY - NO BUNCHING!
+			-- Each segment follows where the head was N frames ago
+			-- More segments back = more frames back in history
+			local framesBack = i * 2 -- This controls segment spacing
+			local historyIndex = math.min(framesBack, #CharacterPreview.positionHistory)
 
 			if CharacterPreview.positionHistory[historyIndex] then
 				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.6) -- Faster lerp for responsiveness
+				-- Add offset to maintain proper spacing even when stationary
+				local spacingOffset = (head.Position - targetPos).Unit * PREVIEW_CONFIG.SEGMENT_SPACING * i * 0.1
+				seg.part.Position = seg.part.Position:Lerp(targetPos + spacingOffset, 0.5)
 			end
 		end
 	end)
@@ -1604,9 +1586,12 @@ local function createMainShop()
 	viewport.Position = UDim2.new(0.05, 0, 0.11, 0)
 	viewport.BackgroundColor3 = SHOP_CONFIG.COLORS.BACKGROUND
 	viewport.BackgroundTransparency = 0.6
-	viewport.Ambient = Color3.new(0.5, 0.5, 0.5)
+	viewport.Ambient = Color3.new(0.7, 0.7, 0.7)
 	viewport.LightColor = Color3.new(1, 1, 1)
-	viewport.LightDirection = Vector3.new(-1, -1, -1)
+	viewport.LightDirection = Vector3.new(-1, -1, -1).Unit
+	-- CRITICAL: Set ImageColor and Transparency for proper rendering
+	viewport.ImageColor3 = Color3.new(1, 1, 1)
+	viewport.ImageTransparency = 0
 	viewport.Parent = previewContainer
 
 	createCorner(viewport, 8)
