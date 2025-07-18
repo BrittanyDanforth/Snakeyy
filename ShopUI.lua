@@ -2320,12 +2320,56 @@ function ShopUI.updatePreview()
 	end
 end
 
--- FIXED: Update info function
+-- Update preview for selected skin (with full UI update)
+local function updatePreviewForSkin(skinName)
+	if not skinName then return end
+	
+	-- Wait for UI to be ready
+	if not ShopUI.uiElements or not ShopUI.playerData then
+		warn("Shop not fully initialized, waiting...")
+		task.wait(0.1)
+		if not ShopUI.uiElements or not ShopUI.playerData then
+			warn("Shop still not ready, aborting update")
+			return
+		end
+	end
+	
+	uiState.selectedSkin = skinName
+	
+	-- Update preview
+	ShopUI.updatePreview()
+	
+	-- Update info with stability checks
+	ShopUI.updateInfo()
+end
+
+-- FIXED: Update info function with STABILITY
 function ShopUI.updateInfo()
-	if not ShopUI.uiElements then return end
+	-- FULL VALIDATION
+	if not ShopUI.uiElements then 
+		warn("UI elements not ready")
+		return 
+	end
+	
+	if not ShopUI.playerData then
+		warn("Player data not loaded")
+		return
+	end
 
 	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin]
-	if not skinData then return end
+	if not skinData then 
+		warn("No skin data for:", uiState.selectedSkin)
+		return 
+	end
+	
+	-- Ensure all required UI elements exist
+	local required = {"skinName", "skinTag", "priceLabel", "purchaseBtn", "robuxBtn", "applyBtn", "favoriteBtn"}
+	for _, elem in ipairs(required) do
+		if not ShopUI.uiElements[elem] then
+			warn("Missing UI element:", elem)
+			return
+		end
+	end
 
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, uiState.selectedSkin) ~= nil
 	local isCurrent = ShopUI.playerData.currentSkin == uiState.selectedSkin
@@ -2384,6 +2428,7 @@ function ShopUI.updateInfo()
 		ShopUI.uiElements.robuxBtn.Visible = false
 	else
 		ShopUI.uiElements.purchaseBtn.Text = "BUY WITH COINS"
+		ShopUI.uiElements.purchaseBtn.Visible = true -- FORCE VISIBLE
 		if ShopUI.playerData.coins >= skinData.price then
 			ShopUI.uiElements.purchaseBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.ACCENT
 		else
@@ -2670,39 +2715,48 @@ function ShopUI.init()
 		end)
 	end
 
-	-- Initialize content
-	ShopUI.updateSkinGrid()
-	
-	-- Check if we're starting on gamepasses and hide preview if so
-	local isGamepass = SKIN_CATEGORIES[uiState.currentCategory].name == "Gamepasses"
-	if isGamepass then
-		if ShopUI.uiElements.previewContainer then
-			ShopUI.uiElements.previewContainer.Visible = false
+	-- Initialize content with STABILITY
+	task.spawn(function()
+		-- Small delay to ensure everything is loaded
+		task.wait(0.1)
+		
+		-- Update grid
+		ShopUI.updateSkinGrid()
+		
+		-- Check if we're starting on gamepasses and hide preview if so
+		local isGamepass = SKIN_CATEGORIES[uiState.currentCategory].name == "Gamepasses"
+		if isGamepass then
+			if ShopUI.uiElements.previewContainer then
+				ShopUI.uiElements.previewContainer.Visible = false
+			end
+			if ShopUI.uiElements.skinName then
+				ShopUI.uiElements.skinName.Visible = false
+			end
+			if ShopUI.uiElements.skinTag then
+				ShopUI.uiElements.skinTag.Visible = false
+			end
+			if ShopUI.uiElements.priceLabel then
+				ShopUI.uiElements.priceLabel.Visible = false
+			end
+			if ShopUI.uiElements.applyBtn then
+				ShopUI.uiElements.applyBtn.Visible = false
+			end
+			if ShopUI.uiElements.purchaseBtn then
+				ShopUI.uiElements.purchaseBtn.Visible = false
+			end
+			if ShopUI.uiElements.robuxBtn then
+				ShopUI.uiElements.robuxBtn.Visible = false
+			end
+			if ShopUI.uiElements.favoriteBtn then
+				ShopUI.uiElements.favoriteBtn.Visible = false
+			end
+		else
+			-- For skins, ensure buttons are visible and update info
+			ShopUI.updatePreview()
+			task.wait(0.05)
+			ShopUI.updateInfo()
 		end
-		if ShopUI.uiElements.skinName then
-			ShopUI.uiElements.skinName.Visible = false
-		end
-		if ShopUI.uiElements.skinTag then
-			ShopUI.uiElements.skinTag.Visible = false
-		end
-		if ShopUI.uiElements.priceLabel then
-			ShopUI.uiElements.priceLabel.Visible = false
-		end
-		if ShopUI.uiElements.applyBtn then
-			ShopUI.uiElements.applyBtn.Visible = false
-		end
-		if ShopUI.uiElements.purchaseBtn then
-			ShopUI.uiElements.purchaseBtn.Visible = false
-		end
-		if ShopUI.uiElements.robuxBtn then
-			ShopUI.uiElements.robuxBtn.Visible = false
-		end
-		if ShopUI.uiElements.favoriteBtn then
-			ShopUI.uiElements.favoriteBtn.Visible = false
-		end
-	end
-	ShopUI.updatePreview()
-	ShopUI.updateInfo()
+	end)
 
 	-- FIXED: Mark as initialized AFTER everything is set up
 	ShopUI.isInitialized = true
