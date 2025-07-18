@@ -443,14 +443,18 @@ local SnakeSkinsData = {
 }
 
 -- Initialize CharacterPreview module after SnakeSkinsData is defined
-pcall(function()
+local success, err = pcall(function()
 	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 2))
-	if CharacterPreviewModule then
+	if CharacterPreviewModule and CharacterPreviewModule.setSkinData then
 		-- Pass our skin data to the module
 		CharacterPreviewModule.setSkinData(SnakeSkinsData)
 		print("✅ CharacterPreview module loaded successfully")
 	end
 end)
+
+if not success then
+	warn("Failed to load CharacterPreview module:", err)
+end
 
 -- If no external module, use built-in preview
 if not CharacterPreviewModule then

@@ -15,6 +15,9 @@ local TweenService = game:GetService("TweenService")
 -- Load skins data
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local CharacterPreview = {}
+CharacterPreview.__index = CharacterPreview
+
 -- Get skins data from parent module (ShopUI will provide this)
 local SnakeSkinsData = nil
 
@@ -22,9 +25,6 @@ local SnakeSkinsData = nil
 function CharacterPreview.setSkinData(skinData)
 	SnakeSkinsData = skinData
 end
-
-local CharacterPreview = {}
-CharacterPreview.__index = CharacterPreview
 
 -- Constants for smooth snake appearance
 local PREVIEW_CONFIG = {
