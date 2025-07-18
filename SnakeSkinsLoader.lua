@@ -1,6 +1,6 @@
--- SNAKE SKINS MODULE LOADER V2.0 - DYNAMIC LOADING
--- Loads skins from SnakeSkinsData and creates module in ReplicatedStorage
--- Ensures consistency between server and client
+-- SNAKE SKINS MODULE LOADER V2.1 - RUNTIME SAFE
+-- Creates a wrapper that loads skins from SnakeSkinsData at runtime
+-- Works around Source writing limitations
 -- Place this script in ServerScriptService
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
