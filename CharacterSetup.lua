@@ -704,7 +704,8 @@ local function createUltraSmoothSnake(character)
 		updateCounter = updateCounter + 1
 
 		local isBoosting = humanoid.WalkSpeed > 16.1
-		local followSpeed = isBoosting and activeConfig.BoostFollowSpeed or activeConfig.FollowSpeed
+		-- Higher follow speed when boosting to prevent stretching
+		local followSpeed = isBoosting and 0.985 or activeConfig.FollowSpeed
 
 		local currentPos = rootPart.Position
 		local currentCFrame = rootPart.CFrame
@@ -719,13 +720,8 @@ local function createUltraSmoothSnake(character)
 		-- ADD TO HISTORY
 		local lastHistoryPoint = getFromHistory(1)
 		local dist = (currentPos - lastHistoryPoint.position).Magnitude
-		
-		-- When boosting, require larger distance before recording to prevent stretching
-		local minRecordDistance = isBoosting and 0.025 or 0.015
-		
-		if dist > minRecordDistance then
-			-- When boosting, don't add as many interpolation points
-			if dist > activeConfig.SegmentSpacing * 0.8 and not isBoosting then
+		if dist > 0.015 then
+			if dist > activeConfig.SegmentSpacing * 0.8 then
 				local numInterpolations = mathMin(mathFloor(dist / (activeConfig.SegmentSpacing * 0.6)), 3)
 				for i = 1, numInterpolations do
 					local fraction = i / (numInterpolations + 1)
@@ -754,9 +750,7 @@ local function createUltraSmoothSnake(character)
 					-- Normal movement after spawn
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
-					-- MUCH tighter delay when boosting to prevent body stretching
-					local delayMultiplier = isBoosting and 0.5 or 0.9 -- Much lower multiplier when boosting
-					local delay = (i == 1) and 1 or mathFloor(i * delayMultiplier)
+					local delay = (i == 1) and 1 or mathFloor(i * 0.9)
 					local targetData = getFromHistory(delay)
 					if targetData then
 						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
