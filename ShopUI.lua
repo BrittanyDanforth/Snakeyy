@@ -47,6 +47,7 @@ end)
 -- FIXED: Using external CharacterPreview module
 local CharacterPreviewModule = nil
 local CharacterPreview = nil
+local CharacterPreviewLoaded = false
 
 -- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
@@ -443,24 +444,35 @@ local SnakeSkinsData = {
 }
 
 -- Initialize CharacterPreview module after SnakeSkinsData is defined
-local success, err = pcall(function()
-	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 2))
-	if CharacterPreviewModule and CharacterPreviewModule.setSkinData then
-		-- Pass our skin data to the module
-		CharacterPreviewModule.setSkinData(SnakeSkinsData)
-		print("✅ CharacterPreview module loaded successfully")
+local function initializeCharacterPreview()
+	if CharacterPreviewLoaded then return end
+	CharacterPreviewLoaded = true
+	
+	local success, err = pcall(function()
+		local module = ReplicatedStorage:FindFirstChild("CharacterPreview")
+		if module then
+			CharacterPreviewModule = require(module)
+			if CharacterPreviewModule and CharacterPreviewModule.setSkinData and SnakeSkinsData then
+				-- Pass our skin data to the module
+				CharacterPreviewModule.setSkinData(SnakeSkinsData)
+				print("✅ CharacterPreview module loaded successfully")
+			end
+		end
+	end)
+	
+	if not success then
+		warn("Failed to load CharacterPreview module:", err)
 	end
-end)
-
-if not success then
-	warn("Failed to load CharacterPreview module:", err)
+	
+	-- If no external module, use built-in preview
+	if not CharacterPreviewModule then
+		print("⚠️ Using built-in preview system")
+		CharacterPreview = {}
+	end
 end
 
--- If no external module, use built-in preview
-if not CharacterPreviewModule then
-	print("⚠️ Using built-in preview system")
-	CharacterPreview = {}
-end
+-- Initialize immediately
+initializeCharacterPreview()
 
 -- Create wrapper functions for CharacterPreview
 if CharacterPreviewModule then
