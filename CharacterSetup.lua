@@ -572,10 +572,17 @@ local function createUltraSmoothSnake(character)
 	local updateCounter = 0
 	local networkUpdateInterval = 3 -- Reduced network updates for better ping
 	local lastNetworkUpdate = 0
+	local recentGrowth = 0 -- Track recent growth to prevent stretching when eating orbs
+	local growthResetTime = 0
 
 	local function growSnake(amount)
 		amount = amount or 5
 		local grew = false
+		
+		-- Track growth for anti-stretch
+		recentGrowth = recentGrowth + amount
+		growthResetTime = tick() + 1 -- Reset after 1 second
+		
 		for i = 1, amount do
 			if currentLength < activeConfig.MaxSegments then
 				grew = true
@@ -691,6 +698,11 @@ local function createUltraSmoothSnake(character)
 		if not isActive or not rootPart.Parent then return end
 
 		updateCounter = updateCounter + 1
+		
+		-- Reset growth tracking after timeout
+		if tick() > growthResetTime then
+			recentGrowth = 0
+		end
 
 		local isBoosting = humanoid.WalkSpeed > 16.1
 		-- EXTREME follow speed when boosting to prevent ANY stretching
@@ -774,12 +786,14 @@ local function createUltraSmoothSnake(character)
 						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05)
 						local currentSegmentPos = segment.Position
 						
-						-- HARD LIMIT ON STRETCHING WHEN BOOSTING
-						if isBoosting and i > 1 then
+						-- HARD LIMIT ON STRETCHING WHEN BOOSTING OR EATING
+						local isGrowing = tick() < growthResetTime and recentGrowth > 0
+						if (isBoosting or isGrowing) and i > 1 then
 							local prevSegment = segments[i - 1]
 							if prevSegment and prevSegment.Parent then
 								local distToPrev = (segmentPos - prevSegment.Position).Magnitude
-								local maxAllowedDist = activeConfig.SegmentSpacing * 1.5
+								-- Even tighter when eating orbs
+								local maxAllowedDist = isGrowing and activeConfig.SegmentSpacing * 1.2 or activeConfig.SegmentSpacing * 1.5
 								
 								-- If target position would stretch too far, clamp it
 								if distToPrev > maxAllowedDist then
