@@ -2740,6 +2740,16 @@ end
 task.spawn(function()
 	wait(0.5)
 	initialize()
+	
+	-- Create the shop GUI immediately but keep it hidden
+	-- This allows ShopManager to find and enhance it
+	wait(1)
+	print("🏪 Pre-creating shop GUI for ShopManager...")
+	local gui = ShopUI.init()
+	if gui then
+		gui.Enabled = false -- Keep it hidden
+		print("✅ Shop GUI created and ready for ShopManager")
+	end
 end)
 
 -- Export for global access
