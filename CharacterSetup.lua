@@ -96,11 +96,11 @@ local Config = {
 		Color3.fromRGB(255, 0, 150),
 		Color3.fromRGB(180, 0, 255),
 	},
-	FollowSpeed = 0.96,
-	UpdateRate = 30,
-	MinDistance = 0.02,
+	FollowSpeed = 0.88, -- Smoother following
+	UpdateRate = 60, -- Higher update rate for less gaps
+	MinDistance = 0.01, -- More precise movement
 	BoostSpeed = 32,
-	BoostFollowSpeed = 0.98,
+	BoostFollowSpeed = 0.92, -- Smoother boost following
 	HeadMaterial = Enum.Material.ForceField,
 	BodyMaterial = Enum.Material.Neon,
 	GlowIntensity = 1.5,
@@ -670,19 +670,30 @@ local function createUltraSmoothSnake(character)
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
-		local lastHistoryPoint = getFromHistory(1)
-		local dist = (currentPos - lastHistoryPoint.position).Magnitude
-		if dist > 0.015 then
-			if dist > activeConfig.SegmentSpacing * 0.8 then
-				local numInterpolations = mathMin(mathFloor(dist / (activeConfig.SegmentSpacing * 0.6)), 3)
-				for i = 1, numInterpolations do
-					local fraction = i / (numInterpolations + 1)
-					local interpPos = lastHistoryPoint.position:Lerp(currentPos, fraction)
-					local interpLook = lastHistoryPoint.lookVector:Lerp(lookVector, fraction).Unit
-					addToHistory({ position = interpPos, lookVector = interpLook })
+		-- SMOOTHER POSITION TRACKING
+		local lastPoint = positionHistory[1] or {position = currentPos, lookVector = lookVector}
+		local dist = (currentPos - lastPoint.position).Magnitude
+		
+		-- Lower threshold for more frequent updates = smoother movement
+		if dist > 0.05 then
+			-- Add intermediate points for smooth curves
+			if dist > activeConfig.SegmentSpacing * 0.5 then
+				local steps = math.min(math.ceil(dist / activeConfig.SegmentSpacing), 5)
+				for i = 1, steps do
+					local t = i / steps
+					local interpPos = lastPoint.position:Lerp(currentPos, t)
+					local interpLook = lastPoint.lookVector:Lerp(lookVector, t).Unit
+					table.insert(positionHistory, 1, {position = interpPos, lookVector = interpLook})
 				end
+			else
+				-- Just add current position
+				table.insert(positionHistory, 1, {position = currentPos, lookVector = lookVector})
 			end
-			addToHistory({ position = currentPos, lookVector = lookVector })
+			
+			-- Keep history size reasonable
+			while #positionHistory > currentLength * 4 do
+				table.remove(positionHistory)
+			end
 		end
 
 		local currentTime = tick()
@@ -690,14 +701,28 @@ local function createUltraSmoothSnake(character)
 		for i = 1, currentLength do
 			local segment = segments[i]
 			if segment and segment.Parent then
-				local delay = mathFloor(i * 1.15)
-				local targetData = getFromHistory(delay)
+				-- SMOOTHER DELAY CALCULATION - less gaps
+				local delay = i * 2.2 -- Increased from 1.15 for better spacing
+				local historyIndex = math.min(math.floor(delay), #positionHistory)
+				local targetData = positionHistory[historyIndex]
+				
 				if targetData then
-					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.08)
-					local currentSegmentPos = segment.Position
-					local newPos = currentSegmentPos:Lerp(segmentPos, followSpeed)
-
-					segment.CFrame = CFramenew(newPos)
+					-- Better position calculation
+					local targetPos = targetData.position
+					
+					-- Maintain proper spacing from previous segment
+					if i > 1 and segments[i-1] and segments[i-1].Parent then
+						local prevPos = segments[i-1].Position
+						local toPrev = (targetPos - prevPos).Unit
+						if toPrev.Magnitude > 0 then
+							targetPos = prevPos + toPrev * activeConfig.SegmentSpacing
+						end
+					end
+					
+					-- MUCH smoother lerping
+					local lerpSpeed = isBoosting and 0.92 or 0.88
+					segment.Position = segment.Position:Lerp(targetPos, lerpSpeed)
+					segment.CFrame = CFramenew(segment.Position)
 				end
 			end
 		end
