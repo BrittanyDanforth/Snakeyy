@@ -719,8 +719,13 @@ local function createUltraSmoothSnake(character)
 		-- ADD TO HISTORY
 		local lastHistoryPoint = getFromHistory(1)
 		local dist = (currentPos - lastHistoryPoint.position).Magnitude
-		if dist > 0.015 then
-			if dist > activeConfig.SegmentSpacing * 0.8 then
+		
+		-- When boosting, require larger distance before recording to prevent stretching
+		local minRecordDistance = isBoosting and 0.025 or 0.015
+		
+		if dist > minRecordDistance then
+			-- When boosting, don't add as many interpolation points
+			if dist > activeConfig.SegmentSpacing * 0.8 and not isBoosting then
 				local numInterpolations = mathMin(mathFloor(dist / (activeConfig.SegmentSpacing * 0.6)), 3)
 				for i = 1, numInterpolations do
 					local fraction = i / (numInterpolations + 1)
