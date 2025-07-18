@@ -697,10 +697,10 @@ function CharacterPreview.create(viewport)
 		-- Add positions at FIXED intervals (not every frame) for consistency
 		CharacterPreview.historyTimer = (CharacterPreview.historyTimer or 0) + dt
 		local historyInterval = 1/60 -- Record at 60Hz regardless of actual framerate
-		
+
 		if CharacterPreview.historyTimer >= historyInterval then
 			CharacterPreview.historyTimer = CharacterPreview.historyTimer - historyInterval
-			
+
 			-- Add current head position to history
 			table.insert(CharacterPreview.positionHistory, 1, head.Position)
 
@@ -724,12 +724,12 @@ function CharacterPreview.create(viewport)
 
 				-- TRUE FRAMERATE-INDEPENDENT SMOOTH FOLLOWING
 				local currentPos = seg.part.Position
-				
+
 				-- This formula makes it look IDENTICAL at 30, 60, or 240 FPS!
 				-- The key is using exponential decay based on delta time
 				local responsiveness = 8 -- How quickly segments follow (higher = faster)
 				local frameIndependentLerp = 1 - math.exp(-responsiveness * dt)
-				
+
 				-- Smooth movement that looks the same at ANY framerate
 				local newPos = currentPos:Lerp(targetPos, frameIndependentLerp)
 
@@ -1736,7 +1736,7 @@ local function createMainShop()
 	local applyBtn = Instance.new("TextButton")
 	applyBtn.Name = "ApplyButton"
 	applyBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
-	applyBtn.Position = UDim2.new(0.26, 0, 0.28, 0)
+	applyBtn.Position = UDim2.new(0.26, 0, 0.24, 0)
 	applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
 	applyBtn.Text = "EQUIP"
 	applyBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
@@ -1991,22 +1991,9 @@ local function createGamepassCard(passName, index)
 	-- Click to purchase
 	card.MouseButton1Click:Connect(function()
 		playSound("SELECT")
-		
-		if passData.id then
-			-- Prompt gamepass purchase
-			local MarketplaceService = game:GetService("MarketplaceService")
-			local success, err = pcall(function()
-				MarketplaceService:PromptGamePassPurchase(game.Players.LocalPlayer, passData.id)
-			end)
-			
-			if not success then
-				warn("Failed to prompt gamepass purchase:", err)
-			end
-		else
-			-- Show message that gamepass ID needs to be configured
-			print("⚠️ Gamepass ID not configured for:", passName)
-			print("Add the gamepass ID to GAMEPASS_DATA['"..passName.."'].id")
-		end
+		-- Placeholder for gamepass purchase
+		print("🛒 Gamepass purchase:", passName, "for", passData.price, "Robux")
+		-- In production, use MarketplaceService:PromptGamePassPurchase
 	end)
 end
 
@@ -2244,16 +2231,6 @@ function ShopUI.updateSkinGrid()
 
 	-- Check if this is the gamepasses category
 	if category.name == "Gamepasses" then
-		-- Hide skin-related UI for gamepasses
-		ShopUI.uiElements.viewport.Visible = false
-		ShopUI.uiElements.skinName.Visible = false
-		ShopUI.uiElements.skinTag.Visible = false
-		ShopUI.uiElements.priceLabel.Visible = false
-		ShopUI.uiElements.purchaseBtn.Visible = false
-		ShopUI.uiElements.robuxBtn.Visible = false
-		ShopUI.uiElements.applyBtn.Visible = false
-		ShopUI.uiElements.favoriteBtn.Visible = false
-		
 		-- Show gamepasses instead of skins
 		local passNames = {}
 		for passName, _ in pairs(GAMEPASS_DATA) do
@@ -2267,14 +2244,6 @@ function ShopUI.updateSkinGrid()
 			totalHeight = rows * (SHOP_CONFIG.CARD_HEIGHT + SHOP_CONFIG.GRID_SPACING) + 25
 		end
 	else
-		-- Show skin-related UI
-		ShopUI.uiElements.viewport.Visible = true
-		ShopUI.uiElements.skinName.Visible = true
-		ShopUI.uiElements.skinTag.Visible = true
-		ShopUI.uiElements.priceLabel.Visible = true
-		-- Other buttons visibility handled by updatePreviewForSkin
-		updatePreviewForSkin(category.skins[1] or "Default")
-		
 		-- Show skins
 		for i, skinName in ipairs(category.skins) do
 			createSkinCard(skinName, i)
