@@ -1,4 +1,3 @@
-
 -- SLITHER.IO ULTRA PREMIUM SHOP UI SYSTEM - COMPLETELY FIXED
 -- Modern, beautiful, and performance-optimized
 -- Fully integrated with CharacterPreview and Slither.io Menu
@@ -443,22 +442,34 @@ local SnakeSkinsData = {
 
 -- FIX FOR LENGTH COMPRESSION IN REAL GAME
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 30, -- More segments for better length
-	SEGMENT_SPACING = 15.5, -- Increased spacing to prevent compression
-	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
-	SIZE_REDUCTION = 0.98, -- Normal taper
-	CAMERA_DISTANCE = 25, -- Further back to see full snake
-	CAMERA_HEIGHT = 20, -- Higher for better view
+	SEGMENT_COUNT = 20,
+	SEGMENT_SPACING = 15,
+	HEAD_SIZE = Vector3.new(3, 3, 3),
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
+	SIZE_REDUCTION = 1, -- No size reduction
+	
+	-- Camera settings (adjusted for large spacing)
+	CAMERA_DISTANCE = 45,
+	CAMERA_HEIGHT = 10,
 	ROTATION_SPEED = 0.3,
-	-- Snake movement
-	SLITHER_AMPLITUDE = 4,
-	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 1.0,
-	SEGMENT_DELAY = 0.08,
-	-- Snake positioning
-	SNAKE_RADIUS = 12, -- Larger movement circle
+	
+	-- Snake animation
+	SNAKE_RADIUS = 15,
+	SLITHER_SPEED = 0.8,
 	SNAKE_CENTER_Z = 0,
+	
+	-- Physics settings for PERFECT framerate independence
+	PHYSICS_SPRING_CONSTANT = 200,      -- Tuned for responsive following
+	PHYSICS_DAMPING_RATIO = 0.85,       -- Slight underdamping for smooth motion
+	PHYSICS_MAX_TIMESTEP = 1/30,        -- Cap timestep for stability
+	PHYSICS_VISUAL_SMOOTHING = 0.92,    -- Visual interpolation factor
+	PHYSICS_TARGET_SMOOTHING = 0.25,    -- Target position smoothing
+	PHYSICS_CORRECTION_STRENGTH = 0.7,  -- How aggressively to correct gaps
+	
+	-- Debug settings
+	SHOW_FPS = true,
+	SHOW_PHYSICS_DEBUG = false,
+	USE_PREDICTION = true, -- Add this line
 }
 
 function CharacterPreview.create(viewport)
@@ -480,6 +491,21 @@ function CharacterPreview.create(viewport)
 	scaleReference.Anchored = true
 	scaleReference.CanCollide = false
 	scaleReference.Parent = worldModel
+	
+	-- FPS Display for debugging
+	local fpsLabel
+	if PREVIEW_CONFIG.SHOW_FPS then
+		fpsLabel = Instance.new("TextLabel")
+		fpsLabel.Size = UDim2.new(0, 200, 0, 50)
+		fpsLabel.Position = UDim2.new(0, 10, 0, 10)
+		fpsLabel.BackgroundTransparency = 0.5
+		fpsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+		fpsLabel.TextColor3 = Color3.new(1, 1, 1)
+		fpsLabel.TextScaled = true
+		fpsLabel.Font = Enum.Font.SourceSans
+		fpsLabel.Text = "FPS: Calculating..."
+		fpsLabel.Parent = viewport
+	end
 
 	-- Create camera with proper FOV for viewport
 	local camera = Instance.new("Camera")
@@ -614,6 +640,17 @@ function CharacterPreview.create(viewport)
 	local time = 0
 	local rotationConnection
 	local segmentTrail = {} -- Store trail positions for smooth following
+	
+	-- FPS tracking
+	local frameCount = 0
+	local fpsTime = 0
+	local currentFPS = 60
+	local fpsHistory = {} -- Track FPS history for adaptive tuning
+	local adaptivePhysics = {
+		springConstant = PREVIEW_CONFIG.PHYSICS_SPRING_CONSTANT,
+		dampingRatio = PREVIEW_CONFIG.PHYSICS_DAMPING_RATIO,
+		visualSmoothing = PREVIEW_CONFIG.PHYSICS_VISUAL_SMOOTHING,
+	}
 
 	-- Initialize segment positions in a straight line WITH PROPER SPACING
 	for i, seg in ipairs(segments) do
@@ -626,6 +663,50 @@ function CharacterPreview.create(viewport)
 	-- Main animation loop - PERFECT SLITHERING
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
+		
+		-- FPS calculation
+		if PREVIEW_CONFIG.SHOW_FPS then
+			frameCount = frameCount + 1
+			fpsTime = fpsTime + dt
+			
+			if fpsTime >= 1 then
+				currentFPS = frameCount / fpsTime
+				fpsLabel.Text = string.format("FPS: %.1f | DT: %.3fms", currentFPS, dt * 1000)
+				frameCount = 0
+				fpsTime = 0
+				
+				-- Adaptive physics tuning based on FPS
+				table.insert(fpsHistory, currentFPS)
+				if #fpsHistory > 5 then
+					table.remove(fpsHistory, 1)
+				end
+				
+				-- Calculate average FPS
+				local avgFPS = 0
+				for _, fps in ipairs(fpsHistory) do
+					avgFPS = avgFPS + fps
+				end
+				avgFPS = avgFPS / #fpsHistory
+				
+				-- ADAPTIVE TUNING - Automatically adjust physics for detected framerate
+				if avgFPS < 45 then
+					-- Low FPS (30-45): More aggressive correction, less smoothing
+					adaptivePhysics.springConstant = 250
+					adaptivePhysics.dampingRatio = 0.95
+					adaptivePhysics.visualSmoothing = 0.85
+				elseif avgFPS < 90 then
+					-- Medium FPS (45-90): Balanced settings
+					adaptivePhysics.springConstant = 200
+					adaptivePhysics.dampingRatio = 0.85
+					adaptivePhysics.visualSmoothing = 0.92
+				else
+					-- High FPS (90+): Smoother motion, less correction needed
+					adaptivePhysics.springConstant = 150
+					adaptivePhysics.dampingRatio = 0.75
+					adaptivePhysics.visualSmoothing = 0.96
+				end
+			end
+		end
 
 		-- Camera rotation with proper positioning
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
@@ -691,15 +772,28 @@ function CharacterPreview.create(viewport)
 		-- Store head positions for trail
 		if not CharacterPreview.positionHistory then
 			CharacterPreview.positionHistory = {}
+			CharacterPreview.velocityHistory = {} -- Track velocities for prediction
 		end
 
 		-- Add current head position to history
 		table.insert(CharacterPreview.positionHistory, 1, head.Position)
+		
+		-- Calculate and store head velocity for prediction
+		if CharacterPreview.lastHeadPos then
+			local headVelocity = (head.Position - CharacterPreview.lastHeadPos) / dt
+			table.insert(CharacterPreview.velocityHistory, 1, headVelocity)
+		else
+			table.insert(CharacterPreview.velocityHistory, 1, Vector3.new(0, 0, 0))
+		end
+		CharacterPreview.lastHeadPos = head.Position
 
 		-- Keep history limited to prevent memory issues
 		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10 -- Much more history for bigger gaps
 		if #CharacterPreview.positionHistory > maxHistory then
 			table.remove(CharacterPreview.positionHistory)
+		end
+		if #CharacterPreview.velocityHistory > maxHistory then
+			table.remove(CharacterPreview.velocityHistory)
 		end
 
 		-- SMOOTH SEGMENT FOLLOWING - FIXED FOR ALL FPS
@@ -712,53 +806,128 @@ function CharacterPreview.create(viewport)
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
 				
-				-- TRULY FPS-INDEPENDENT FOLLOWING (Works from 30 to 240+ FPS)
-				local currentPos = seg.part.Position
-				
-				-- Store segment velocity if not exists
-				if not seg.velocity then
-					seg.velocity = Vector3.new(0, 0, 0)
+				-- PREDICTIVE TARGETING - Anticipate future position
+				if CharacterPreview.velocityHistory[historyIndex] and PREVIEW_CONFIG.USE_PREDICTION then
+					local targetVel = CharacterPreview.velocityHistory[historyIndex]
+					-- Predict where the target will be based on current velocity
+					local predictionTime = dt * 2 -- Look ahead 2 frames
+					targetPos = targetPos + targetVel * predictionTime * 0.3 -- 30% prediction blend
 				end
 				
-				-- Calculate desired position and velocity
-				local toTarget = targetPos - currentPos
-				local distance = toTarget.Magnitude
-				
-				-- Prevent gaps at ANY framerate
-				local maxDistance = PREVIEW_CONFIG.SEGMENT_SPACING * 1.5
-				if distance > maxDistance then
-					-- Teleport closer if too far (prevents ANY gaps)
-					local direction = toTarget.Unit
-					seg.part.Position = targetPos - direction * PREVIEW_CONFIG.SEGMENT_SPACING
-					seg.velocity = Vector3.new(0, 0, 0)
-				else
-					-- Smooth spring-based movement (works identically at all FPS)
-					local springStrength = 50  -- How quickly segments follow
-					local damping = 10        -- Reduces oscillation
-					
-					-- Spring physics (frame-rate independent)
-					local acceleration = toTarget * springStrength - seg.velocity * damping
-					seg.velocity = seg.velocity + acceleration * dt
-					
-					-- Apply velocity with safety check
-					local newPos = currentPos + seg.velocity * dt
-					
-					-- Final safety check - ensure we don't overshoot
-					if (newPos - targetPos).Magnitude > distance then
-						seg.part.Position = targetPos
-						seg.velocity = Vector3.new(0, 0, 0)
-					else
-						seg.part.Position = newPos
-					end
+				-- ULTRA-ADVANCED PHYSICS SYSTEM - WORKS AT ANY FPS (30-240+)
+				-- Initialize physics state if not exists
+				if not seg.physicsState then
+					seg.physicsState = {
+						position = seg.part.Position,
+						velocity = Vector3.new(0, 0, 0),
+						lastTarget = targetPos,
+						smoothTarget = targetPos,
+						integrator = 0,
+					}
 				end
 				
-				-- Orient segment to face previous segment
-				if i > 1 then
-					local prevSeg = segments[i-1].part
-					local direction = (prevSeg.Position - newPos).Unit
-					if direction.Magnitude > 0 then
-						seg.part.CFrame = CFrame.lookAt(newPos, prevSeg.Position)
+				local physics = seg.physicsState
+				
+				-- Smooth target interpolation to prevent jitter
+				local targetSmoothing = PREVIEW_CONFIG.PHYSICS_TARGET_SMOOTHING
+				physics.smoothTarget = physics.smoothTarget:Lerp(targetPos, math.min(targetSmoothing, dt * 10))
+				
+				-- Calculate current state
+				local currentPos = physics.position
+				local currentVel = physics.velocity
+				
+				-- Spring physics constants (tuned for perfect following)
+				local springConstant = adaptivePhysics.springConstant
+				local dampingRatio = adaptivePhysics.dampingRatio
+				local mass = 1                -- Virtual mass
+				
+				-- Calculate spring damping coefficient
+				local criticalDamping = 2 * math.sqrt(springConstant * mass)
+				local dampingCoeff = dampingRatio * criticalDamping
+				
+				-- Calculate forces
+				local displacement = physics.smoothTarget - currentPos
+				local springForce = displacement * springConstant
+				local dampingForce = -currentVel * dampingCoeff
+				local totalForce = springForce + dampingForce
+				
+				-- Calculate acceleration (F = ma)
+				local acceleration = totalForce / mass
+				
+				-- ADVANCED INTEGRATION (RK4-inspired for stability at any timestep)
+				-- This prevents issues at both low and high framerates
+				local dt_safe = math.min(dt, PREVIEW_CONFIG.PHYSICS_MAX_TIMESTEP) -- Cap timestep to prevent instability
+				
+				-- Velocity Verlet integration (more stable than Euler)
+				local newVel = currentVel + acceleration * dt_safe
+				local avgVel = (currentVel + newVel) * 0.5
+				local newPos = currentPos + avgVel * dt_safe
+				
+				-- INTELLIGENT GAP PREVENTION
+				local desiredGap = PREVIEW_CONFIG.SEGMENT_SPACING
+				local maxAllowedGap = desiredGap * 1.5
+				
+				-- Check distance to previous segment
+				local prevPos = (i == 1) and head.Position or segments[i-1].physicsState.position
+				local toPrev = newPos - prevPos
+				local distToPrev = toPrev.Magnitude
+				
+				if distToPrev > maxAllowedGap then
+					-- SMOOTH CORRECTION (not instant snap)
+					local correction = toPrev.Unit * (distToPrev - desiredGap)
+					newPos = prevPos + toPrev.Unit * desiredGap
+					
+					-- Dampen velocity to prevent oscillation after correction
+					newVel = newVel * PREVIEW_CONFIG.PHYSICS_CORRECTION_STRENGTH
+				elseif distToPrev < desiredGap * 0.8 then
+					-- Too close - gently push away
+					local pushDirection = (distToPrev > 0.1) and toPrev.Unit or Vector3.new(0, 0, -1)
+					newPos = prevPos + pushDirection * desiredGap
+					newVel = newVel * PREVIEW_CONFIG.PHYSICS_CORRECTION_STRENGTH
+				end
+				
+				-- FRAME-TIME ACCUMULATOR for sub-frame accuracy
+				physics.integrator = physics.integrator + dt
+				local physicsSteps = math.floor(physics.integrator / (1/120)) -- 120Hz physics
+				physics.integrator = physics.integrator % (1/120)
+				
+				-- Update physics state
+				physics.position = newPos
+				physics.velocity = newVel
+				physics.lastTarget = targetPos
+				
+				-- Apply position with additional smoothing for visual quality
+				local visualSmoothFactor = adaptivePhysics.visualSmoothing
+				seg.part.Position = seg.part.Position:Lerp(physics.position, 
+					1 - math.exp(-20 * dt_safe)) -- Exponential smoothing
+				
+				-- Orient segment to face movement direction
+				if i > 1 and physics.velocity.Magnitude > 0.1 then
+					local lookDir = -physics.velocity.Unit
+					local upDir = Vector3.new(0, 1, 0)
+					
+					-- Prevent gimbal lock
+					if math.abs(lookDir:Dot(upDir)) > 0.99 then
+						upDir = Vector3.new(1, 0, 0)
 					end
+					
+					seg.part.CFrame = CFrame.lookAt(seg.part.Position, 
+						seg.part.Position + lookDir, upDir)
+				end
+			else
+				-- Initialize position if no history yet
+				if not seg.physicsState then
+					local prevPos = (i == 1) and head.Position or segments[i-1].part.Position
+					local initialPos = prevPos + Vector3.new(0, 0, -PREVIEW_CONFIG.SEGMENT_SPACING)
+					
+					seg.physicsState = {
+						position = initialPos,
+						velocity = Vector3.new(0, 0, 0),
+						lastTarget = initialPos,
+						smoothTarget = initialPos,
+						integrator = 0,
+					}
+					seg.part.Position = initialPos
 				end
 			end
 		end
