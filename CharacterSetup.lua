@@ -749,7 +749,9 @@ local function createUltraSmoothSnake(character)
 					-- Normal movement after spawn
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
-					local delay = (i == 1) and 1 or mathFloor(i * 0.9)
+					-- Tighter delay when boosting to prevent stretching
+					local delayMultiplier = isBoosting and 0.7 or 0.9
+					local delay = (i == 1) and 1 or mathFloor(i * delayMultiplier)
 					local targetData = getFromHistory(delay)
 					if targetData then
 						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
@@ -767,11 +769,16 @@ local function createUltraSmoothSnake(character)
 								local gap = (currentSegmentPos - prevSegment.Position).Magnitude
 								local idealGap = activeConfig.SegmentSpacing
 								
+								-- TIGHTER BOOST CONTROL
+								local maxGapMultiplier = isBoosting and 1.1 or 1.2 -- Tighter when boosting
+								
 								-- Smooth adjustment based on gap size
-								if gap > idealGap * 1.2 then
+								if gap > idealGap * maxGapMultiplier then
 									-- Gap too big - speed up to catch up
 									local gapRatio = gap / idealGap
-									dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.02, 0.985)
+									-- More aggressive correction when boosting
+									local correctionStrength = isBoosting and 0.04 or 0.02
+									dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * correctionStrength, 0.99)
 								elseif gap < idealGap * 0.8 then
 									-- Too close - slow down slightly
 									dynamicFollowSpeed = followSpeed * 0.95
