@@ -808,8 +808,11 @@ function CharacterPreview.update(skinName)
 	-- Apply VFX if available
 	local VFXManager = game:GetService("ReplicatedStorage"):FindFirstChild("VFXManager")
 	if VFXManager then
+		print("✨ VFXManager found, applying VFX for:", skinName)
 		local VFXModule = require(VFXManager)
 		VFXModule.ApplySnakePreviewVFX(CharacterPreview.currentModel, skinName)
+	else
+		print("⚠️ VFXManager not found in ReplicatedStorage!")
 	end
 end
 

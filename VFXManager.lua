@@ -476,13 +476,18 @@ end
 
 -- Apply VFX to snake preview
 function VFXManager.ApplySnakePreviewVFX(model, skinName)
+	print("🎨 VFXManager.ApplySnakePreviewVFX called for:", skinName)
+	
 	-- Remove any existing VFX first
 	VFXManager.RemoveSnakeVFX(model)
 	
 	local config = skinVFXConfigs[skinName]
 	if not config then
+		print("❌ No VFX config found for skin:", skinName)
 		return -- No VFX for this skin
 	end
+	
+	print("✅ Found VFX config for:", skinName)
 	
 	local vfxData = {
 		glowEffects = {},
@@ -492,7 +497,8 @@ function VFXManager.ApplySnakePreviewVFX(model, skinName)
 	}
 	
 	-- Apply to head
-	local head = model:FindFirstChild("SnakeHead")
+	local head = model:FindFirstChild("Head") or model:FindFirstChild("SnakeHead")
+	print("🐍 Looking for head, found:", head)
 	if head and config.headGlow then
 		local glowEffect = createGlowEffect(head, config.headGlow)
 		table.insert(vfxData.glowEffects, glowEffect)
@@ -514,7 +520,9 @@ function VFXManager.ApplySnakePreviewVFX(model, skinName)
 		end
 		
 		if config.rainbow then
+			print("🌈 Creating rainbow effect for head!")
 			local rainbowEffects = createRainbowEffect(head, true)
+			print("🌈 Created", #rainbowEffects, "rainbow effects")
 			for _, effect in ipairs(rainbowEffects) do
 				table.insert(vfxData.specialEffects, effect)
 			end
