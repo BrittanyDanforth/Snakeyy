@@ -30,6 +30,14 @@ local playerGui = localPlayer:WaitForChild("PlayerGui")
 -- UI System
 local ShopUI = {}
 
+-- UI State (defined early to be accessible throughout)
+local uiState = {
+	currentCategory = 1,
+	selectedSkin = "Default",
+	shopOpen = false,
+	previewRotation = 0
+}
+
 -- INTEGRATION WITH YOUR SNAKE SYSTEM
 local SnakeSkins = nil
 pcall(function()
@@ -46,140 +54,259 @@ end)
 
 -- FIXED: Character Preview using YOUR EXACT CharacterSetup functions
 local CharacterPreview = {}
+CharacterPreview.currentModel = nil
+CharacterPreview.currentHead = nil
+CharacterPreview.currentBody = {}
+CharacterPreview.currentSkinName = "Default"
 
--- Import your CharacterSetup functions directly
-local function createVisualHead(rootPart, config, parentModel)
-	local headPart = Instance.new("Part")
-	headPart.Name = "SnakeHead"
-	headPart.Size = config.HeadSize
-	headPart.Material = config.HeadMaterial
-	headPart.Color = config.HeadColor
-	headPart.Shape = Enum.PartType.Ball
-	headPart.CanCollide = false
-	headPart.CanQuery = false
-	headPart.CanTouch = false
-	headPart.Anchored = true
-	headPart.TopSurface = Enum.SurfaceType.Smooth
-	headPart.BottomSurface = Enum.SurfaceType.Smooth
-	headPart.Parent = parentModel
-
-	headPart:SetAttribute("IsSnakeHead", true)
-	headPart:SetAttribute("IsSnakeSegment", true)
-
-	local headLight = Instance.new("PointLight")
-	headLight.Color = config.HeadColor
-	headLight.Brightness = config.GlowIntensity + 1
-	headLight.Range = config.GlowRange + 2
-	headLight.Parent = headPart
-
-	local headOutline = Instance.new("SelectionBox")
-	headOutline.Adornee = headPart
-	headOutline.Color3 = Color3.fromRGB(255, 255, 255)
-	headOutline.LineThickness = 0.08
-	headOutline.Transparency = 1
-	headOutline.Parent = headPart
-
-	local function createEye(name, position, parent)
-		local eye = Instance.new("Part")
-		eye.Name = name
-		eye.Size = Vector3.new(0.6, 0.6, 0.6)
-		eye.Material = Enum.Material.Neon
-		eye.Color = Color3.fromRGB(255, 255, 255)
-		eye.Shape = Enum.PartType.Ball
-		eye.CanCollide = false
-		eye.CanQuery = false
-		eye.CanTouch = false
-		eye.Anchored = false
-		eye.Parent = parent
-		eye.CFrame = parent.CFrame * CFrame.new(position)
-
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = parent
-		weld.Part1 = eye
-		weld.Parent = parent
-
-		return eye, weld
+-- Load skin data
+local SnakeSkinsData = {}
+pcall(function()
+	-- Try to load from server if available
+	local serverModule = game.ServerScriptService:FindFirstChild("SnakeSkinsData")
+	if serverModule then
+		SnakeSkinsData = require(serverModule:Clone())
+	else
+		-- Fallback to module in ReplicatedStorage
+		local module = ReplicatedStorage:WaitForChild("SnakeSkins", 5)
+		if module then
+			SnakeSkinsData = require(module)
+		end
 	end
+end)
 
-	local function createPupil(name, position, parent)
-		local pupil = Instance.new("Part")
-		pupil.Name = name
-		pupil.Size = Vector3.new(0.25, 0.25, 0.25)
-		pupil.Material = Enum.Material.Neon
-		pupil.Color = Color3.fromRGB(0, 0, 0)
-		pupil.Shape = Enum.PartType.Ball
-		pupil.CanCollide = false
-		pupil.CanQuery = false
-		pupil.CanTouch = false
-		pupil.Anchored = false
-		pupil.Parent = parent
-		pupil.CFrame = parent.CFrame * CFrame.new(position)
-
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = parent
-		weld.Part1 = pupil
-		weld.Parent = parent
-
-		return pupil, weld
-	end
-
-	local leftEye, leftEyeWeld = createEye("LeftEye", Vector3.new(-0.6, 0.55, 0.8), headPart)
-	local rightEye, rightEyeWeld = createEye("RightEye", Vector3.new(0.6, 0.55, 0.8), headPart)
-	local leftPupil, leftPupilWeld = createPupil("LeftPupil", Vector3.new(0, 0, -0.2), leftEye)
-	local rightPupil, rightPupilWeld = createPupil("RightPupil", Vector3.new(0, 0, -0.2), rightEye)
-
-	return {
-		head = headPart,
-		headLight = headLight,
-		headOutline = headOutline,
-		leftEye = leftEye,
-		rightEye = rightEye,
-		leftPupil = leftPupil,
-		rightPupil = rightPupil,
-		leftEyeWeld = leftEyeWeld,
-		rightEyeWeld = rightEyeWeld,
-		leftPupilWeld = leftPupilWeld,
-		rightPupilWeld = rightPupilWeld,
+-- If still no data, use defaults
+if not next(SnakeSkinsData) then
+	SnakeSkinsData = {
+		Default = {
+			HeadColor = Color3.fromRGB(180, 0, 255),
+			BodyColors = {
+				Color3.fromRGB(180, 0, 255),
+				Color3.fromRGB(255, 0, 150),
+				Color3.fromRGB(255, 80, 200)
+			},
+			HeadMaterial = Enum.Material.ForceField,
+			BodyMaterial = Enum.Material.Neon,
+			GlowIntensity = 1.5,
+			GlowRange = 4
+		}
 	}
 end
 
-local function createSegment(index, position, color, config, parentModel)
-	local segment = Instance.new("Part")
-	segment.Name = "Segment" .. index
-	segment.Size = config.SegmentSize
-	segment.Material = config.BodyMaterial
-	segment.Color = color
-	segment.Shape = Enum.PartType.Ball
-	segment.CanCollide = false
-	segment.CanQuery = false
-	segment.CanTouch = false
-	segment.Anchored = true
-	segment.TopSurface = Enum.SurfaceType.Smooth
-	segment.BottomSurface = Enum.SurfaceType.Smooth
-	segment.CFrame = CFrame.new(position)
-	segment.Parent = parentModel
-	segment.Transparency = 0
+-- Store as part of ShopUI for module-wide access
+ShopUI.SKIN_DATA = SnakeSkinsData
 
-	segment:SetAttribute("IsSnakeSegment", true)
-	segment:SetAttribute("SegmentIndex", index)
+-- Simple cleanup function
+function CharacterPreview.cleanup()
+	if CharacterPreview.currentModel then
+		CharacterPreview.currentModel:Destroy()
+		CharacterPreview.currentModel = nil
+		CharacterPreview.currentHead = nil
+		CharacterPreview.currentBody = {}
+	end
+end
 
-	local light = Instance.new("PointLight")
-	light.Name = "Glow"
-	light.Color = color
-	light.Brightness = config.GlowIntensity
-	light.Range = config.GlowRange
-	light.Enabled = true
-	light.Parent = segment
+-- Create preview snake that looks EXACTLY like in-game snakes
+function CharacterPreview.createSnake()
+	CharacterPreview.cleanup()
+	
+	local snakeModel = Instance.new("Model")
+	snakeModel.Name = "PreviewSnake"
+	
+	-- Use default skin initially
+	local skin = SnakeSkinsData["Default"] or SnakeSkinsData[next(SnakeSkinsData)]
+	
+	-- Create head (EXACTLY like in-game)
+	local head = Instance.new("Part")
+	head.Name = "SnakeHead"
+	head.Size = Vector3.new(3, 3, 3)
+	head.Material = skin.HeadMaterial
+	head.Color = skin.HeadColor
+	head.Shape = Enum.PartType.Ball
+	head.CanCollide = false
+	head.Anchored = true
+	head.TopSurface = Enum.SurfaceType.Smooth
+	head.BottomSurface = Enum.SurfaceType.Smooth
+	head.Parent = snakeModel
+	
+	-- Add simple glow (no lag)
+	local headLight = Instance.new("PointLight")
+	headLight.Color = skin.HeadColor
+	headLight.Brightness = skin.GlowIntensity
+	headLight.Range = skin.GlowRange
+	headLight.Parent = head
+	
+	-- Create eyes with pupils (EXACTLY like in-game)
+	local function createEye(xOffset)
+		local eye = Instance.new("Part")
+		eye.Name = "Eye"
+		eye.Size = Vector3.new(0.8, 0.8, 0.8)
+		eye.Shape = Enum.PartType.Ball
+		eye.Material = Enum.Material.Neon
+		eye.Color = Color3.new(1, 1, 1)
+		eye.CanCollide = false
+		eye.Parent = head
+		
+		local eyeWeld = Instance.new("WeldConstraint")
+		eyeWeld.Part0 = head
+		eyeWeld.Part1 = eye
+		eyeWeld.Parent = eye
+		
+		eye.CFrame = head.CFrame * CFrame.new(xOffset, 0.8, -1.2)
+		
+		-- Pupil
+		local pupil = Instance.new("Part")
+		pupil.Name = "Pupil"
+		pupil.Size = Vector3.new(0.4, 0.4, 0.4)
+		pupil.Shape = Enum.PartType.Ball
+		pupil.Material = Enum.Material.Neon
+		pupil.Color = Color3.new(0, 0, 0)
+		pupil.CanCollide = false
+		pupil.Parent = eye
+		
+		local pupilWeld = Instance.new("WeldConstraint")
+		pupilWeld.Part0 = eye
+		pupilWeld.Part1 = pupil
+		pupilWeld.Parent = pupil
+		
+		pupil.CFrame = eye.CFrame * CFrame.new(0, 0, -0.25)
+	end
+	
+	createEye(-0.8)
+	createEye(0.8)
+	
+	-- Create body segments (12 segments for good preview)
+	local prevSegment = head
+	for i = 1, 12 do
+		local segment = Instance.new("Part")
+		segment.Name = "Segment" .. i
+		segment.Shape = Enum.PartType.Ball
+		segment.Material = skin.BodyMaterial
+		segment.CanCollide = false
+		segment.Anchored = true
+		segment.TopSurface = Enum.SurfaceType.Smooth
+		segment.BottomSurface = Enum.SurfaceType.Smooth
+		
+		-- Tapered size (gets smaller towards tail)
+		local sizeFactor = 1 - (i * 0.03)
+		segment.Size = Vector3.new(2.5, 2.5, 2.5) * sizeFactor
+		
+		-- Apply color pattern
+		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
+		segment.Color = skin.BodyColors[colorIndex]
+		
+		-- Position in S-curve
+		local angle = (i - 1) * 0.5
+		local xOffset = math.sin(angle) * 2
+		local zOffset = i * 2.2
+		segment.Position = head.Position + Vector3.new(xOffset, 0, zOffset)
+		
+		-- Add subtle glow
+		if i <= 3 then -- Only first few segments
+			local light = Instance.new("PointLight")
+			light.Color = segment.Color
+			light.Brightness = skin.GlowIntensity * (1 - i * 0.2)
+			light.Range = skin.GlowRange * (1 - i * 0.2)
+			light.Parent = segment
+		end
+		
+		segment.Parent = snakeModel
+		table.insert(CharacterPreview.currentBody, segment)
+		prevSegment = segment
+	end
+	
+	-- Set primary part and position
+	snakeModel.PrimaryPart = head
+	snakeModel.Parent = workspace
+	snakeModel:SetPrimaryPartCFrame(CFrame.new(0, 0, -10))
+	
+	CharacterPreview.currentModel = snakeModel
+	CharacterPreview.currentHead = head
+	
+	-- Start simple rotation
+	CharacterPreview.startRotation()
+	
+	return snakeModel
+end
 
-	local outline = Instance.new("SelectionBox")
-	outline.Name = "Outline"
-	outline.Adornee = segment
-	outline.Color3 = Color3.fromRGB(255, 255, 255)
-	outline.LineThickness = 0.03
-	outline.Transparency = 1
-	outline.Parent = segment
+-- Update preview with new skin (smooth transitions)
+function CharacterPreview.update(skinName)
+	if not CharacterPreview.currentModel or not SnakeSkinsData[skinName] then 
+		return 
+	end
+	
+	CharacterPreview.currentSkinName = skinName
+	local skin = SnakeSkinsData[skinName]
+	
+	-- Update head
+	if CharacterPreview.currentHead then
+		TweenService:Create(CharacterPreview.currentHead, TweenInfo.new(0.5), {
+			Color = skin.HeadColor
+		}):Play()
+		CharacterPreview.currentHead.Material = skin.HeadMaterial
+		
+		-- Update head light
+		local light = CharacterPreview.currentHead:FindFirstChild("PointLight")
+		if light then
+			light.Color = skin.HeadColor
+			light.Brightness = skin.GlowIntensity
+			light.Range = skin.GlowRange
+		end
+	end
+	
+	-- Update body segments
+	for i, segment in ipairs(CharacterPreview.currentBody) do
+		if segment and skin.BodyColors then
+			local colorIndex = ((i - 1) % #skin.BodyColors) + 1
+			local color = skin.BodyColors[colorIndex]
+			
+			TweenService:Create(segment, TweenInfo.new(0.5), {
+				Color = color
+			}):Play()
+			segment.Material = skin.BodyMaterial
+			
+			-- Update segment lights
+			local light = segment:FindFirstChild("PointLight")
+			if light then
+				light.Color = color
+				light.Brightness = skin.GlowIntensity * (1 - i * 0.2)
+				light.Range = skin.GlowRange * (1 - i * 0.2)
+			end
+		end
+	end
+end
 
-	return segment
+-- Simple rotation animation
+function CharacterPreview.startRotation()
+	if not CharacterPreview.currentModel then return end
+	
+	local rotationConnection
+	rotationConnection = RunService.Heartbeat:Connect(function()
+		if CharacterPreview.currentModel and CharacterPreview.currentModel.Parent and CharacterPreview.currentHead then
+			local time = tick() * 0.5
+			
+			-- Rotate the whole snake
+			local basePos = Vector3.new(0, math.sin(time * 2) * 0.3, -10)
+			CharacterPreview.currentHead.CFrame = CFrame.new(basePos) * CFrame.Angles(0, time, 0)
+			
+			-- Update body segments with wave motion
+			for i, segment in ipairs(CharacterPreview.currentBody) do
+				if segment then
+					local angle = time + (i - 1) * 0.5
+					local xOffset = math.sin(angle) * 2 * (1 + math.sin(time * 3) * 0.2)
+					local yOffset = math.sin(angle * 2) * 0.3
+					local zOffset = i * 2.2
+					
+					segment.Position = CharacterPreview.currentHead.Position + 
+						CharacterPreview.currentHead.CFrame.LookVector * -zOffset +
+						CharacterPreview.currentHead.CFrame.RightVector * xOffset +
+						Vector3.new(0, yOffset, 0)
+				end
+			end
+		else
+			rotationConnection:Disconnect()
+		end
+	end)
 end
 
 -- ULTRA PREMIUM SNAKE SKIN CONFIGURATIONS WITH ENHANCED COLORS AND VFX
@@ -759,7 +886,7 @@ function CharacterPreview.create(viewport)
 		leftEyeWeld = leftEyeWeld,
 		rightEyeWeld = rightEyeWeld,
 		leftPupilWeld = leftPupilWeld,
-		rightPupilWeld = rightPupilWeld
+		rightPupilWeld = rightPupilWeld,
 	}
 
 	-- Create VFX attachment points
@@ -1277,15 +1404,7 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.activeVFX = {}
 end
 
--- UI State (moved to top to be accessible everywhere)
-local uiState = {
-	currentCategory = 1,
-	selectedSkin = "Default",
-	isShopOpen = false,
-	previewViewport = nil,
-	animations = {},
-	particles = {}
-}
+
 
 -- Ultra Modern Configuration
 local SHOP_CONFIG = {
@@ -2297,7 +2416,7 @@ end
 
 -- Create skin card
 local function createSkinCard(skinName, index)
-	local skinData = ShopUI.SKIN_DATA[skinName]
+	local skinData = ShopUI.SKIN_DATA[skinName] or SnakeSkinsData[skinName]
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, skinName) ~= nil
 	local isCurrent = ShopUI.playerData.currentSkin == skinName
 
@@ -2554,7 +2673,7 @@ end
 function ShopUI.updateInfo()
 	if not ShopUI.uiElements then return end
 
-	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin]
+	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin] or SnakeSkinsData[uiState.selectedSkin]
 	if not skinData then return end
 
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, uiState.selectedSkin) ~= nil
@@ -2646,7 +2765,7 @@ end
 
 -- FIXED: Purchase handler with proper server communication and Robux support
 function ShopUI.purchaseSkin(useRobux)
-	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin]
+	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin] or SnakeSkinsData[uiState.selectedSkin]
 	if not skinData then return end
 
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, uiState.selectedSkin) ~= nil

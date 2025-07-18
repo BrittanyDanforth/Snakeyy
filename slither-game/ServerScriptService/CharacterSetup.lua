@@ -595,6 +595,15 @@ local function createUltraSmoothSnake(character)
 				conn:Disconnect()
 			end
 		end
+		
+		-- Clean up VFX parts
+		if snakeInstance.vfxParts then
+			for _, vfxPart in pairs(snakeInstance.vfxParts) do
+				if vfxPart and vfxPart.Parent then
+					vfxPart:Destroy()
+				end
+			end
+		end
 
 		for i, segment in pairs(segments) do
 			if segment then
@@ -708,9 +717,108 @@ local function createUltraSmoothSnake(character)
 	}
 	playerSnakes[player] = snakeInstance
 	_G.PlayerSnakes[player] = snakeInstance
-
-	-- REMOVED: Real-time skin changes to improve performance
-	-- Skins will only apply on spawn/respawn for better FPS
+	
+	-- ENHANCED: Apply VFX based on skin (after snake is fully created)
+	local function applyVFX()
+		-- Only apply VFX if skin has VFX data and it's not causing performance issues
+		local skinData = activeConfig.VFX
+		if not skinData or not skinData.Type then return end
+		
+		-- Limit VFX to prevent lag
+		local vfxParts = {}
+		
+		-- Apply VFX to head only (not every segment to prevent lag)
+		if skinData.Type == "Fire" and headParts.head then
+			-- Simple fire effect on head
+			local fire = Instance.new("Fire")
+			fire.Size = 5
+			fire.Heat = 5
+			fire.Color = skinData.Color or Color3.fromRGB(255, 0, 0)
+			fire.SecondaryColor = Color3.new(
+				math.min(fire.Color.R * 0.7, 1),
+				math.min(fire.Color.G * 0.7, 1),
+				math.min(fire.Color.B * 0.7, 1)
+			)
+			fire.Parent = headParts.head
+			table.insert(vfxParts, fire)
+			
+		elseif skinData.Type == "Frost" and headParts.head then
+			-- Frost particles on head
+			local attachment = Instance.new("Attachment")
+			attachment.Parent = headParts.head
+			
+			local emitter = Instance.new("ParticleEmitter")
+			emitter.Texture = skinData.ParticleTexture or "rbxasset://textures/particles/sparkles_main.dds"
+			emitter.Rate = 20
+			emitter.Lifetime = NumberRange.new(1, 2)
+			emitter.Speed = NumberRange.new(2, 4)
+			emitter.VelocitySpread = 180
+			emitter.Color = ColorSequence.new(skinData.Color or Color3.fromRGB(150, 220, 255))
+			emitter.LightEmission = 0.8
+			emitter.Size = NumberSequence.new{
+				NumberSequenceKeypoint.new(0, 0.5),
+				NumberSequenceKeypoint.new(1, 0)
+			}
+			emitter.Parent = attachment
+			table.insert(vfxParts, attachment)
+			
+		elseif skinData.Type == "Energy" then
+			-- Energy glow on first few segments only
+			for i = 1, math.min(3, #segments) do
+				local segment = segments[i]
+				if segment then
+					local light = Instance.new("PointLight")
+					light.Color = skinData.Color or activeConfig.HeadColor
+					light.Brightness = activeConfig.GlowIntensity * 2
+					light.Range = activeConfig.GlowRange * 1.5
+					light.Parent = segment
+					table.insert(vfxParts, light)
+				end
+			end
+			
+		elseif skinData.Type == "Lightning" and headParts.head then
+			-- Electric effect on head
+			local attachment = Instance.new("Attachment")
+			attachment.Parent = headParts.head
+			
+			local beam = Instance.new("Beam")
+			beam.Texture = "rbxasset://textures/particles/sparkle_main.dds"
+			beam.Width0 = 0.5
+			beam.Width1 = 0.1
+			beam.Color = ColorSequence.new(skinData.Color or Color3.fromRGB(255, 255, 0))
+			beam.LightEmission = 1
+			beam.Transparency = NumberSequence.new{
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.5, 0.3),
+				NumberSequenceKeypoint.new(1, 1)
+			}
+			beam.Attachment0 = attachment
+			
+			-- Create second attachment for beam
+			local attachment2 = Instance.new("Attachment")
+			attachment2.Parent = segments[1] or headParts.head
+			attachment2.Position = Vector3.new(0, 2, 0)
+			beam.Attachment1 = attachment2
+			
+			beam.Parent = headParts.head
+			table.insert(vfxParts, beam)
+			table.insert(vfxParts, attachment)
+			table.insert(vfxParts, attachment2)
+		end
+		
+		-- Store VFX parts for cleanup
+		snakeInstance.vfxParts = vfxParts
+	end
+	
+	-- Apply VFX after a short delay to ensure snake is fully created
+	task.spawn(function()
+		task.wait(0.1)
+		if isActive and headParts.head and headParts.head.Parent then
+			applyVFX()
+		end
+	end)
+	
+	-- Cleanup function
 
 	return snakeInstance
 end
