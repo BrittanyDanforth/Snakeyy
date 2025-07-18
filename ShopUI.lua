@@ -1920,10 +1920,16 @@ local function createCategoryButton(category, index)
 			if ShopUI.uiElements.priceLabel then
 				ShopUI.uiElements.priceLabel.Visible = true
 			end
+			-- Force hide robux button initially
+			if ShopUI.uiElements.robuxBtn then
+				ShopUI.uiElements.robuxBtn.Visible = false
+			end
 			-- Refresh the current skin selection to update button states properly
 			if uiState.selectedSkin then
-				wait() -- Small delay to let UI update
-				updatePreviewForSkin(uiState.selectedSkin)
+				task.spawn(function()
+					task.wait(0.05) -- Small delay to let UI update
+					updatePreviewForSkin(uiState.selectedSkin)
+				end)
 			end
 		end
 
