@@ -1,5 +1,5 @@
 --[[
-ULTRA-SMOOTH & HIGH-PERFORMANCE SLITHER.IO SNAKE SYSTEM V5.2 - SKIN SYSTEM INTEGRATED
+ULTRA-SMOOTH & HIGH-PERFORMANCE SLITHER.IO SNAKE SYSTEM V5.1 - LAG FIXED WITH SKIN SYSTEM
 - Fixed segment pooling to remove segments from workspace
 - Added periodic cleanup for orphaned segments
 - Optimized memory management
@@ -81,20 +81,20 @@ local mathFloor = math.floor
 local taskSpawn = task.spawn
 local taskWait = task.wait
 
--- ENHANCED: Base config with skin override capability (Classic green colors)
+-- OPTIMIZED: Base config with performance settings from V5.1
 local Config = {
 	HeadSize = Vector3new(3, 3, 3),
 	SegmentSize = Vector3new(2.5, 2.5, 2.5),
 	SegmentSpacing = 2.2,
 	InitialLength = 15,
 	MaxSegments = 2450,
-	HeadColor = Color3.fromRGB(76, 217, 100), -- Classic green
+	HeadColor = Color3.fromRGB(180, 0, 255), -- Default purple (will be overridden by skins)
 	BodyColors = {
-		Color3.fromRGB(60, 180, 80),
-		Color3.fromRGB(80, 200, 100),
-		Color3.fromRGB(100, 220, 120),
-		Color3.fromRGB(80, 200, 100),
-		Color3.fromRGB(60, 180, 80),
+		Color3.fromRGB(180, 0, 255),
+		Color3.fromRGB(255, 0, 150),
+		Color3.fromRGB(255, 80, 200),
+		Color3.fromRGB(255, 0, 150),
+		Color3.fromRGB(180, 0, 255),
 	},
 	FollowSpeed = 0.96,
 	UpdateRate = 30,
@@ -400,46 +400,8 @@ if not _G.PlayerSnakes then
 	_G.PlayerSnakes = {}
 end
 
--- ENHANCED: Apply skin changes to existing snake without recreating
-local function applySkinToExistingSnake(player, snakeInstance)
-	if not snakeInstance or not snakeInstance.isActive() then return end
-
-	local activeConfig = getActiveConfig(player)
-
-	-- Update head appearance
-	if snakeInstance.headParts and snakeInstance.headParts.head then
-		snakeInstance.headParts.head.Color = activeConfig.HeadColor
-		snakeInstance.headParts.head.Material = activeConfig.HeadMaterial
-
-		-- Update head light
-		if snakeInstance.headParts.headLight then
-			snakeInstance.headParts.headLight.Color = activeConfig.HeadColor
-			snakeInstance.headParts.headLight.Brightness = activeConfig.GlowIntensity + 1
-			snakeInstance.headParts.headLight.Range = activeConfig.GlowRange + 2
-		end
-	end
-
-	-- Update segment appearances
-	if snakeInstance.segments then
-		for i, segment in pairs(snakeInstance.segments) do
-			if segment and segment.Parent then
-				local colorIndex = ((i - 1) % #activeConfig.BodyColors) + 1
-				segment.Color = activeConfig.BodyColors[colorIndex]
-				segment.Material = activeConfig.BodyMaterial
-
-				-- Update segment light
-				local light = segment:FindFirstChild("Glow")
-				if light then
-					light.Color = activeConfig.BodyColors[colorIndex]
-					light.Brightness = activeConfig.GlowIntensity
-					light.Range = activeConfig.GlowRange
-				end
-			end
-		end
-	end
-
-	print("🎨 Applied skin changes to existing snake for", player.Name)
-end
+-- REMOVED: Apply skin changes function to improve performance
+-- Skins are now only applied on spawn
 
 local function createUltraSmoothSnake(character)
 	print("🐍 Creating snake for character:", character.Name)
@@ -729,29 +691,19 @@ local function createUltraSmoothSnake(character)
 	end)
 	table.insert(connections, heartbeatConn)
 
-	local snakeInstance
-	snakeInstance = {
+	local snakeInstance = {
 		segments = segments,
 		headParts = headParts,
 		cleanup = cleanup,
 		grow = growSnake,
 		model = snakeModel,
 		isActive = function() return isActive end,
-		-- ENHANCED: Add skin update capability
-		updateSkin = function()
-			applySkinToExistingSnake(player, snakeInstance)
-		end,
 	}
 	playerSnakes[player] = snakeInstance
 	_G.PlayerSnakes[player] = snakeInstance
 
-	-- ENHANCED: Monitor skin changes for real-time updates
-	local skinChangeConn = player.AttributeChanged:Connect(function(attributeName)
-		if attributeName == "SelectedSkin" and isActive then
-			applySkinToExistingSnake(player, snakeInstance)
-		end
-	end)
-	table.insert(connections, skinChangeConn)
+	-- REMOVED: Real-time skin changes to improve performance
+	-- Skins will only apply on spawn/respawn for better FPS
 
 	return snakeInstance
 end
@@ -890,7 +842,7 @@ task.spawn(function()
 end)
 
 local function initialize()
-	print("SLITHER.IO SYSTEM V5.2 - SKIN SYSTEM INTEGRATED")
+	print("SLITHER.IO SYSTEM V5.1 - LAG FIXED WITH SKIN SYSTEM")
 	for _, player in Players:GetPlayers() do
 		handlePlayer(player)
 	end
@@ -920,15 +872,7 @@ task.spawn(function()
 	end
 end)
 
--- ENHANCED: Global skin update function for external calls
-_G.UpdatePlayerSkin = function(player, skinName)
-	if player and skinName then
-		player:SetAttribute("SelectedSkin", skinName)
-		local snakeInstance = playerSnakes[player] or _G.PlayerSnakes[player]
-		if snakeInstance and snakeInstance.updateSkin then
-			snakeInstance.updateSkin()
-		end
-	end
-end
+-- REMOVED: Global skin update function to improve performance
+-- Skins now only apply on spawn/respawn
 
 taskSpawn(initialize)
