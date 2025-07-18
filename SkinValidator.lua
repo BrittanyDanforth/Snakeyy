@@ -1,5 +1,8 @@
--- SKIN VALIDATOR
+-- SKIN VALIDATOR (OPTIONAL DEVELOPMENT TOOL)
 -- Validates all skins in SnakeSkinsData to ensure they have proper configurations
+-- This is a development/debugging tool - not required for production
+-- Run this script when adding new skins or troubleshooting skin issues
+-- Can be safely disabled/removed in production
 
 local SnakeSkinsData = require(script.Parent:WaitForChild("SnakeSkinsData"))
 
