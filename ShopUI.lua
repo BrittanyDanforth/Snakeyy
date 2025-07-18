@@ -441,21 +441,21 @@ local SnakeSkinsData = {
 	}
 }
 
--- PERFECT SLITHER.IO SNAKE PREVIEW - FIXED SQUISHING
+-- MATCHING CHARACTERSETUP EXACTLY
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 18, -- Slightly fewer for better spacing
-	SEGMENT_SPACING = 2.2, -- MUCH MORE SPACING - NO MORE PANCAKES!
-	HEAD_SIZE = Vector3.new(4, 4, 4), -- Bigger head
-	SEGMENT_SIZE = Vector3.new(3.8, 3.8, 3.8), -- Bigger segments
-	SIZE_REDUCTION = 0.96, -- More noticeable taper
-	CAMERA_DISTANCE = 25, -- Back up camera to see whole snake
+	SEGMENT_COUNT = 15, -- Match CharacterSetup InitialLength
+	SEGMENT_SPACING = 2.2, -- EXACT same as CharacterSetup
+	HEAD_SIZE = Vector3.new(3, 3, 3), -- EXACT same as CharacterSetup
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- EXACT same as CharacterSetup
+	SIZE_REDUCTION = 1, -- No size reduction in CharacterSetup for preview
+	CAMERA_DISTANCE = 25,
 	CAMERA_HEIGHT = 8,
 	ROTATION_SPEED = 0.4,
 	-- Snake movement
 	SLITHER_AMPLITUDE = 3,
 	SLITHER_FREQUENCY = 1.5,
 	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.12,
+	SEGMENT_DELAY = 0.08, -- Tighter following
 	-- Snake positioning
 	SNAKE_RADIUS = 8,
 	SNAKE_CENTER_Z = -5,
@@ -581,8 +581,8 @@ function CharacterPreview.create(viewport)
 			colorIndex = colorIndex
 		})
 		
-		-- Reduce size for taper effect
-		currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
+		-- No size reduction - keep segments same size like CharacterSetup
+		-- currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
 	end
 	
 	-- Animation variables
@@ -590,9 +590,11 @@ function CharacterPreview.create(viewport)
 	local rotationConnection
 	local segmentTrail = {} -- Store trail positions for smooth following
 	
-	-- Initialize segment positions in a straight line
+	-- Initialize segment positions in a straight line WITH PROPER SPACING
 	for i, seg in ipairs(segments) do
+		-- Exact same spacing as CharacterSetup
 		seg.part.Position = head.Position + Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
+		seg.part.Size = PREVIEW_CONFIG.SEGMENT_SIZE -- Force consistent size
 		segmentTrail[i] = {}
 	end
 	
