@@ -695,32 +695,7 @@ local function createUltraSmoothSnake(character)
 				if targetData then
 					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.08)
 					local currentSegmentPos = segment.Position
-					
-					-- SMOOTH ANTI-GAP ENFORCEMENT
-					-- Check distance to previous segment (not for first segment)
-					local dynamicFollowSpeed = followSpeed
-					if i > 1 then
-						local prevSegment = segments[i - 1]
-						if prevSegment and prevSegment.Parent then
-							local gapDistance = (currentSegmentPos - prevSegment.Position).Magnitude
-							local idealDistance = activeConfig.SegmentSpacing
-							
-							-- If gap is too large, gradually increase follow speed
-							if gapDistance > idealDistance * 1.5 then
-								-- Smoothly scale follow speed based on gap size
-								-- The larger the gap, the faster it catches up
-								local gapRatio = mathMin(gapDistance / idealDistance, 3.0) -- Cap at 3x
-								dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.1, 0.99)
-								
-								-- Also adjust target position to be closer to previous segment
-								local dirToPrev = (prevSegment.Position - currentSegmentPos).Unit
-								local adjustedPos = prevSegment.Position - dirToPrev * idealDistance
-								segmentPos = currentSegmentPos:Lerp(adjustedPos, 0.3) -- Gentle correction
-							end
-						end
-					end
-					
-					local newPos = currentSegmentPos:Lerp(segmentPos, dynamicFollowSpeed)
+					local newPos = currentSegmentPos:Lerp(segmentPos, followSpeed)
 
 					segment.CFrame = CFramenew(newPos)
 				end
