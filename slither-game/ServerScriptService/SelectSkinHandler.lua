@@ -47,9 +47,11 @@ SelectSkinRemote.OnServerEvent:Connect(function(player, skinName)
 	-- Map the skin name if needed
 	local serverSkinName = SKIN_NAME_MAP[skinName] or skinName
 
-	-- Set the SelectedSkin attribute using SERVER NAME
-	player:SetAttribute("SelectedSkin", serverSkinName)
+	-- Set BOTH attributes - server name for game logic, client name for UI
+	player:SetAttribute("SelectedSkin", serverSkinName) -- For server/game logic
+	player:SetAttribute("ClientSelectedSkin", skinName) -- For client UI
 	print("🔄 Mapped", skinName, "to", serverSkinName)
+	print("📱 Set ClientSelectedSkin to:", skinName)
 	
 	-- DEBUG: Monitor attribute changes to catch what's resetting it
 	local connection

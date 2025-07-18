@@ -338,14 +338,16 @@ local function handleSkinSelection(player, skinName)
 		return false
 	end
 
-	-- FIXED: Set selected skin attribute using SERVER NAME
-	player:SetAttribute("SelectedSkin", serverSkinName)
+	-- FIXED: Set BOTH attributes - server name for game logic, client name for UI
+	player:SetAttribute("SelectedSkin", serverSkinName) -- For server/game logic
+	player:SetAttribute("ClientSelectedSkin", skinName) -- For client UI
 	
 	-- IMPORTANT: Update playerData to persist the selection
 	local playerData = PlayerDataStore[player]
 	if playerData then
 		playerData.selectedSkin = serverSkinName -- Store server name in data
-		print("💾 Updated playerData.selectedSkin to:", serverSkinName)
+		playerData.clientSelectedSkin = skinName -- Store client name too
+		print("💾 Updated playerData.selectedSkin to:", serverSkinName, "client:", skinName)
 	end
 
 	print("✅ Player", player.Name, "selected skin:", skinName, "(server name:", serverSkinName, ")")
@@ -390,6 +392,7 @@ local function initializePlayer(player)
 	local currentSelectedSkin = player:GetAttribute("SelectedSkin")
 	if not currentSelectedSkin or currentSelectedSkin == "" then
 		player:SetAttribute("SelectedSkin", playerData.selectedSkin or "Classic") -- Server's default skin name
+		player:SetAttribute("ClientSelectedSkin", playerData.clientSelectedSkin or "Default") -- Client's default skin name
 	else
 		-- Update playerData to match current selection
 		playerData.selectedSkin = currentSelectedSkin

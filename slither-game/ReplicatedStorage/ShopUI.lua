@@ -772,9 +772,10 @@ local function setupServerSync()
 					end
 				end
 			end
-		elseif attributeName == "SelectedSkin" then
+		elseif attributeName == "ClientSelectedSkin" or attributeName == "SelectedSkin" then
 			-- Update current skin when server changes it
-			local newSkin = localPlayer:GetAttribute("SelectedSkin")
+			-- Prefer ClientSelectedSkin (client name) over SelectedSkin (server name)
+			local newSkin = localPlayer:GetAttribute("ClientSelectedSkin") or localPlayer:GetAttribute("SelectedSkin")
 			if newSkin and newSkin ~= ShopUI.playerData.currentSkin then
 				print("🐍 Selected skin updated from server:", newSkin)
 				ShopUI.playerData.currentSkin = newSkin
