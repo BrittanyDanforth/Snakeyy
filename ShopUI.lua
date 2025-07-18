@@ -1882,6 +1882,19 @@ local function createCategoryButton(category, index)
 		if ShopUI.uiElements.viewport then
 			ShopUI.uiElements.viewport.Visible = not isGamepass
 		end
+		if ShopUI.uiElements.viewport and ShopUI.uiElements.viewport.Parent then
+			-- Hide the preview box frame itself
+			ShopUI.uiElements.viewport.Parent.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.skinName then
+			ShopUI.uiElements.skinName.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.skinTag then
+			ShopUI.uiElements.skinTag.Visible = not isGamepass
+		end
+		if ShopUI.uiElements.priceLabel then
+			ShopUI.uiElements.priceLabel.Visible = not isGamepass
+		end
 		if ShopUI.uiElements.applyBtn then
 			ShopUI.uiElements.applyBtn.Visible = not isGamepass
 		end
