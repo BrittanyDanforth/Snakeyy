@@ -441,23 +441,23 @@ local SnakeSkinsData = {
 	}
 }
 
--- PERFECT ANIMATION WITH BIGGER GAPS
+-- FIX FOR LENGTH COMPRESSION IN REAL GAME
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 20, -- Good segment count
-	SEGMENT_SPACING = 25, -- MUCH BIGGER GAPS as requested!
-	HEAD_SIZE = Vector3.new(3, 3, 3),
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
-	SIZE_REDUCTION = 0.98,
-	CAMERA_DISTANCE = 60, -- Further back to see full long snake
-	CAMERA_HEIGHT = 20,
-	ROTATION_SPEED = 0.25,
-	-- Snake movement - keeping beautiful animation
-	SLITHER_AMPLITUDE = 8,
-	SLITHER_FREQUENCY = 1.2,
-	SLITHER_SPEED = 0.7, -- Slightly slower for smooth gaps
-	SEGMENT_DELAY = 0.1,
+	SEGMENT_COUNT = 30, -- More segments for better length
+	SEGMENT_SPACING = 15.5, -- Increased spacing to prevent compression
+	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
+	SIZE_REDUCTION = 0.98, -- Normal taper
+	CAMERA_DISTANCE = 25, -- Further back to see full snake
+	CAMERA_HEIGHT = 20, -- Higher for better view
+	ROTATION_SPEED = 0.3,
+	-- Snake movement
+	SLITHER_AMPLITUDE = 4,
+	SLITHER_FREQUENCY = 1.5,
+	SLITHER_SPEED = 1.0,
+	SEGMENT_DELAY = 0.08,
 	-- Snake positioning
-	SNAKE_RADIUS = 18, -- Bigger infinity loop
+	SNAKE_RADIUS = 12, -- Larger movement circle
 	SNAKE_CENTER_Z = 0,
 }
 
@@ -702,10 +702,10 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- SMOOTH SEGMENT FOLLOWING WITH BIGGER GAPS
+		-- SMOOTH SEGMENT FOLLOWING
 		for i, seg in ipairs(segments) do
-			-- Each segment follows based on delay - adjusted for 25 unit spacing
-			local delay = i * 4 -- Bigger delay for bigger gaps
+			-- Each segment follows based on delay
+			local delay = i * 3.5 -- More delay = bigger gaps while moving
 			local historyIndex = math.floor(delay)
 			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
 
