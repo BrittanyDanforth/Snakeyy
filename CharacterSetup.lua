@@ -754,15 +754,9 @@ local function createUltraSmoothSnake(character)
 					-- Normal movement after spawn
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
-					-- EXTREME boost fix - segments follow VERY recent positions
-					local delay
-					if isBoosting then
-						-- When boosting, all segments follow very recent history
-						delay = mathMin(i, 5) -- Max delay of 5 when boosting
-					else
-						-- Normal delay when not boosting
-						delay = (i == 1) and 1 or mathFloor(i * 0.9)
-					end
+					-- MUCH tighter delay when boosting to prevent body stretching
+					local delayMultiplier = isBoosting and 0.5 or 0.9 -- Much lower multiplier when boosting
+					local delay = (i == 1) and 1 or mathFloor(i * delayMultiplier)
 					local targetData = getFromHistory(delay)
 					if targetData then
 						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
