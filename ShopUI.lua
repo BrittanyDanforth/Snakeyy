@@ -444,20 +444,20 @@ local SnakeSkinsData = {
 -- PERFECT PREVIEW WITH AMAZING ANIMATION
 local PREVIEW_CONFIG = {
 	SEGMENT_COUNT = 20, -- Perfect amount
-	SEGMENT_SPACING = 10, -- As you said - 10 spacing!
+	SEGMENT_SPACING = 15, -- 15 spacing as requested!
 	HEAD_SIZE = Vector3.new(3, 3, 3),
 	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
 	SIZE_REDUCTION = 0.98,
-	CAMERA_DISTANCE = 35, -- Adjusted for longer snake
-	CAMERA_HEIGHT = 12,
-	ROTATION_SPEED = 0.4,
+	CAMERA_DISTANCE = 45, -- Adjusted for 15 spacing
+	CAMERA_HEIGHT = 15,
+	ROTATION_SPEED = 0.3,
 	-- Snake movement - PERFECTED
-	SLITHER_AMPLITUDE = 5, -- Bigger waves
-	SLITHER_FREQUENCY = 2, -- More curves
-	SLITHER_SPEED = 1.5, -- Faster movement
-	SEGMENT_DELAY = 0.15, -- Smoother delay between segments
+	SLITHER_AMPLITUDE = 8, -- Bigger figure-8
+	SLITHER_FREQUENCY = 1.2, -- Slower curves to show pattern
+	SLITHER_SPEED = 0.8, -- Slower to show off skin
+	SEGMENT_DELAY = 0.12, -- Smoother delay between segments
 	-- Snake positioning
-	SNAKE_RADIUS = 10,
+	SNAKE_RADIUS = 15, -- Bigger figure-8 pattern
 	SNAKE_CENTER_Z = 0,
 }
 
