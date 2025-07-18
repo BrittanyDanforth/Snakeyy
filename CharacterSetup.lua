@@ -749,8 +749,8 @@ local function createUltraSmoothSnake(character)
 					-- Normal movement after spawn
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
-					-- Tighter delay when boosting to prevent stretching
-					local delayMultiplier = isBoosting and 0.7 or 0.9
+					-- MUCH tighter delay when boosting to prevent body stretching
+					local delayMultiplier = isBoosting and 0.5 or 0.9 -- Much lower multiplier when boosting
 					local delay = (i == 1) and 1 or mathFloor(i * delayMultiplier)
 					local targetData = getFromHistory(delay)
 					if targetData then
