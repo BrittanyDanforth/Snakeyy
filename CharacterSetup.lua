@@ -509,6 +509,10 @@ local function createUltraSmoothSnake(character)
 		end
 	end
 
+	-- IMMEDIATELY hide the character to prevent ANY flashing
+	rootPart.Transparency = 1
+	rootPart.CanCollide = false
+	
 	for _, part in character:GetChildren() do
 		if part:IsA("BasePart") then
 			part.Transparency = 1
@@ -530,8 +534,8 @@ local function createUltraSmoothSnake(character)
 		obj:Destroy()
 	end
 
-	local headParts = createVisualHead(rootPart, activeConfig, snakeModel)
-
+	-- Don't create visual parts yet
+	local headParts = nil
 	local segments = {}
 	local currentLength = 0 -- Start with 0 segments
 	local targetLength = activeConfig.InitialLength
@@ -632,14 +636,16 @@ local function createUltraSmoothSnake(character)
 			end
 		end
 
-		for name, part in pairs(headParts) do
-			if typeof(part) == "Instance" and part.Parent then
-				for _, child in part:GetChildren() do
-					if child:IsA("Attachment") then
-						child:Destroy()
+		if headParts then
+			for name, part in pairs(headParts) do
+				if typeof(part) == "Instance" and part.Parent then
+					for _, child in part:GetChildren() do
+						if child:IsA("Attachment") then
+							child:Destroy()
+						end
 					end
+					part:Destroy()
 				end
-				part:Destroy()
 			end
 		end
 
@@ -696,7 +702,12 @@ local function createUltraSmoothSnake(character)
 		local headOffset = lookVector * 1.5
 		local headPos = currentPos + headOffset
 
-		if headParts.head and headParts.head.Parent then
+		-- Create head after 3 frames to prevent flash
+		if not headParts and framesSinceSpawn == 3 then
+			headParts = createVisualHead(rootPart, activeConfig, snakeModel)
+		end
+
+		if headParts and headParts.head and headParts.head.Parent then
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
