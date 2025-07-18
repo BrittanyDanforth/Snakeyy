@@ -894,7 +894,7 @@ function CharacterPreview.startBodyWave()
 					segment.Position = basePos + Vector3.new(offset, 0, 0)
 					
 					-- Subtle size pulse for premium skins
-					if CharacterPreview.currentSkinName and SKIN_DATA[CharacterPreview.currentSkinName] and SKIN_DATA[CharacterPreview.currentSkinName].robux then
+					if CharacterPreview.currentSkinName and ShopUI.SKIN_DATA and ShopUI.SKIN_DATA[CharacterPreview.currentSkinName] and ShopUI.SKIN_DATA[CharacterPreview.currentSkinName].robux then
 						local scale = 1 + math.sin(time * 4 - i * 0.3) * 0.05
 						segment.Size = Vector3.new(2.5, 2.5, 2.5) * scale
 					end
@@ -932,6 +932,16 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.energyRings = nil
 	CharacterPreview.vfxContainer = nil
 end
+
+-- UI State (moved to top to be accessible everywhere)
+local uiState = {
+	currentCategory = 1,
+	selectedSkin = "Default",
+	isShopOpen = false,
+	previewViewport = nil,
+	animations = {},
+	particles = {}
+}
 
 -- Ultra Modern Configuration
 local SHOP_CONFIG = {
@@ -1028,7 +1038,7 @@ local SKIN_CATEGORIES = {
 }
 
 -- Skin pricing - Basic patterns for coins, premium for Robux
-local SKIN_DATA = {
+ShopUI.SKIN_DATA = {
 	-- FREE
 	["Default"] = {price = 0, robux = nil, tag = nil},
 	
@@ -1279,16 +1289,6 @@ setupServerSync()
 -- FIXED: UI State management with proper initialization flag
 ShopUI.isInitialized = false
 ShopUI.uiElements = {}
-
-local uiState = {
-	currentCategory = 1,
-	selectedSkin = "Default",
-	isShopOpen = false,
-	previewViewport = nil,
-	animations = {},
-	particles = {},
-	glowEffects = {},
-}
 
 -- Utility functions
 local function createGradient(parent, startColor, endColor, rotation)
@@ -1953,7 +1953,7 @@ end
 
 -- Create skin card
 local function createSkinCard(skinName, index)
-	local skinData = SKIN_DATA[skinName]
+	local skinData = ShopUI.SKIN_DATA[skinName]
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, skinName) ~= nil
 	local isCurrent = ShopUI.playerData.currentSkin == skinName
 
@@ -2210,7 +2210,7 @@ end
 function ShopUI.updateInfo()
 	if not ShopUI.uiElements then return end
 
-	local skinData = SKIN_DATA[uiState.selectedSkin]
+	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin]
 	if not skinData then return end
 
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, uiState.selectedSkin) ~= nil
@@ -2302,7 +2302,7 @@ end
 
 -- FIXED: Purchase handler with proper server communication and Robux support
 function ShopUI.purchaseSkin(useRobux)
-	local skinData = SKIN_DATA[uiState.selectedSkin]
+	local skinData = ShopUI.SKIN_DATA[uiState.selectedSkin]
 	if not skinData then return end
 
 	local isOwned = table.find(ShopUI.playerData.ownedSkins, uiState.selectedSkin) ~= nil
