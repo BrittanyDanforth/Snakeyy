@@ -33,6 +33,21 @@ SelectSkinRemote.OnServerEvent:Connect(function(player, skinName)
 	end
 
 	print("🎨 Player", player.Name, "selected skin:", skinName)
+	
+	-- Check ownership
+	local ownedSkinsJson = player:GetAttribute("OwnedSkinsJSON") or "{}"
+	local ownedSkins = {"Default"}
+	
+	local HttpService = game:GetService("HttpService")
+	pcall(function()
+		ownedSkins = HttpService:JSONDecode(ownedSkinsJson)
+	end)
+	
+	if not table.find(ownedSkins, skinName) then
+		warn("❌ Player", player.Name, "tried to select unowned skin:", skinName)
+		warn("   Owned skins:", table.concat(ownedSkins, ", "))
+		return
+	end
 
 	-- SKIN NAME MAPPING: Map client names to server names
 	local SKIN_NAME_MAP = {

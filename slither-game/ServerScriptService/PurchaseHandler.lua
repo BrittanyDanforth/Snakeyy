@@ -74,18 +74,30 @@ else
 	print("⚠️ DataStore disabled (Studio mode)")
 end
 
--- Create RemoteEvents
-local PurchaseItemEvent = Instance.new("RemoteEvent")
-PurchaseItemEvent.Name = "PurchaseItem"
-PurchaseItemEvent.Parent = ReplicatedStorage
+-- Create RemoteEvents (check if they exist first)
+local PurchaseItemEvent = ReplicatedStorage:FindFirstChild("PurchaseItem")
+if not PurchaseItemEvent then
+	PurchaseItemEvent = Instance.new("RemoteEvent")
+	PurchaseItemEvent.Name = "PurchaseItem"
+	PurchaseItemEvent.Parent = ReplicatedStorage
+	print("✅ Created PurchaseItem RemoteEvent")
+end
 
-local SelectSkinEvent = Instance.new("RemoteEvent") 
-SelectSkinEvent.Name = "SelectSkin"
-SelectSkinEvent.Parent = ReplicatedStorage
+local SelectSkinEvent = ReplicatedStorage:FindFirstChild("SelectSkin")
+if not SelectSkinEvent then
+	SelectSkinEvent = Instance.new("RemoteEvent") 
+	SelectSkinEvent.Name = "SelectSkin"
+	SelectSkinEvent.Parent = ReplicatedStorage
+	print("✅ Created SelectSkin RemoteEvent")
+end
 
-local RespawnSnakeEvent = Instance.new("RemoteEvent")
-RespawnSnakeEvent.Name = "RespawnSnake"
-RespawnSnakeEvent.Parent = ReplicatedStorage
+local RespawnSnakeEvent = ReplicatedStorage:FindFirstChild("RespawnSnake")
+if not RespawnSnakeEvent then
+	RespawnSnakeEvent = Instance.new("RemoteEvent")
+	RespawnSnakeEvent.Name = "RespawnSnake"
+	RespawnSnakeEvent.Parent = ReplicatedStorage
+	print("✅ Created RespawnSnake RemoteEvent")
+end
 
 -- Optional: Purchase success notification event
 local RemoteEventsFolder = ReplicatedStorage:FindFirstChild("RemoteEvents")
@@ -481,20 +493,20 @@ PurchaseItemEvent.OnServerEvent:Connect(function(player, itemName)
 	end
 end)
 
-SelectSkinEvent.OnServerEvent:Connect(function(player, skinName)
-	if not player or not skinName then return end
+-- REMOVED: SelectSkin handling moved to SelectSkinHandler.lua to avoid conflicts
+-- SelectSkinEvent.OnServerEvent:Connect(function(player, skinName)
+-- 	if not player or not skinName then return end
+-- 	handleSkinSelection(player, skinName)
+-- end)
 
-	handleSkinSelection(player, skinName)
-end)
-
-RespawnSnakeEvent.OnServerEvent:Connect(function(player)
-	if not player then return end
-
-	print("🔄 Respawning player:", player.Name)
-	if player.Character then
-		player:LoadCharacter()
-	end
-end)
+-- REMOVED: RespawnSnake handling exists in multiple places, consolidated
+-- RespawnSnakeEvent.OnServerEvent:Connect(function(player)
+-- 	if not player then return end
+-- 	print("🔄 Respawning player:", player.Name)
+-- 	if player.Character then
+-- 		player:LoadCharacter()
+-- 	end
+-- end)
 
 -- Player management
 Players.PlayerAdded:Connect(initializePlayer)
