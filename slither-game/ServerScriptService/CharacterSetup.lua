@@ -15,9 +15,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- ENHANCED: Safe SnakeSkins loading with fallback
 local SnakeSkins = nil
 local function loadSnakeSkins()
-	pcall(function()
-		SnakeSkins = require(ReplicatedStorage:WaitForChild("SnakeSkins", 5))
+	local success, result = pcall(function()
+		local module = ReplicatedStorage:WaitForChild("SnakeSkins", 5)
+		if module then
+			return require(module)
+		end
 	end)
+	if success and result then
+		SnakeSkins = result
+		print("✅ SnakeSkins module loaded successfully")
+	else
+		warn("❌ Failed to load SnakeSkins module:", result)
+	end
 
 	if not SnakeSkins then
 		warn("⚠️ SnakeSkins module not found, using default config")
@@ -71,6 +80,15 @@ local Config = {
 	GlowRange = 4,
 }
 
+-- Helper function to get table keys
+local function getTableKeys(tbl)
+	local keys = {}
+	for k, _ in pairs(tbl or {}) do
+		table.insert(keys, tostring(k))
+	end
+	return keys
+end
+
 -- ENHANCED: Get active config with skin overrides
 local function getActiveConfig(player)
 	local activeConfig = {}
@@ -80,14 +98,23 @@ local function getActiveConfig(player)
 
 	-- Apply skin overrides if available
 	local playerSkinName = player:GetAttribute("SelectedSkin")
-	if playerSkinName and SnakeSkins and SnakeSkins[playerSkinName] then
-		local skinData = SnakeSkins[playerSkinName]
-		for key, value in pairs(skinData) do
-			if key ~= "Price" and key ~= "Description" then
-				activeConfig[key] = value
+	print("🔍 Getting skin config for:", playerSkinName, "Player:", player.Name)
+	
+	if playerSkinName and playerSkinName ~= "" then
+		if not SnakeSkins then
+			warn("❌ SnakeSkins module not loaded!")
+		elseif not SnakeSkins[playerSkinName] then
+			warn("❌ Skin", playerSkinName, "not found in SnakeSkins module!")
+			warn("   Available skins:", table.concat(getTableKeys(SnakeSkins), ", "))
+		else
+			local skinData = SnakeSkins[playerSkinName]
+			for key, value in pairs(skinData) do
+				if key ~= "Price" and key ~= "Description" then
+					activeConfig[key] = value
+				end
 			end
+			print("✅ Applied skin config for", playerSkinName, "to player", player.Name)
 		end
-		print("🎨 Applied skin config for", playerSkinName, "to player", player.Name)
 	end
 
 	return activeConfig
@@ -373,10 +400,24 @@ local function applySkinToExistingSnake(player, snakeInstance)
 end
 
 local function createUltraSmoothSnake(character)
+	print("🐍 Creating snake for character:", character.Name)
+	
 	local humanoid = character:FindFirstChild("Humanoid") or character:WaitForChild("Humanoid", 5)
 	local rootPart = character:FindFirstChild("HumanoidRootPart") or character:WaitForChild("HumanoidRootPart", 5)
 	local player = Players:GetPlayerFromCharacter(character)
-	if not humanoid or not rootPart or not player then return end
+	
+	if not humanoid then
+		warn("❌ No humanoid found for", character.Name)
+		return
+	end
+	if not rootPart then
+		warn("❌ No HumanoidRootPart found for", character.Name)
+		return
+	end
+	if not player then
+		warn("❌ No player found for", character.Name)
+		return
+	end
 
 	local oldSnakeInstance = character:FindFirstChild("__SnakeInstance")
 	if oldSnakeInstance then
@@ -385,6 +426,16 @@ local function createUltraSmoothSnake(character)
 
 	-- ENHANCED: Use new skin system
 	local activeConfig = getActiveConfig(player)
+	
+	-- Validate config
+	if not activeConfig.BodyColors or #activeConfig.BodyColors == 0 then
+		warn("❌ Invalid skin config - missing BodyColors!")
+		activeConfig.BodyColors = Config.BodyColors -- Fallback to default
+	end
+	if not activeConfig.HeadColor then
+		warn("❌ Invalid skin config - missing HeadColor!")
+		activeConfig.HeadColor = Config.HeadColor -- Fallback to default
+	end
 
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if leaderstats then
