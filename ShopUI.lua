@@ -1769,6 +1769,7 @@ local function createMainShop()
 		sidebar = sidebar,
 		gridScroll = gridScroll,
 		viewport = viewport,
+		previewContainer = previewContainer,
 		skinName = skinName,
 		skinTag = skinTag,
 		priceLabel = priceLabel,
@@ -1879,12 +1880,8 @@ local function createCategoryButton(category, index)
 		
 		-- Hide/show preview based on category
 		local isGamepass = SKIN_CATEGORIES[index].name == "Gamepasses"
-		if ShopUI.uiElements.viewport then
-			ShopUI.uiElements.viewport.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.viewport and ShopUI.uiElements.viewport.Parent then
-			-- Hide the preview box frame itself
-			ShopUI.uiElements.viewport.Parent.Visible = not isGamepass
+		if ShopUI.uiElements.previewContainer then
+			ShopUI.uiElements.previewContainer.Visible = not isGamepass
 		end
 		if ShopUI.uiElements.skinName then
 			ShopUI.uiElements.skinName.Visible = not isGamepass
