@@ -661,23 +661,23 @@ local SKIN_CATEGORIES = {
 	}
 }
 
--- Skin pricing
+-- Skin pricing with Robux options
 local SKIN_DATA = {
-	["Default"] = {price = 0, tag = nil},
-	["Crimson"] = {price = 250, tag = "Popular"},
-	["Arctic"] = {price = 350, tag = nil},
-	["Emerald"] = {price = 500, tag = "New"},
-	["Void"] = {price = 1000, tag = "Hot"},
-	["Plasma"] = {price = 1500, tag = "Trending"},
-	["Galaxy"] = {price = 2000, tag = "Bestseller"},
-	["Ocean"] = {price = 2500, tag = nil},
-	["Shadow"] = {price = 3000, tag = "Mysterious"},
-	["Cyber"] = {price = 4000, tag = "Tech"},
-	["Dragon"] = {price = 5000, tag = "Epic"},
-	["VIP Diamond"] = {price = 10000, tag = "VIP"},
-	["VIP Inferno"] = {price = 15000, tag = "VIP"},
-	["VIP Cosmic"] = {price = 20000, tag = "VIP"},
-	["Rainbow"] = {price = 7500, tag = "Special"},
+	["Default"] = {price = 0, robux = nil, tag = nil},
+	["Crimson"] = {price = 250, robux = nil, tag = "Popular"},
+	["Arctic"] = {price = 350, robux = nil, tag = nil},
+	["Emerald"] = {price = 500, robux = nil, tag = "New"},
+	["Void"] = {price = 1000, robux = nil, tag = "Hot"},
+	["Plasma"] = {price = 1500, robux = 25, tag = "Trending"},
+	["Galaxy"] = {price = 2000, robux = 35, tag = "Bestseller"},
+	["Ocean"] = {price = 2500, robux = 45, tag = nil},
+	["Shadow"] = {price = 3000, robux = 50, tag = "Mysterious"},
+	["Cyber"] = {price = 4000, robux = 75, tag = "Tech"},
+	["Dragon"] = {price = 5000, robux = 99, tag = "Epic"},
+	["VIP Diamond"] = {price = 10000, robux = 149, tag = "VIP"},
+	["VIP Inferno"] = {price = 15000, robux = 199, tag = "VIP"},
+	["VIP Cosmic"] = {price = 20000, robux = 299, tag = "VIP"},
+	["Rainbow"] = {price = 7500, robux = 125, tag = "Special"},
 }
 
 -- FIXED: Player data system (using JSON for arrays to avoid attribute errors)
@@ -692,7 +692,7 @@ ShopUI.playerData = {
 -- FIXED: Load data properly from attributes using JSON for arrays
 local function loadPlayerData()
 	-- Load simple values
-	ShopUI.playerData.coins = localPlayer:GetAttribute("Coins") or 50000
+	ShopUI.playerData.coins = localPlayer:GetAttribute("Coins") or 100
 	ShopUI.playerData.currentSkin = localPlayer:GetAttribute("SelectedSkin") or "Default"
 
 	-- Load arrays using JSON (to avoid "Array is not a supported attribute type" error)
@@ -1061,7 +1061,7 @@ local function createMainShop()
 	coinAmount.Size = UDim2.new(0.7, 0, 0.8, 0)
 	coinAmount.Position = UDim2.new(0.25, 0, 0.1, 0)
 	coinAmount.BackgroundTransparency = 1
-	coinAmount.Text = tostring(ShopUI.playerData.coins)
+	coinAmount.Text = ShopUI.formatNumber(ShopUI.playerData.coins)
 	coinAmount.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
 	coinAmount.TextScaled = true
 	coinAmount.Font = SHOP_CONFIG.FONTS.PRICE
@@ -1238,10 +1238,10 @@ local function createMainShop()
 
 	local purchaseBtn = Instance.new("TextButton")
 	purchaseBtn.Name = "PurchaseButton"
-	purchaseBtn.Size = UDim2.new(0.48, 0, 0.22, 0)
+	purchaseBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
 	purchaseBtn.Position = UDim2.new(0, 0, 0, 0)
 	purchaseBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.ACCENT
-	purchaseBtn.Text = "PURCHASE"
+	purchaseBtn.Text = "BUY WITH COINS"
 	purchaseBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
 	purchaseBtn.TextScaled = true
 	purchaseBtn.Font = SHOP_CONFIG.FONTS.BUTTON
@@ -1249,11 +1249,27 @@ local function createMainShop()
 
 	createCorner(purchaseBtn, 8)
 	createStroke(purchaseBtn, SHOP_CONFIG.COLORS.ACCENT_GLOW, 1, 0.8)
+	
+	-- Robux purchase button
+	local robuxBtn = Instance.new("TextButton")
+	robuxBtn.Name = "RobuxButton"
+	robuxBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
+	robuxBtn.Position = UDim2.new(0.52, 0, 0, 0)
+	robuxBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 127) -- Robux green
+	robuxBtn.Text = "BUY WITH ROBUX"
+	robuxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	robuxBtn.TextScaled = true
+	robuxBtn.Font = SHOP_CONFIG.FONTS.BUTTON
+	robuxBtn.Parent = buttonContainer
+	robuxBtn.Visible = false -- Will show only for skins with Robux price
+	
+	createCorner(robuxBtn, 8)
+	createStroke(robuxBtn, Color3.fromRGB(0, 200, 100), 1, 0.8)
 
 	local applyBtn = Instance.new("TextButton")
 	applyBtn.Name = "ApplyButton"
-	applyBtn.Size = UDim2.new(0.48, 0, 0.22, 0)
-	applyBtn.Position = UDim2.new(0.52, 0, 0, 0)
+	applyBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
+	applyBtn.Position = UDim2.new(0.26, 0, 0.24, 0)
 	applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
 	applyBtn.Text = "APPLY"
 	applyBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
@@ -1290,6 +1306,7 @@ local function createMainShop()
 		skinTag = skinTag,
 		priceLabel = priceLabel,
 		purchaseBtn = purchaseBtn,
+		robuxBtn = robuxBtn,
 		applyBtn = applyBtn,
 		favoriteBtn = favoriteBtn,
 		coinAmount = coinAmount,
@@ -1518,8 +1535,39 @@ local function createSkinCard(skinName, index)
 		statusLabel.Text = "✓ OWNED"
 		statusLabel.TextColor3 = SHOP_CONFIG.COLORS.ACCENT
 	else
-		statusLabel.Text = "💰 "..tostring(skinData.price)
-		statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+		-- Show both coin and Robux price if available
+		if skinData.robux then
+			-- Create two price labels side by side
+			statusLabel.Size = UDim2.new(0.45, 0, 1, 0)
+			statusLabel.Position = UDim2.new(0, 0, 0, 0)
+			statusLabel.Text = "💰 "..tostring(skinData.price)
+			statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+			
+			local robuxLabel = Instance.new("TextLabel")
+			robuxLabel.Name = "RobuxPrice"
+			robuxLabel.Size = UDim2.new(0.45, 0, 1, 0)
+			robuxLabel.Position = UDim2.new(0.55, 0, 0, 0)
+			robuxLabel.BackgroundTransparency = 1
+			robuxLabel.Text = "R$ "..tostring(skinData.robux)
+			robuxLabel.TextColor3 = Color3.fromRGB(0, 255, 127) -- Robux green
+			robuxLabel.TextScaled = true
+			robuxLabel.Font = SHOP_CONFIG.FONTS.PRICE
+			robuxLabel.Parent = statusFrame
+			
+			-- Add "OR" text
+			local orLabel = Instance.new("TextLabel")
+			orLabel.Size = UDim2.new(0.1, 0, 1, 0)
+			orLabel.Position = UDim2.new(0.45, 0, 0, 0)
+			orLabel.BackgroundTransparency = 1
+			orLabel.Text = "or"
+			orLabel.TextColor3 = SHOP_CONFIG.COLORS.TEXT_SECONDARY
+			orLabel.TextScaled = true
+			orLabel.Font = SHOP_CONFIG.FONTS.BUTTON
+			orLabel.Parent = statusFrame
+		else
+			statusLabel.Text = "💰 "..tostring(skinData.price)
+			statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+		end
 	end
 
 	-- Badges
@@ -1655,7 +1703,13 @@ function ShopUI.updateInfo()
 		ShopUI.uiElements.priceLabel.Text = "✓ OWNED"
 		ShopUI.uiElements.priceLabel.TextColor3 = SHOP_CONFIG.COLORS.SUCCESS
 	else
-		ShopUI.uiElements.priceLabel.Text = "💰 "..tostring(skinData.price)
+		-- Show price(s)
+		if skinData.robux then
+			ShopUI.uiElements.priceLabel.Text = "💰 "..tostring(skinData.price).." or R$ "..tostring(skinData.robux)
+		else
+			ShopUI.uiElements.priceLabel.Text = "💰 "..tostring(skinData.price)
+		end
+		
 		if ShopUI.playerData.coins >= skinData.price then
 			ShopUI.uiElements.priceLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
 		else
@@ -1675,12 +1729,26 @@ function ShopUI.updateInfo()
 	if isOwned then
 		ShopUI.uiElements.purchaseBtn.Text = "OWNED"
 		ShopUI.uiElements.purchaseBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.TERTIARY
+		ShopUI.uiElements.robuxBtn.Visible = false
 	else
-		ShopUI.uiElements.purchaseBtn.Text = "PURCHASE"
+		ShopUI.uiElements.purchaseBtn.Text = "BUY WITH COINS"
 		if ShopUI.playerData.coins >= skinData.price then
 			ShopUI.uiElements.purchaseBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.ACCENT
 		else
 			ShopUI.uiElements.purchaseBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.ERROR
+		end
+		
+		-- Show/hide Robux button
+		if skinData.robux then
+			ShopUI.uiElements.robuxBtn.Visible = true
+			ShopUI.uiElements.robuxBtn.Text = "R$ " .. tostring(skinData.robux)
+			-- Adjust button positions for two buttons
+			ShopUI.uiElements.purchaseBtn.Position = UDim2.new(0, 0, 0, 0)
+			ShopUI.uiElements.robuxBtn.Position = UDim2.new(0.52, 0, 0, 0)
+		else
+			ShopUI.uiElements.robuxBtn.Visible = false
+			-- Center the purchase button
+			ShopUI.uiElements.purchaseBtn.Position = UDim2.new(0.26, 0, 0, 0)
 		end
 	end
 
@@ -1694,8 +1762,8 @@ function ShopUI.updateInfo()
 	end
 end
 
--- FIXED: Purchase handler with proper server communication
-function ShopUI.purchaseSkin()
+-- FIXED: Purchase handler with proper server communication and Robux support
+function ShopUI.purchaseSkin(useRobux)
 	local skinData = SKIN_DATA[uiState.selectedSkin]
 	if not skinData then return end
 
@@ -1706,6 +1774,34 @@ function ShopUI.purchaseSkin()
 		return
 	end
 
+	-- Handle Robux purchase
+	if useRobux and skinData.robux then
+		-- Create a Developer Product purchase for Robux
+		local MarketplaceService = game:GetService("MarketplaceService")
+		local productId = nil -- You'll need to create developer products for each skin
+		
+		-- For now, we'll use a placeholder system
+		print("🛒 Initiating Robux purchase for", uiState.selectedSkin, "- Cost:", skinData.robux, "Robux")
+		
+		-- Fire to server for Robux purchase validation
+		local PurchaseItemEvent = ReplicatedStorage:FindFirstChild("PurchaseItem")
+		if PurchaseItemEvent then
+			PurchaseItemEvent:FireServer("robux_skin_" .. uiState.selectedSkin)
+		end
+		
+		-- Show Robux purchase UI feedback
+		local flash = Instance.new("Frame")
+		flash.Size = UDim2.new(1, 0, 1, 0)
+		flash.BackgroundColor3 = Color3.fromRGB(0, 255, 127) -- Robux green
+		flash.BackgroundTransparency = 0.85
+		flash.Parent = ShopUI.uiElements.contentWindow
+		TweenService:Create(flash, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+		Debris:AddItem(flash, 0.25)
+		
+		return
+	end
+
+	-- Handle coin purchase
 	if ShopUI.playerData.coins >= skinData.price then
 		-- FIXED: Use server-side purchase through PurchaseItem RemoteEvent
 		print("🛒 Attempting to purchase", uiState.selectedSkin, "through server...")
@@ -1737,10 +1833,10 @@ function ShopUI.purchaseSkin()
 			local elapsed = tick() - startTime
 			local progress = math.min(elapsed / 0.4, 1)
 			local currentCoins = math.floor(oldCoins - (oldCoins - ShopUI.playerData.coins) * progress)
-			coinDisplay.Text = tostring(currentCoins)
+			coinDisplay.Text = ShopUI.formatNumber(currentCoins)
 			if progress >= 1 then
 				coinConnection:Disconnect()
-				coinDisplay.Text = tostring(ShopUI.playerData.coins)
+				coinDisplay.Text = ShopUI.formatNumber(ShopUI.playerData.coins)
 			end
 		end)
 
@@ -1852,6 +1948,12 @@ function ShopUI.toggleFavorite()
 	ShopUI.updateInfo()
 end
 
+-- Format number with commas
+function ShopUI.formatNumber(n)
+	local formatted = tostring(n)
+	return formatted:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
+end
+
 -- Initialize shop
 function ShopUI.init()
 	local gui = createMainShop()
@@ -1872,7 +1974,11 @@ function ShopUI.init()
 	end)
 
 	ShopUI.uiElements.purchaseBtn.MouseButton1Click:Connect(function()
-		ShopUI.purchaseSkin()
+		ShopUI.purchaseSkin(false) -- Purchase with coins
+	end)
+	
+	ShopUI.uiElements.robuxBtn.MouseButton1Click:Connect(function()
+		ShopUI.purchaseSkin(true) -- Purchase with Robux
 	end)
 
 	ShopUI.uiElements.applyBtn.MouseButton1Click:Connect(function()

@@ -576,6 +576,13 @@ local function createUltraSmoothSnake(character)
 			if lengthValue then
 				lengthValue.Value = currentLength
 			end
+			
+			-- Award coins for growth (1 coin per 5 segments)
+			if currentLength % 5 == 0 then
+				local currentCoins = player:GetAttribute("Coins") or 0
+				player:SetAttribute("Coins", currentCoins + 1)
+				print("💰 Awarded 1 coin for reaching length", currentLength)
+			end
 		end
 	end
 
@@ -724,6 +731,21 @@ local function handlePlayer(player)
 		length.Name = "Length"
 		length.Value = 0
 		length.Parent = leaderstats
+	end
+	
+	local coins = leaderstats:FindFirstChild("Coins")
+	if not coins then
+		coins = Instance.new("NumberValue")
+		coins.Name = "Coins"
+		coins.Value = player:GetAttribute("Coins") or 100
+		coins.Parent = leaderstats
+		
+		-- Update coins when attribute changes
+		player.AttributeChanged:Connect(function(name)
+			if name == "Coins" then
+				coins.Value = player:GetAttribute("Coins") or 0
+			end
+		end)
 	end
 
 	-- REMOVED: Let UnifiedSkinSystem handle skin initialization

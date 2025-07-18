@@ -114,9 +114,20 @@ end
 
 -- Handle skin purchase
 local function handlePurchase(player, itemName)
-	if not itemName or not itemName:match("^skin_") then return end
+	if not itemName then return end
 	
-	local skinName = itemName:sub(6) -- Remove "skin_" prefix
+	-- Check if it's a Robux purchase
+	local isRobuxPurchase = itemName:match("^robux_skin_")
+	local skinName
+	
+	if isRobuxPurchase then
+		skinName = itemName:sub(12) -- Remove "robux_skin_" prefix
+	elseif itemName:match("^skin_") then
+		skinName = itemName:sub(6) -- Remove "skin_" prefix
+	else
+		return
+	end
+	
 	local serverSkinName = SKIN_NAME_MAP[skinName] or skinName
 	
 	print("💰 Purchase request:", skinName, "->", serverSkinName)
@@ -136,18 +147,31 @@ local function handlePurchase(player, itemName)
 		return
 	end
 	
-	-- Check price
-	local skinData = SnakeSkins[serverSkinName]
-	local price = skinData.Price or 0
-	
-	if data.coins < price then
-		warn("❌ Not enough coins:", data.coins, "<", price)
-		return
+	-- Handle Robux purchase differently
+	if isRobuxPurchase then
+		-- For Robux purchases, we need to verify the purchase through MarketplaceService
+		-- This is a placeholder - in production, you'd use ProcessReceipt
+		print("💎 Robux purchase requested for:", skinName)
+		
+		-- For now, we'll just grant the skin (in production, this would be after payment verification)
+		table.insert(data.ownedSkins, skinName)
+		
+		-- Log the Robux purchase
+		print("✅ Robux purchase completed for:", skinName)
+	else
+		-- Check price for coin purchase
+		local skinData = SnakeSkins[serverSkinName]
+		local price = skinData.Price or 0
+		
+		if data.coins < price then
+			warn("❌ Not enough coins:", data.coins, "<", price)
+			return
+		end
+		
+		-- Process coin purchase
+		data.coins = data.coins - price
+		table.insert(data.ownedSkins, skinName)
 	end
-	
-	-- Process purchase
-	data.coins = data.coins - price
-	table.insert(data.ownedSkins, skinName)
 	
 	-- Update player
 	local leaderstats = player:FindFirstChild("leaderstats")
