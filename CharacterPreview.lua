@@ -13,7 +13,8 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 -- Load skins data
-local SnakeSkinsData = require(script.Parent:WaitForChild("SnakeSkinsData"))
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SnakeSkinsData = require(ReplicatedStorage:WaitForChild("SnakeSkins"))
 
 local CharacterPreview = {}
 CharacterPreview.__index = CharacterPreview

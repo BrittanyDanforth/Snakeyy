@@ -45,7 +45,7 @@ pcall(function()
 end)
 
 -- FIXED: Using new high-quality CharacterPreview module
-local CharacterPreviewModule = require(script.Parent:WaitForChild("CharacterPreview"))
+local CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview"))
 local CharacterPreview = nil -- Will be instantiated when needed
 
 -- Import your CharacterSetup functions directly

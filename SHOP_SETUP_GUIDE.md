@@ -2,17 +2,17 @@
 
 ## File Locations
 
-### Client Scripts (StarterPlayer > StarterPlayerScripts)
-Place these files in StarterPlayerScripts:
-- `ShopUI.lua` - Main shop interface
-- `CharacterPreview.lua` - High-quality snake preview system
-- `ShopManager.lua` - Shop data management
-- `ShopInitializer.lua` - Ensures shop loads properly (optional)
-
-### Shared Modules (ReplicatedStorage)
+### ReplicatedStorage (Based on your setup)
 Place these files in ReplicatedStorage:
-- `SnakeSkinsData.lua` - Skin database
-- `ExtremeVFXSystem.lua` - VFX effects system
+- `ShopUI` - Main shop interface module
+- `CharacterPreview.lua` - High-quality snake preview system
+- `SnakeSkins` - Skin database (already there)
+- `ExtremeVFXSystem.lua` - VFX effects system (optional)
+
+### Client Scripts (StarterPlayer > StarterPlayerScripts)
+- `ShopManager` - Shop data management (already there)
+- `ShopUILoader` - Loads ShopUI from ReplicatedStorage (already there)
+- `ShopInitializer.lua` - Ensures shop loads properly (optional)
 
 ### Server Scripts (ServerScriptService)
 - `CharacterSetup.lua` - Snake character system
