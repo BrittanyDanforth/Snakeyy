@@ -355,120 +355,125 @@ local function createElectricEffect(part)
 	return {attachment = electricAttachment, emitter = sparks}
 end
 
--- Create AMAZING rainbow effect with curved light beams
+-- Create AMAZING rainbow effect optimized for ViewportFrames
 local function createRainbowEffect(part, isHead)
 	local effects = {}
 	
-	-- Create multiple beam attachments in a circle
-	local beamCount = isHead and 8 or 4
-	local radius = isHead and 2 or 1.5
-	
-	for i = 1, beamCount do
-		local angle = (i - 1) * (math.pi * 2 / beamCount)
-		
-		-- Create attachment on the part
-		local att1 = Instance.new("Attachment")
-		att1.Position = Vector3.new(
-			math.cos(angle) * radius,
-			0,
-			math.sin(angle) * radius
-		)
-		att1.Parent = part
-		
-		-- Create floating attachment above
-		local floatPart = Instance.new("Part")
-		floatPart.Name = "RainbowFloat"..i
-		floatPart.Size = Vector3.new(0.1, 0.1, 0.1)
-		floatPart.Transparency = 1
-		floatPart.CanCollide = false
-		floatPart.CanQuery = false
-		floatPart.CanTouch = false
-		floatPart.Anchored = true
-		floatPart.Parent = part.Parent
-		
-		local att2 = Instance.new("Attachment")
-		att2.Parent = floatPart
-		
-		-- Create the beam
-		local beam = Instance.new("Beam")
-		beam.Attachment0 = att1
-		beam.Attachment1 = att2
-		beam.Width0 = isHead and 2 or 1
-		beam.Width1 = 0.1
-		beam.CurveSize0 = 10
-		beam.CurveSize1 = -10
-		beam.FaceCamera = true
-		beam.Segments = 20
-		beam.LightEmission = 1
-		beam.LightInfluence = 0
-		beam.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.8),
-			NumberSequenceKeypoint.new(0.5, 0.3),
-			NumberSequenceKeypoint.new(1, 1)
-		})
-		
-		-- Rainbow color sequence
-		beam.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),      -- Red
-			ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 165, 0)), -- Orange
-			ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)), -- Yellow
-			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),    -- Green
-			ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 255)), -- Cyan
-			ColorSequenceKeypoint.new(0.83, Color3.fromRGB(130, 0, 255)), -- Purple
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))     -- Magenta
-		})
-		
-		beam.Parent = part
-		
-		table.insert(effects, {
-			beam = beam,
-			att1 = att1,
-			att2 = att2,
-			floatPart = floatPart,
-			baseAngle = angle,
-			index = i
-		})
-	end
-	
-	-- Add rainbow particle ring
+	-- VIEWPORT-FRIENDLY APPROACH: Use colored parts instead of beams
 	if isHead then
-		local ringAttachment = Instance.new("Attachment")
-		ringAttachment.Parent = part
+		-- Create rainbow aura using colored neon parts
+		local auraCount = 12
+		for i = 1, auraCount do
+			local angle = (i - 1) * (math.pi * 2 / auraCount)
+			local hue = (i - 1) / auraCount
+			
+			-- Create glowing orb
+			local orb = Instance.new("Part")
+			orb.Name = "RainbowOrb"..i
+			orb.Size = Vector3.new(1.5, 1.5, 1.5)
+			orb.Shape = Enum.PartType.Ball
+			orb.Material = Enum.Material.Neon
+			orb.Color = Color3.fromHSV(hue, 1, 1)
+			orb.Transparency = 0.3
+			orb.CanCollide = false
+			orb.CanQuery = false
+			orb.CanTouch = false
+			orb.Anchored = true
+			orb.Parent = part.Parent
+			
+			-- Position in circle around head
+			local radius = 3
+			orb.Position = part.Position + Vector3.new(
+				math.cos(angle) * radius,
+				0,
+				math.sin(angle) * radius
+			)
+			
+			-- Add glow
+			local glow = Instance.new("PointLight")
+			glow.Color = orb.Color
+			glow.Brightness = 5
+			glow.Range = 10
+			glow.Parent = orb
+			
+			table.insert(effects, {
+				orb = orb,
+				baseAngle = angle,
+				index = i,
+				hue = hue,
+				radius = radius
+			})
+		end
 		
-		local ringEmitter = Instance.new("ParticleEmitter")
-		ringEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		ringEmitter.Color = ColorSequence.new({
+		-- Add central rainbow particles
+		local centralAttachment = Instance.new("Attachment")
+		centralAttachment.Parent = part
+		
+		local rainbow = Instance.new("ParticleEmitter")
+		rainbow.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		rainbow.Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-			ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
-			ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
-			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
-			ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 0, 255)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+			ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 165, 0)),
+			ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
+			ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 255)),
+			ColorSequenceKeypoint.new(0.83, Color3.fromRGB(130, 0, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
 		})
-		ringEmitter.Lifetime = NumberRange.new(2, 3)
-		ringEmitter.Rate = 100
-		ringEmitter.Speed = NumberRange.new(0, 0)
-		ringEmitter.VelocityInheritance = 0
-		ringEmitter.EmissionDirection = Enum.NormalId.Top
-		ringEmitter.SpreadAngle = Vector2.new(0, 0)
-		ringEmitter.LightEmission = 1
-		ringEmitter.LightInfluence = 0
-		ringEmitter.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(0.1, 2),
-			NumberSequenceKeypoint.new(0.5, 3),
+		rainbow.Lifetime = NumberRange.new(1, 2)
+		rainbow.Rate = 200
+		rainbow.Speed = NumberRange.new(5, 10)
+		rainbow.SpreadAngle = Vector2.new(360, 360)
+		rainbow.VelocityInheritance = 0
+		rainbow.EmissionDirection = Enum.NormalId.Top
+		rainbow.LightEmission = 1
+		rainbow.LightInfluence = 0
+		rainbow.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(0.5, 2),
 			NumberSequenceKeypoint.new(1, 0)
 		})
-		ringEmitter.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(0.2, 0),
-			NumberSequenceKeypoint.new(0.8, 0),
+		rainbow.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.7, 0.3),
 			NumberSequenceKeypoint.new(1, 1)
 		})
-		ringEmitter.ZOffset = -2
-		ringEmitter.Parent = ringAttachment
+		rainbow.ZOffset = 1
+		rainbow.Parent = centralAttachment
 		
-		table.insert(effects, {emitter = ringEmitter, attachment = ringAttachment})
+		table.insert(effects, {emitter = rainbow, attachment = centralAttachment})
+		
+		-- Add rainbow selection box for extra glow
+		local selection = Instance.new("SelectionBox")
+		selection.Adornee = part
+		selection.Color3 = Color3.fromRGB(255, 255, 255)
+		selection.LineThickness = 0.3
+		selection.Transparency = 0
+		selection.SurfaceTransparency = 0.8
+		selection.Parent = part
+		
+		table.insert(effects, {selectionBox = selection})
+	else
+		-- For segments, just add rainbow particles
+		local attachment = Instance.new("Attachment")
+		attachment.Parent = part
+		
+		local particles = Instance.new("ParticleEmitter")
+		particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		particles.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
+		})
+		particles.Lifetime = NumberRange.new(0.5, 1)
+		particles.Rate = 50
+		particles.Speed = NumberRange.new(2, 4)
+		particles.SpreadAngle = Vector2.new(180, 180)
+		particles.LightEmission = 1
+		particles.Size = NumberSequence.new(1)
+		particles.Parent = attachment
+		
+		table.insert(effects, {emitter = particles, attachment = attachment})
 	end
 	
 	return effects
@@ -621,38 +626,50 @@ function VFXManager.StartVFXAnimation(model, skinName)
 				-- Pulse effect for aura/electric
 				local pulse = math.sin(time * 2) * 0.5 + 0.5
 				effect.emitter.Rate = effect.emitter.Rate * (0.8 + pulse * 0.4)
-			elseif effect.beam and effect.floatPart then
-				-- Animate rainbow beams
+			elseif effect.orb then
+				-- Animate rainbow orbs
 				local baseAngle = effect.baseAngle
 				local index = effect.index
 				
-				-- Make beams rotate and wave
-				local rotSpeed = 0.5
-				local waveHeight = 8
-				local waveSpeed = 2
-				local radius = 5
+				-- Make orbs rotate and pulse
+				local rotSpeed = 1
+				local pulseSpeed = 3
+				local verticalSpeed = 2
 				
 				local currentAngle = baseAngle + (time * rotSpeed)
-				local height = math.sin(time * waveSpeed + index) * waveHeight + 10
+				local pulse = math.sin(time * pulseSpeed + index * 0.5) * 0.3 + 1
+				local verticalOffset = math.sin(time * verticalSpeed + index * 0.3) * 2
 				
-				-- Update float part position relative to the beam's parent part
-				if effect.beam.Parent then
-					local partPos = effect.beam.Parent.Position
-					effect.floatPart.CFrame = CFrame.new(
-						partPos.X + math.cos(currentAngle) * radius,
-						partPos.Y + height,
-						partPos.Z + math.sin(currentAngle) * radius
-					)
+				-- Update orb position
+				if effect.orb.Parent then
+					local centerPart = effect.orb.Parent:FindFirstChild("Head") or effect.orb.Parent:FindFirstChild("SnakeHead")
+					if centerPart then
+						local radius = effect.radius * pulse
+						effect.orb.Position = centerPart.Position + Vector3.new(
+							math.cos(currentAngle) * radius,
+							verticalOffset,
+							math.sin(currentAngle) * radius
+						)
+						
+						-- Animate color through rainbow
+						local hue = (effect.hue + time * 0.5) % 1
+						effect.orb.Color = Color3.fromHSV(hue, 1, 1)
+						
+						-- Update glow color
+						local glow = effect.orb:FindFirstChild("PointLight")
+						if glow then
+							glow.Color = effect.orb.Color
+							glow.Brightness = 5 + math.sin(time * 4 + index) * 2
+						end
+						
+						-- Pulse size
+						effect.orb.Size = Vector3.new(1.5, 1.5, 1.5) * pulse
+					end
 				end
-				
-				-- Animate beam properties
-				local colorShift = (time * 0.5 + index * 0.2) % 1
-				effect.beam.CurveSize0 = math.sin(time * 3 + index) * 15 + 10
-				effect.beam.CurveSize1 = -math.sin(time * 3 + index + math.pi) * 15 - 10
-				
-				-- Pulse the width
-				local widthPulse = math.sin(time * 4 + index * 0.5) * 0.3 + 1
-				effect.beam.Width0 = (effect.beam.Parent == model:FindFirstChild("SnakeHead") and 2 or 1) * widthPulse
+			elseif effect.selectionBox then
+				-- Animate selection box rainbow
+				local hue = (time * 0.3) % 1
+				effect.selectionBox.Color3 = Color3.fromHSV(hue, 1, 1)
 			end
 		end
 	end)
@@ -696,11 +713,9 @@ function VFXManager.RemoveSnakeVFX(model)
 	-- Remove special effects
 	for _, effect in ipairs(vfxData.specialEffects or {}) do
 		if effect.attachment then effect.attachment:Destroy() end
-		if effect.beam then effect.beam:Destroy() end
-		if effect.att1 then effect.att1:Destroy() end
-		if effect.att2 then effect.att2:Destroy() end
-		if effect.floatPart then effect.floatPart:Destroy() end
+		if effect.orb then effect.orb:Destroy() end
 		if effect.emitter then effect.emitter:Destroy() end
+		if effect.selectionBox then effect.selectionBox:Destroy() end
 	end
 	
 	activeVFX[model] = nil
