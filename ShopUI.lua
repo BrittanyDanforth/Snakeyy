@@ -441,24 +441,24 @@ local SnakeSkinsData = {
 	}
 }
 
--- PERFECT SLITHER.IO SNAKE PREVIEW - FIXED FOR PUBLISHED GAME
+-- PERFECT SLITHER.IO SNAKE PREVIEW - FIXED SQUISHING
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 20,
-	SEGMENT_SPACING = 0.8,
-	HEAD_SIZE = Vector3.new(3, 3, 3),
-	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8),
-	SIZE_REDUCTION = 0.98,
-	CAMERA_DISTANCE = 15, -- Much closer camera
-	CAMERA_HEIGHT = 5, -- Lower camera
+	SEGMENT_COUNT = 18, -- Slightly fewer for better spacing
+	SEGMENT_SPACING = 2.2, -- MUCH MORE SPACING - NO MORE PANCAKES!
+	HEAD_SIZE = Vector3.new(4, 4, 4), -- Bigger head
+	SEGMENT_SIZE = Vector3.new(3.8, 3.8, 3.8), -- Bigger segments
+	SIZE_REDUCTION = 0.96, -- More noticeable taper
+	CAMERA_DISTANCE = 25, -- Back up camera to see whole snake
+	CAMERA_HEIGHT = 8,
 	ROTATION_SPEED = 0.4,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 2, -- Smaller movement radius
+	SLITHER_AMPLITUDE = 3,
 	SLITHER_FREQUENCY = 1.5,
 	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.15,
+	SEGMENT_DELAY = 0.12,
 	-- Snake positioning
-	SNAKE_RADIUS = 5, -- Smaller circle for movement
-	SNAKE_CENTER_Z = 0, -- Closer to camera
+	SNAKE_RADIUS = 8,
+	SNAKE_CENTER_Z = -5,
 }
 
 function CharacterPreview.create(viewport)
@@ -664,12 +664,12 @@ function CharacterPreview.create(viewport)
 		
 		-- Update segments to follow the trail
 		for i, seg in ipairs(segments) do
-			local historyIndex = math.floor(i * 2.5) -- Spacing in the history
+			local historyIndex = math.floor(i * 4) -- MORE SPACING IN HISTORY - NO BUNCHING!
 			
 			if CharacterPreview.positionHistory[historyIndex] then
 				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.5)
+				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.6) -- Faster lerp for responsiveness
 			end
 		end
 	end)
