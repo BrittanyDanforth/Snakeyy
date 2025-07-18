@@ -708,16 +708,38 @@ local function createUltraSmoothSnake(character)
 
 		local currentTime = tick()
 
+		-- POSITION HISTORY BASED MOVEMENT WITH ANTI-GAP FOR BOOSTING
 		for i = 1, currentLength do
 			local segment = segments[i]
 			if segment and segment.Parent then
-				local delay = mathFloor(i * 1.15)
+				-- CONSISTENT DELAY - Make segments follow closer together
+				local delay = mathFloor(i * 0.9) -- Reduced from 1.15 for tighter following
 				local targetData = getFromHistory(delay)
 				if targetData then
-					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.08)
+					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
 					local currentSegmentPos = segment.Position
-					local newPos = currentSegmentPos:Lerp(segmentPos, followSpeed)
-
+					
+					-- IMPROVED ANTI-GAP - Works for both normal and boost
+					local dynamicFollowSpeed = followSpeed
+					if i > 1 then
+						local prevSegment = segments[i - 1]
+						if prevSegment and prevSegment.Parent then
+							local gap = (currentSegmentPos - prevSegment.Position).Magnitude
+							local idealGap = activeConfig.SegmentSpacing
+							
+							-- Smooth adjustment based on gap size
+							if gap > idealGap * 1.2 then
+								-- Gap too big - speed up to catch up
+								local gapRatio = gap / idealGap
+								dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.02, 0.985)
+							elseif gap < idealGap * 0.8 then
+								-- Too close - slow down slightly
+								dynamicFollowSpeed = followSpeed * 0.95
+							end
+						end
+					end
+					
+					local newPos = currentSegmentPos:Lerp(segmentPos, dynamicFollowSpeed)
 					segment.CFrame = CFramenew(newPos)
 				end
 			end
