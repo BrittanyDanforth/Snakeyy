@@ -45,8 +45,17 @@ pcall(function()
 end)
 
 -- FIXED: Using new high-quality CharacterPreview module
-local CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview"))
+local CharacterPreviewModule = nil
 local CharacterPreview = nil -- Will be instantiated when needed
+
+-- Try to load CharacterPreview, but don't break if it's missing
+local loadCharacterPreview = pcall(function()
+	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 5))
+end)
+
+if not loadCharacterPreview then
+	warn("⚠️ CharacterPreview module not found - using legacy preview system")
+end
 
 -- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
@@ -444,20 +453,26 @@ local SnakeSkinsData = {
 
 -- Wrapper functions for the new CharacterPreview module
 local function createCharacterPreview(viewport)
-	if CharacterPreview then
-		CharacterPreview:destroy()
+	if CharacterPreviewModule then
+		if CharacterPreview then
+			CharacterPreview:destroy()
+		end
+		CharacterPreview = CharacterPreviewModule.new(viewport)
+	else
+		-- Fallback to legacy system
+		warn("Using legacy preview system")
+		return
 	end
-	CharacterPreview = CharacterPreviewModule.new(viewport)
 end
 
 local function updateCharacterPreview(skinName)
-	if CharacterPreview then
+	if CharacterPreview and CharacterPreviewModule then
 		CharacterPreview:updateSkin(skinName)
 	end
 end
 
 local function destroyCharacterPreview()
-	if CharacterPreview then
+	if CharacterPreview and CharacterPreviewModule then
 		CharacterPreview:destroy()
 		CharacterPreview = nil
 	end
