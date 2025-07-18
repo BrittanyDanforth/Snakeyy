@@ -804,6 +804,13 @@ function CharacterPreview.update(skinName)
 			end
 		end
 	end
+	
+	-- Apply VFX if available
+	local VFXManager = game:GetService("ReplicatedStorage"):FindFirstChild("VFXManager")
+	if VFXManager then
+		local VFXModule = require(VFXManager)
+		VFXModule.ApplySnakePreviewVFX(CharacterPreview.currentModel, skinName)
+	end
 end
 
 function CharacterPreview.destroy()
@@ -811,7 +818,14 @@ function CharacterPreview.destroy()
 		CharacterPreview.rotationConnection:Disconnect()
 	end
 
+	-- Remove VFX before destroying model
 	if CharacterPreview.currentModel then
+		local VFXManager = game:GetService("ReplicatedStorage"):FindFirstChild("VFXManager")
+		if VFXManager then
+			local VFXModule = require(VFXManager)
+			VFXModule.RemoveSnakeVFX(CharacterPreview.currentModel)
+		end
+		
 		CharacterPreview.currentModel:Destroy()
 	end
 
