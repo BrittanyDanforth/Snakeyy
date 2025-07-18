@@ -1,65 +1,44 @@
---[[
-ULTRA HIGH-QUALITY CHARACTER PREVIEW SYSTEM V3.0 - EXTREME SIZE FIX
-MASSIVE OVERHAUL for maximum visibility in published games
-Features:
-- EXTREMELY LARGE snake that's impossible to miss
-- 50 segments for massive presence
-- WorldModel with enhanced rendering
-- Zero lag with optimized calculations
-- Perfect for real Roblox game visibility
---]]
+-- CharacterPreview Module
+-- Handles snake preview rendering with VFX support
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CharacterPreview = {}
 CharacterPreview.__index = CharacterPreview
 
--- Get skins data from parent module
-local SnakeSkinsData = nil
-
-function CharacterPreview.setSkinData(skinData)
-	SnakeSkinsData = skinData
-end
-
--- EXTREME SIZES FOR MAXIMUM VISIBILITY
-local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 50,           -- MASSIVE amount of segments
-	SEGMENT_SPACING = 4,          -- HUGE spacing between segments
-	HEAD_SIZE = Vector3.new(12, 12, 12),      -- GIGANTIC head
-	SEGMENT_SIZE = Vector3.new(10, 10, 10),   -- HUGE starting segment size
-	SIZE_REDUCTION = 0.985,       -- Very gradual size reduction
-	CAMERA_DISTANCE = 100,        -- Camera WAY back
-	CAMERA_HEIGHT = 30,           -- Much higher camera
-	CAMERA_FOV = 90,             -- Maximum FOV for wide view
-	ORBIT_SPEED = 0.3,           -- Slow smooth orbit
-	MOVEMENT_RADIUS = 30,        -- MASSIVE movement circle
-	MOVEMENT_SPEED = 0.8,        -- Good movement speed
-	POSITION_HISTORY_SIZE = 55,  -- More history than segments
-	EYE_SIZE = Vector3.new(2.5, 2.5, 2.5),    -- HUGE eyes
-	EYE_SPACING = 1.5,           -- Wide eye spacing
-	EYE_FORWARD = -3.5,          -- Eyes forward on head
-	EYE_UP = 1.5,                -- Eyes up position
-	WAVE_HEIGHT = 5,             -- Vertical wave motion
-	SNAKE_HEIGHT = 10,           -- Base height off ground
+-- Configuration
+local CONFIG = {
+	SEGMENT_COUNT = 30,
+	SEGMENT_SPACING = 15.5,
+	HEAD_SIZE = Vector3.new(3, 3, 3),
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
+	SIZE_REDUCTION = 0.98,
+	CAMERA_DISTANCE = 45,
+	CAMERA_HEIGHT = 20,
+	CAMERA_FOV = 70,
+	ROTATION_SPEED = 0.5,
+	SLITHER_SPEED = 0.8,
+	SNAKE_RADIUS = 10,
+	SNAKE_CENTER_Z = -10,
+	DELAY_MULTIPLIER = 3.5
 }
 
-function CharacterPreview.new(viewport)
+function CharacterPreview.new(viewport, skinData)
 	local self = setmetatable({}, CharacterPreview)
 	
 	self.viewport = viewport
-	self.camera = nil
-	self.worldModel = nil
+	self.skinData = skinData or {}
 	self.model = nil
 	self.head = nil
 	self.segments = {}
-	self.eyes = {}
+	self.camera = nil
+	self.worldModel = nil
 	self.connections = {}
-	self.vfxParts = {}
-	self.currentSkin = "Default"
-	self.time = 0
+	self.vfxEffects = {}
 	self.positionHistory = {}
+	self.historyTimer = 0
+	self.time = 0
 	
 	self:initialize()
 	
@@ -67,42 +46,39 @@ function CharacterPreview.new(viewport)
 end
 
 function CharacterPreview:initialize()
-	-- Clear viewport completely
+	-- Clear viewport
 	self.viewport:ClearAllChildren()
 	
-	-- Create WorldModel FIRST for proper rendering
+	-- Create WorldModel for proper rendering
 	self.worldModel = Instance.new("WorldModel")
 	self.worldModel.Parent = self.viewport
 	
-	-- Enhanced viewport lighting
-	self.viewport.Ambient = Color3.new(0.8, 0.8, 0.8)
+	-- Set viewport properties
+	self.viewport.Ambient = Color3.new(0.3, 0.3, 0.3)
 	self.viewport.LightColor = Color3.new(1, 1, 1)
 	self.viewport.LightDirection = Vector3.new(-1, -1, -1).Unit
-	self.viewport.ImageColor3 = Color3.new(1, 1, 1)
-	self.viewport.ImageTransparency = 0
 	
-	-- Create camera with maximum FOV
+	-- Create camera
 	self.camera = Instance.new("Camera")
-	self.camera.FieldOfView = PREVIEW_CONFIG.CAMERA_FOV
+	self.camera.FieldOfView = CONFIG.CAMERA_FOV
 	self.camera.CameraType = Enum.CameraType.Scriptable
 	self.viewport.CurrentCamera = self.camera
 	self.camera.Parent = self.viewport
 	
-	-- Create model inside WorldModel
+	-- Create model
 	self.model = Instance.new("Model")
 	self.model.Name = "SnakePreview"
 	self.model.Parent = self.worldModel
 	
-	-- Create the massive snake
+	-- Create snake
 	self:createSnake()
 	
-	-- Start animations
-	self:startAnimations()
+	-- Start animation
+	self:startAnimation()
 end
 
 function CharacterPreview:createSnake()
-	-- Default skin with enhanced visibility
-	local defaultSkin = {
+	local skin = self.skinData["Default"] or {
 		HeadColor = Color3.fromRGB(76, 217, 100),
 		BodyColors = {
 			Color3.fromRGB(60, 180, 80),
@@ -111,302 +87,183 @@ function CharacterPreview:createSnake()
 			Color3.fromRGB(80, 200, 100),
 			Color3.fromRGB(60, 180, 80),
 		},
-		HeadSize = PREVIEW_CONFIG.HEAD_SIZE,
-		SegmentSize = PREVIEW_CONFIG.SEGMENT_SIZE,
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 3,
-		GlowRange = 15,
+		GlowIntensity = 2,
+		GlowRange = 6,
 	}
 	
-	local skinData = (SnakeSkinsData and SnakeSkinsData[self.currentSkin]) or defaultSkin
+	-- Create head
+	self.head = Instance.new("Part")
+	self.head.Name = "Head"
+	self.head.Size = skin.HeadSize or CONFIG.HEAD_SIZE
+	self.head.Shape = Enum.PartType.Ball
+	self.head.Material = skin.HeadMaterial
+	self.head.Color = skin.HeadColor
+	self.head.CanCollide = false
+	self.head.Anchored = true
+	self.head.Position = Vector3.new(0, 0, CONFIG.SNAKE_CENTER_Z)
+	self.head.Parent = self.model
 	
-	-- Create GIGANTIC head
-	local head = Instance.new("Part")
-	head.Name = "SnakeHead"
-	head.Size = PREVIEW_CONFIG.HEAD_SIZE
-	head.Material = skinData.HeadMaterial or Enum.Material.ForceField
-	head.Color = skinData.HeadColor
-	head.Shape = Enum.PartType.Ball
-	head.CanCollide = false
-	head.Anchored = true
-	head.TopSurface = Enum.SurfaceType.Smooth
-	head.BottomSurface = Enum.SurfaceType.Smooth
-	head.Position = Vector3.new(0, PREVIEW_CONFIG.SNAKE_HEIGHT, 0)
-	head.Parent = self.model
+	-- Head glow
+	local headGlow = Instance.new("PointLight")
+	headGlow.Brightness = skin.GlowIntensity * 1.5
+	headGlow.Range = skin.GlowRange * 1.5
+	headGlow.Color = skin.HeadColor
+	headGlow.Parent = self.head
 	
-	-- SUPER bright head glow
-	local headLight = Instance.new("PointLight")
-	headLight.Color = skinData.HeadColor
-	headLight.Brightness = 5
-	headLight.Range = 30
-	headLight.Parent = head
+	-- Create eyes
+	self:createEyes()
 	
-	-- Also add a SurfaceLight for extra visibility
-	local surfaceLight = Instance.new("SurfaceLight")
-	surfaceLight.Color = skinData.HeadColor
-	surfaceLight.Brightness = 3
-	surfaceLight.Range = 20
-	surfaceLight.Face = Enum.NormalId.Front
-	surfaceLight.Parent = head
-	
-	-- Create MASSIVE eyes
-	local function createEye(name, offsetX)
+	-- Create segments
+	local currentSize = CONFIG.SEGMENT_SIZE
+	for i = 1, CONFIG.SEGMENT_COUNT do
+		local segment = Instance.new("Part")
+		segment.Name = "Segment" .. i
+		segment.Size = currentSize
+		segment.Shape = Enum.PartType.Ball
+		segment.Material = skin.BodyMaterial
+		segment.CanCollide = false
+		segment.Anchored = true
+		segment.Parent = self.model
+		
+		-- Initial position
+		segment.Position = self.head.Position + Vector3.new(0, 0, -i * CONFIG.SEGMENT_SPACING * 3)
+		
+		-- Color pattern
+		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
+		segment.Color = skin.BodyColors[colorIndex]
+		
+		-- Segment glow
+		local glow = Instance.new("PointLight")
+		glow.Brightness = skin.GlowIntensity
+		glow.Range = skin.GlowRange
+		glow.Color = segment.Color
+		glow.Parent = segment
+		
+		table.insert(self.segments, {
+			part = segment,
+			colorIndex = colorIndex,
+			size = currentSize
+		})
+		
+		currentSize = currentSize * CONFIG.SIZE_REDUCTION
+	end
+end
+
+function CharacterPreview:createEyes()
+	local function createEye(xOffset)
 		local eye = Instance.new("Part")
-		eye.Name = name
-		eye.Size = PREVIEW_CONFIG.EYE_SIZE
+		eye.Size = Vector3.new(0.6, 0.6, 0.6)
+		eye.Shape = Enum.PartType.Ball
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
-		eye.Shape = Enum.PartType.Ball
 		eye.CanCollide = false
 		eye.Anchored = true
 		eye.Parent = self.model
 		
-		-- Eye glow
-		local eyeLight = Instance.new("PointLight")
-		eyeLight.Color = Color3.fromRGB(255, 255, 255)
-		eyeLight.Brightness = 2
-		eyeLight.Range = 10
-		eyeLight.Parent = eye
+		local eyeGlow = Instance.new("PointLight")
+		eyeGlow.Brightness = 8
+		eyeGlow.Range = 40
+		eyeGlow.Color = Color3.fromRGB(255, 255, 255)
+		eyeGlow.Parent = eye
 		
-		-- Create pupil
 		local pupil = Instance.new("Part")
-		pupil.Name = name .. "Pupil"
-		pupil.Size = PREVIEW_CONFIG.EYE_SIZE * 0.4
+		pupil.Size = Vector3.new(0.3, 0.3, 0.3)
+		pupil.Shape = Enum.PartType.Ball
 		pupil.Material = Enum.Material.Neon
 		pupil.Color = Color3.fromRGB(0, 0, 0)
-		pupil.Shape = Enum.PartType.Ball
 		pupil.CanCollide = false
 		pupil.Anchored = true
 		pupil.Parent = self.model
 		
-		table.insert(self.eyes, {eye = eye, pupil = pupil, offsetX = offsetX})
 		return eye, pupil
 	end
 	
-	createEye("LeftEye", -PREVIEW_CONFIG.EYE_SPACING)
-	createEye("RightEye", PREVIEW_CONFIG.EYE_SPACING)
-	
-	self.head = head
-	self.model.PrimaryPart = head
-	
-	-- Initialize position history with a long trail
-	local startPos = head.Position
-	for i = 1, PREVIEW_CONFIG.POSITION_HISTORY_SIZE do
-		local offset = i * PREVIEW_CONFIG.SEGMENT_SPACING * 0.8
-		table.insert(self.positionHistory, startPos - Vector3.new(offset * 0.5, 0, offset))
-	end
-	
-	-- Create MANY MASSIVE body segments
-	local currentSize = PREVIEW_CONFIG.SEGMENT_SIZE
-	
-	for i = 1, PREVIEW_CONFIG.SEGMENT_COUNT do
-		local segment = Instance.new("Part")
-		segment.Name = "Segment" .. i
-		segment.Size = currentSize
-		segment.Material = skinData.BodyMaterial or Enum.Material.Neon
-		segment.Shape = Enum.PartType.Ball
-		segment.CanCollide = false
-		segment.Anchored = true
-		segment.TopSurface = Enum.SurfaceType.Smooth
-		segment.BottomSurface = Enum.SurfaceType.Smooth
-		segment.Parent = self.model
-		
-		-- Apply color pattern
-		local colorIndex = ((i - 1) % #skinData.BodyColors) + 1
-		segment.Color = skinData.BodyColors[colorIndex]
-		
-		-- BRIGHT glow on every segment
-		local segmentLight = Instance.new("PointLight")
-		segmentLight.Color = segment.Color
-		segmentLight.Brightness = 2
-		segmentLight.Range = 15
-		segmentLight.Parent = segment
-		
-		-- Initial position in a spread out line
-		segment.Position = startPos - Vector3.new(
-			i * PREVIEW_CONFIG.SEGMENT_SPACING * 0.5,
-			0,
-			i * PREVIEW_CONFIG.SEGMENT_SPACING
-		)
-		
-		table.insert(self.segments, segment)
-		
-		-- Very gradual size reduction for massive snake
-		currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
-	end
-	
-	-- Apply enhanced VFX
-	self:applyVFX(skinData)
+	self.leftEye, self.leftPupil = createEye(-0.6)
+	self.rightEye, self.rightPupil = createEye(0.6)
 end
 
-function CharacterPreview:applyVFX(skinData)
-	-- Clean up old VFX
-	for _, vfx in pairs(self.vfxParts) do
-		vfx:Destroy()
-	end
-	self.vfxParts = {}
-	
-	-- Check for custom VFX
-	if skinData.VFX then
-		local vfx = skinData.VFX
-		
-		-- MASSIVE Aura effect
-		if vfx.AuraColor then
-			local aura = Instance.new("Part")
-			aura.Name = "Aura"
-			aura.Size = Vector3.new(20, 20, 20)
-			aura.Material = Enum.Material.ForceField
-			aura.Color = vfx.AuraColor
-			aura.Transparency = 0.5
-			aura.Shape = Enum.PartType.Ball
-			aura.CanCollide = false
-			aura.Anchored = true
-			aura.Parent = self.model
-			table.insert(self.vfxParts, aura)
-			
-			aura:SetAttribute("FollowHead", true)
-		end
-		
-		-- Larger particle effects
-		if vfx.ParticleColor then
-			for i = 1, 5 do
-				local particle = Instance.new("Part")
-				particle.Name = "Particle" .. i
-				particle.Size = Vector3.new(2, 2, 2)
-				particle.Material = Enum.Material.Neon
-				particle.Color = vfx.ParticleColor
-				particle.Shape = Enum.PartType.Ball
-				particle.CanCollide = false
-				particle.Anchored = true
-				particle.Parent = self.model
-				particle:SetAttribute("ParticleIndex", i)
-				
-				-- Particle glow
-				local pLight = Instance.new("PointLight")
-				pLight.Color = vfx.ParticleColor
-				pLight.Brightness = 3
-				pLight.Range = 10
-				pLight.Parent = particle
-				
-				table.insert(self.vfxParts, particle)
-			end
-		end
-		
-		-- Bigger lightning effect
-		if vfx.LightningColor then
-			local lightning = Instance.new("Part")
-			lightning.Name = "Lightning"
-			lightning.Size = Vector3.new(1, 15, 1)
-			lightning.Material = Enum.Material.Neon
-			lightning.Color = vfx.LightningColor
-			lightning.CanCollide = false
-			lightning.Anchored = true
-			lightning.Parent = self.model
-			lightning:SetAttribute("IsLightning", true)
-			table.insert(self.vfxParts, lightning)
-		end
-	end
-end
-
-function CharacterPreview:startAnimations()
-	-- Main update loop
+function CharacterPreview:startAnimation()
 	local connection = RunService.Heartbeat:Connect(function(dt)
 		self.time = self.time + dt
 		
-		-- Animate head in a large circular path with figure-8 motion
-		local headAngle = self.time * PREVIEW_CONFIG.MOVEMENT_SPEED
-		local figure8 = math.sin(headAngle * 2)
-		self.head.Position = Vector3.new(
-			math.cos(headAngle) * PREVIEW_CONFIG.MOVEMENT_RADIUS * (1 + figure8 * 0.3),
-			PREVIEW_CONFIG.SNAKE_HEIGHT + math.sin(headAngle * 2) * PREVIEW_CONFIG.WAVE_HEIGHT,
-			math.sin(headAngle) * PREVIEW_CONFIG.MOVEMENT_RADIUS * (1 - figure8 * 0.3)
+		-- Camera rotation
+		local camAngle = self.time * CONFIG.ROTATION_SPEED
+		local focusPoint = Vector3.new(0, 0, CONFIG.SNAKE_CENTER_Z)
+		
+		self.camera.CFrame = CFrame.lookAt(
+			focusPoint + Vector3.new(
+				math.sin(camAngle) * CONFIG.CAMERA_DISTANCE,
+				CONFIG.CAMERA_HEIGHT,
+				math.cos(camAngle) * CONFIG.CAMERA_DISTANCE
+			),
+			focusPoint
 		)
 		
-		-- Update position history for smooth following
-		table.insert(self.positionHistory, 1, self.head.Position)
-		if #self.positionHistory > PREVIEW_CONFIG.POSITION_HISTORY_SIZE then
-			table.remove(self.positionHistory)
-		end
+		-- Snake movement (infinity pattern)
+		local moveTime = self.time * CONFIG.SLITHER_SPEED
+		local t = moveTime * 2
+		local scale = CONFIG.SNAKE_RADIUS
 		
-		-- Update eyes to stay with head and look forward
-		for _, eyeData in ipairs(self.eyes) do
-			local eye = eyeData.eye
-			local pupil = eyeData.pupil
+		local headX = scale * math.sin(t) / (1 + math.cos(t)^2)
+		local headZ = scale * math.sin(t) * math.cos(t) / (1 + math.cos(t)^2)
+		local waveOffset = math.sin(moveTime * 3) * 3
+		headX = headX + waveOffset
+		local headY = math.sin(moveTime * 2) * 1
+		
+		local finalPos = Vector3.new(headX, headY, headZ)
+		
+		-- Look direction
+		local futureT = (moveTime + 0.1) * 2
+		local futureX = scale * math.sin(futureT) / (1 + math.cos(futureT)^2) + math.sin((moveTime + 0.1) * 3) * 3
+		local futureZ = scale * math.sin(futureT) * math.cos(futureT) / (1 + math.cos(futureT)^2)
+		local futureY = math.sin((moveTime + 0.1) * 2) * 1
+		
+		self.head.CFrame = CFrame.lookAt(finalPos, Vector3.new(futureX, futureY, futureZ))
+		
+		-- Position eyes
+		local eyeHeight = 0.6
+		local eyeForward = -1.4
+		local eyeSeparation = 0.55
+		
+		self.leftEye.CFrame = self.head.CFrame * CFrame.new(-eyeSeparation, eyeHeight, eyeForward)
+		self.rightEye.CFrame = self.head.CFrame * CFrame.new(eyeSeparation, eyeHeight, eyeForward)
+		self.leftPupil.CFrame = self.leftEye.CFrame * CFrame.new(0, 0, -0.25)
+		self.rightPupil.CFrame = self.rightEye.CFrame * CFrame.new(0, 0, -0.25)
+		
+		-- Update position history
+		self.historyTimer = self.historyTimer + dt
+		if self.historyTimer >= 1/60 then
+			self.historyTimer = self.historyTimer - 1/60
+			table.insert(self.positionHistory, 1, self.head.Position)
 			
-			-- Calculate head movement direction
-			local headLookDir = Vector3.new(0, 0, -1) -- Default forward
-			if #self.positionHistory > 2 then
-				local velocity = (self.head.Position - self.positionHistory[3])
-				if velocity.Magnitude > 0.1 then
-					headLookDir = velocity.Unit
-				end
+			local maxHistory = CONFIG.SEGMENT_COUNT * 10
+			if #self.positionHistory > maxHistory then
+				table.remove(self.positionHistory)
 			end
-			
-			-- Create proper head orientation
-			local rightVector = headLookDir:Cross(Vector3.new(0, 1, 0)).Unit
-			local upVector = rightVector:Cross(headLookDir).Unit
-			local headCFrame = CFrame.fromMatrix(self.head.Position, rightVector, upVector, -headLookDir)
-			
-			-- Position eyes with proper offsets
-			eye.CFrame = headCFrame * CFrame.new(eyeData.offsetX, PREVIEW_CONFIG.EYE_UP, PREVIEW_CONFIG.EYE_FORWARD)
-			pupil.CFrame = eye.CFrame * CFrame.new(0, 0, -0.5)
 		end
 		
-		-- Animate segments using position history with smooth interpolation
-		for i, segment in ipairs(self.segments) do
-			local historyIndex = math.floor(i * 1.1) + 1 -- Spread segments more
+		-- Animate segments
+		for i, seg in ipairs(self.segments) do
+			local delay = i * CONFIG.DELAY_MULTIPLIER
+			local historyIndex = math.floor(delay)
+			historyIndex = math.clamp(historyIndex, 1, #self.positionHistory)
+			
 			if self.positionHistory[historyIndex] then
-				-- Add slight wave motion to each segment
-				local segmentWave = math.sin(self.time * 2 + i * 0.2) * 0.5
-				local targetPos = self.positionHistory[historyIndex] + Vector3.new(0, segmentWave, 0)
+				local targetPos = self.positionHistory[historyIndex]
+				local currentPos = seg.part.Position
+				local frameIndependentLerp = 1 - math.exp(-8 * dt)
+				local newPos = currentPos:Lerp(targetPos, frameIndependentLerp)
+				seg.part.Position = newPos
 				
-				-- Smooth interpolation
-				segment.Position = segment.Position:Lerp(targetPos, 0.3)
-			end
-		end
-		
-		-- Dynamic camera that follows the snake
-		local cameraAngle = self.time * PREVIEW_CONFIG.ORBIT_SPEED
-		local snakeCenter = Vector3.new(0, PREVIEW_CONFIG.SNAKE_HEIGHT, 0) -- Focus on center area
-		
-		-- Camera moves in an elliptical orbit
-		local cameraX = math.sin(cameraAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
-		local cameraZ = math.cos(cameraAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE * 0.7
-		local cameraY = PREVIEW_CONFIG.CAMERA_HEIGHT + math.sin(cameraAngle * 2) * 10
-		
-		local cameraPos = snakeCenter + Vector3.new(cameraX, cameraY, cameraZ)
-		self.camera.CFrame = CFrame.lookAt(cameraPos, snakeCenter)
-		
-		-- Animate VFX
-		for _, vfx in pairs(self.vfxParts) do
-			if vfx:GetAttribute("FollowHead") then
-				-- Aura follows head with pulsing effect
-				vfx.Position = self.head.Position
-				vfx.Size = Vector3.new(20, 20, 20) + Vector3.new(1, 1, 1) * math.sin(self.time * 3) * 5
-				vfx.Transparency = 0.3 + math.sin(self.time * 2) * 0.2
-			elseif vfx:GetAttribute("ParticleIndex") then
-				-- Orbit particles in a larger radius
-				local index = vfx:GetAttribute("ParticleIndex")
-				local angle = self.time * 2 + (index * math.pi * 2 / 5)
-				local radius = 15
-				local height = math.sin(angle * 3) * 5
-				vfx.Position = self.head.Position + Vector3.new(
-					math.cos(angle) * radius,
-					height,
-					math.sin(angle) * radius
-				)
-				-- Pulsing particles
-				vfx.Size = Vector3.new(2, 2, 2) + Vector3.new(1, 1, 1) * math.sin(self.time * 5 + index) * 0.5
-			elseif vfx:GetAttribute("IsLightning") then
-				-- Dynamic lightning effect
-				local lightningOffset = math.sin(self.time * 10) * 10
-				vfx.CFrame = CFrame.lookAt(
-					self.head.Position + Vector3.new(lightningOffset, 10, 0),
-					self.head.Position + Vector3.new(-lightningOffset, -5, 0)
-				)
-				vfx.Transparency = 0.2 + math.random() * 0.3
-				vfx.Size = Vector3.new(1 + math.random() * 0.5, 15, 1 + math.random() * 0.5)
+				if i > 1 then
+					local prevSeg = self.segments[i-1].part
+					local direction = (prevSeg.Position - newPos).Unit
+					if direction.Magnitude > 0 then
+						seg.part.CFrame = CFrame.lookAt(newPos, prevSeg.Position)
+					end
+				end
 			end
 		end
 	end)
@@ -415,106 +272,72 @@ function CharacterPreview:startAnimations()
 end
 
 function CharacterPreview:updateSkin(skinName)
-	self.currentSkin = skinName
-	
-	-- Get skin data or use default
-	local skinData = nil
-	if SnakeSkinsData and SnakeSkinsData[skinName] then
-		skinData = SnakeSkinsData[skinName]
-	else
-		-- Use default colors if skin not found
-		skinData = {
-			HeadColor = Color3.fromRGB(76, 217, 100),
-			BodyColors = {
-				Color3.fromRGB(60, 180, 80),
-				Color3.fromRGB(80, 200, 100),
-				Color3.fromRGB(100, 220, 120),
-				Color3.fromRGB(80, 200, 100),
-				Color3.fromRGB(60, 180, 80),
-			},
-			HeadMaterial = Enum.Material.ForceField,
-			BodyMaterial = Enum.Material.Neon,
-			GlowIntensity = 2,
-			GlowRange = 8,
-		}
-	end
+	local skin = self.skinData[skinName] or self.skinData["Default"]
+	if not skin then return end
 	
 	-- Update head
-	self.head.Color = skinData.HeadColor
-	self.head.Material = skinData.HeadMaterial or Enum.Material.ForceField
-	self.head.Size = PREVIEW_CONFIG.HEAD_SIZE -- Always use massive size
-	
-	-- Update head light
-	local headLight = self.head:FindFirstChild("PointLight")
-	if headLight then
-		headLight.Color = skinData.HeadColor
-		headLight.Brightness = 5
-		headLight.Range = 30
-	end
-	
-	-- Update surface light
-	local surfaceLight = self.head:FindFirstChild("SurfaceLight")
-	if surfaceLight then
-		surfaceLight.Color = skinData.HeadColor
-		surfaceLight.Brightness = 3
-	end
-	
-	-- Update eyes
-	for _, eyeData in ipairs(self.eyes) do
-		local eye = eyeData.eye
-		local pupil = eyeData.pupil
+	if self.head then
+		self.head.Color = skin.HeadColor
+		self.head.Material = skin.HeadMaterial or Enum.Material.ForceField
 		
-		eye.Color = Color3.fromRGB(255, 255, 255)
-		eye.Material = Enum.Material.Neon
-		
-		pupil.Color = Color3.fromRGB(0, 0, 0)
-		pupil.Material = Enum.Material.Neon
-		
-		eye.CFrame = self.head.CFrame * CFrame.new(eyeData.offsetX, PREVIEW_CONFIG.EYE_UP, PREVIEW_CONFIG.EYE_FORWARD)
-		pupil.CFrame = eye.CFrame * CFrame.new(0, 0, -0.2)
-	end
-	
-	-- Update segments
-	for i, segment in ipairs(self.segments) do
-		local colorIndex = ((i - 1) % #skinData.BodyColors) + 1
-		
-		segment.Color = skinData.BodyColors[colorIndex]
-		segment.Material = skinData.BodyMaterial or Enum.Material.Neon
-		
-		-- Update segment light
-		local light = segment:FindFirstChild("PointLight")
+		local light = self.head:FindFirstChild("PointLight")
 		if light then
-			light.Color = segment.Color
-			light.Brightness = 1
+			light.Color = skin.HeadColor
+			light.Brightness = (skin.GlowIntensity or 2) * 1.5
 		end
 	end
 	
-	-- Update VFX
-	self:applyVFX(skinData)
+	-- Update segments
+	for i, seg in ipairs(self.segments) do
+		local colorIndex = seg.colorIndex
+		if skin.BodyColors and skin.BodyColors[colorIndex] then
+			seg.part.Color = skin.BodyColors[colorIndex]
+			seg.part.Material = skin.BodyMaterial or Enum.Material.Neon
+			
+			local light = seg.part:FindFirstChild("PointLight")
+			if light then
+				light.Color = seg.part.Color
+				light.Brightness = skin.GlowIntensity or 2
+			end
+		end
+	end
+	
+	-- Clear existing VFX
+	self:clearVFX()
+	
+	-- Apply new VFX if available
+	self:applyVFX(skinName)
+end
+
+function CharacterPreview:applyVFX(skinName)
+	-- This is where VFX would be applied
+	-- For now, keeping it simple and clean
+	-- VFX can be added later as needed
+end
+
+function CharacterPreview:clearVFX()
+	for _, effect in ipairs(self.vfxEffects) do
+		if effect then
+			effect:Destroy()
+		end
+	end
+	self.vfxEffects = {}
 end
 
 function CharacterPreview:destroy()
-	-- Disconnect all connections
-	for _, connection in pairs(self.connections) do
+	self:clearVFX()
+	
+	for _, connection in ipairs(self.connections) do
 		connection:Disconnect()
 	end
-	self.connections = {}
 	
-	-- Clean up model
 	if self.model then
 		self.model:Destroy()
 	end
 	
-	-- Clear references
-	self.viewport = nil
-	self.camera = nil
-	self.worldModel = nil
-	self.model = nil
-	self.head = nil
-	self.segments = {}
-	self.eyes = {}
-	self.vfxParts = {}
-	self.positionHistory = {}
+	if self.worldModel then
+		self.worldModel:Destroy()
+	end
 end
 
 return CharacterPreview
