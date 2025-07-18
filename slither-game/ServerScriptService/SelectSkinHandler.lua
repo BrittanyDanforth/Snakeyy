@@ -1,3 +1,6 @@
+-- DISABLED: Using UnifiedSkinSystem instead
+return
+--[[
 -- SERVER SCRIPT: SelectSkin RemoteEvent Handler - FIXED VERSION
 -- This handles skin changes from the shop UI and applies them to the snake system
 -- FIXED: Prevents skin from reverting to Default by not respawning immediately
@@ -115,6 +118,7 @@ RespawnSnakeRemote.OnServerEvent:Connect(function(player)
 	print("🔄 Respawning", player.Name)
 	player:LoadCharacter()
 end)
+--]]
 
 print("🐍 SelectSkin server handler ready! (Fixed version)")
 print("🎮 Players can now change skins without respawning!")

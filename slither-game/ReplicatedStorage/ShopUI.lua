@@ -743,6 +743,38 @@ end
 
 -- FIXED: Listen for server data changes to keep shop in sync
 local function setupServerSync()
+	-- Listen for updates from UnifiedSkinSystem
+	local UpdateClientRemote = ReplicatedStorage:WaitForChild("UpdateClientSkinData", 5)
+	if UpdateClientRemote then
+		UpdateClientRemote.OnClientEvent:Connect(function(data)
+			if data.coins ~= nil then
+				ShopUI.playerData.coins = data.coins
+				print("💰 Coins updated from unified system:", data.coins)
+				
+				-- Update UI
+				if ShopUI.isInitialized and ShopUI.uiElements and ShopUI.uiElements.coinAmount then
+					ShopUI.uiElements.coinAmount.Text = tostring(data.coins)
+				end
+			end
+			
+			if data.ownedSkins then
+				ShopUI.playerData.ownedSkins = data.ownedSkins
+				print("🎨 Owned skins updated from unified system:", table.concat(data.ownedSkins, ", "))
+			end
+			
+			if data.selectedSkin then
+				ShopUI.playerData.currentSkin = data.selectedSkin
+				print("🐍 Selected skin updated from unified system:", data.selectedSkin)
+			end
+			
+			-- Update UI
+			if ShopUI.isInitialized and ShopUI.updateSkinGrid and ShopUI.updateInfo then
+				ShopUI.updateSkinGrid()
+				ShopUI.updateInfo()
+			end
+		end)
+	end
+	
 	-- Listen for coin changes from server
 	localPlayer.AttributeChanged:Connect(function(attributeName)
 		if attributeName == "Coins" then

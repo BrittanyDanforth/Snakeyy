@@ -404,7 +404,13 @@ local function createUltraSmoothSnake(character)
 	
 	local humanoid = character:FindFirstChild("Humanoid") or character:WaitForChild("Humanoid", 5)
 	local rootPart = character:FindFirstChild("HumanoidRootPart") or character:WaitForChild("HumanoidRootPart", 5)
+	
+	-- Try multiple ways to get the player
 	local player = Players:GetPlayerFromCharacter(character)
+	if not player then
+		-- Try by name
+		player = Players:FindFirstChild(character.Name)
+	end
 	
 	if not humanoid then
 		warn("❌ No humanoid found for", character.Name)

@@ -474,6 +474,8 @@ local function handlePlayerLeaving(player)
 	savePlayerData(player, playerData)
 end
 
+-- DISABLED: Using UnifiedSkinSystem instead
+--[[
 -- Event connections
 PurchaseItemEvent.OnServerEvent:Connect(function(player, itemName)
 	print("🔔 PurchaseItemEvent fired by", player and player.Name or "nil", "for item:", itemName or "nil")
@@ -541,3 +543,4 @@ print("🎮 Studio mode:", isStudio and "✅ Enabled" or "❌ Disabled")
 print("💾 Data persistence:", isStudio and "❌ Disabled (Studio)" or "✅ Enabled")
 print("🎨 SnakeSkins integration:", SnakeSkins and "✅ Working" or "❌ Failed")
 print("🛒 ShopItems integration:", ShopItems and "✅ Working" or "❌ Failed")
+--]]
