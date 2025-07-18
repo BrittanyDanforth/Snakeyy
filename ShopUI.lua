@@ -1036,21 +1036,21 @@ local SKIN_CATEGORIES = {
 	{
 		name = "Featured",
 		description = "Hot & Trending",
-		icon = "🔥",
+		icon = "",
 		color = Color3.fromRGB(255, 100, 0),
 		skins = {"Default", "Plasma", "Cyber", "Rainbow"}
 	},
 	{
 		name = "Classic",
 		description = "Timeless Designs",
-		icon = "⭐",
+		icon = "",
 		color = Color3.fromRGB(100, 200, 255),
 		skins = {"Default", "Crimson", "Arctic", "Emerald"}
 	},
 	{
 		name = "Premium",
 		description = "Enhanced Effects",
-		icon = "💎",
+		icon = "",
 		color = Color3.fromRGB(200, 100, 255),
 		skins = {"Void", "Plasma", "Galaxy", "Ocean", "Shadow", "Cyber", "Dragon"}
 	},
@@ -1064,7 +1064,7 @@ local SKIN_CATEGORIES = {
 	{
 		name = "Special",
 		description = "Limited Edition",
-		icon = "🌟",
+		icon = "",
 		color = Color3.fromRGB(255, 0, 255),
 		skins = {"Rainbow"}
 	},
@@ -1110,14 +1110,14 @@ local GAMEPASS_DATA = {
 	["2x Coins"] = {
 		id = nil, -- Add your gamepass ID here
 		price = 99,
-		icon = "💰",
+		icon = "",
 		description = "Double all coin earnings!",
 		color = Color3.fromRGB(255, 215, 0)
 	},
 	["Speed Boost"] = {
 		id = nil, -- Add your gamepass ID here
 		price = 149,
-		icon = "⚡",
+		icon = "",
 		description = "25% faster movement speed!",
 		color = Color3.fromRGB(100, 200, 255)
 	},
@@ -1513,7 +1513,7 @@ local function createMainShop()
 	coinIcon.Size = UDim2.new(0.25, 0, 0.8, 0)
 	coinIcon.Position = UDim2.new(0.05, 0, 0.1, 0)
 	coinIcon.BackgroundTransparency = 1
-	coinIcon.Text = "💰"
+	coinIcon.Text = "$"
 	coinIcon.TextScaled = true
 	coinIcon.Parent = currencyFrame
 
@@ -1689,7 +1689,7 @@ local function createMainShop()
 	priceLabel.Name = "PriceLabel"
 	priceLabel.Size = UDim2.new(1, 0, 1, 0)
 	priceLabel.BackgroundTransparency = 1
-	priceLabel.Text = "💰 FREE"
+	priceLabel.Text = "FREE"
 	priceLabel.TextColor3 = SHOP_CONFIG.COLORS.SUCCESS
 	priceLabel.TextScaled = true
 	priceLabel.Font = SHOP_CONFIG.FONTS.PRICE
@@ -1738,7 +1738,7 @@ local function createMainShop()
 	applyBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
 	applyBtn.Position = UDim2.new(0.26, 0, 0.24, 0)
 	applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
-	applyBtn.Text = "APPLY"
+	applyBtn.Text = "EQUIP"
 	applyBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
 	applyBtn.TextScaled = true
 	applyBtn.Font = SHOP_CONFIG.FONTS.BUTTON
@@ -1750,9 +1750,9 @@ local function createMainShop()
 	local favoriteBtn = Instance.new("TextButton")
 	favoriteBtn.Name = "FavoriteButton"
 	favoriteBtn.Size = UDim2.new(1, 0, 0.22, 0)
-	favoriteBtn.Position = UDim2.new(0, 0, 0.26, 0)
+	favoriteBtn.Position = UDim2.new(0, 0, 0.48, 0)
 	favoriteBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.TERTIARY
-	favoriteBtn.Text = "⭐ ADD TO FAVORITES"
+	favoriteBtn.Text = "ADD TO FAVORITES"
 	favoriteBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_SECONDARY
 	favoriteBtn.TextScaled = true
 	favoriteBtn.Font = SHOP_CONFIG.FONTS.BUTTON
@@ -2104,7 +2104,7 @@ local function createSkinCard(skinName, index)
 			statusLabel.Size = UDim2.new(0.45, 0, 1, 0)
 			statusLabel.Position = UDim2.new(0, 0, 0, 0)
 			if skinData.price and skinData.price > 0 then
-				statusLabel.Text = "💰 "..tostring(skinData.price)
+				statusLabel.Text = "$"..tostring(skinData.price)
 				statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
 			else
 				-- VIP skins - Robux only
@@ -2135,7 +2135,7 @@ local function createSkinCard(skinName, index)
 			orLabel.Parent = statusFrame
 		else
 			if skinData.price and skinData.price > 0 then
-				statusLabel.Text = "💰 "..tostring(skinData.price)
+				statusLabel.Text = "$"..tostring(skinData.price)
 				statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
 			else
 				-- Special handling for items with no price (shouldn't happen)
@@ -2297,9 +2297,9 @@ function ShopUI.updateInfo()
 	else
 		-- Show price(s)
 		if skinData.robux then
-			ShopUI.uiElements.priceLabel.Text = "💰 "..tostring(skinData.price).." or R$ "..tostring(skinData.robux)
+			ShopUI.uiElements.priceLabel.Text = "$"..tostring(skinData.price).." or R$"..tostring(skinData.robux)
 		else
-			ShopUI.uiElements.priceLabel.Text = "💰 "..tostring(skinData.price)
+			ShopUI.uiElements.priceLabel.Text = "$"..tostring(skinData.price)
 		end
 
 		if ShopUI.playerData.coins >= skinData.price then
@@ -2350,10 +2350,10 @@ function ShopUI.updateInfo()
 
 	local isFavorite = table.find(ShopUI.playerData.favorites, uiState.selectedSkin) ~= nil
 	if isFavorite then
-		ShopUI.uiElements.favoriteBtn.Text = "⭐ FAVORITED"
+		ShopUI.uiElements.favoriteBtn.Text = "FAVORITED"
 		ShopUI.uiElements.favoriteBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.WARNING
 	else
-		ShopUI.uiElements.favoriteBtn.Text = "⭐ ADD TO FAVORITES"
+		ShopUI.uiElements.favoriteBtn.Text = "ADD TO FAVORITES"
 		ShopUI.uiElements.favoriteBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.TERTIARY
 	end
 end
