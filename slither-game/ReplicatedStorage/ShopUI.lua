@@ -441,7 +441,7 @@ local SnakeSkinsData = {
 	}
 }
 
--- FIXED: Create preview using YOUR exact CharacterSetup system
+-- ULTRA PREMIUM PREVIEW with AMAZING VFX
 function CharacterPreview.create(viewport)
 	if not viewport then return end
 
@@ -469,10 +469,10 @@ function CharacterPreview.create(viewport)
 	-- Set primary part
 	snakeModel.PrimaryPart = headParts.head
 
-	-- Create body segments using YOUR system
+	-- Create body segments with smooth wave animation
 	local segments = {}
 	local startPos = Vector3.new(0, 0, -10)
-	for i = 1, 8 do  -- 8 segments for good preview
+	for i = 1, 8 do
 		local pos = startPos - Vector3.new(0, 0, i * 2.8)
 		local colorIndex = ((i - 1) % #config.BodyColors) + 1
 		local color = config.BodyColors[colorIndex]
@@ -480,9 +480,85 @@ function CharacterPreview.create(viewport)
 		segments[i] = segment
 	end
 
-	-- Position camera for good view
-	camera.CFrame = CFrame.new(Vector3.new(15, 5, -10), Vector3.new(0, 0, -10))
-	camera.FieldOfView = 30
+	-- EPIC VFX CONTAINER
+	local vfxContainer = Instance.new("Folder")
+	vfxContainer.Name = "VFXContainer"
+	vfxContainer.Parent = snakeModel
+
+	-- CREATE AMAZING ORBITAL PARTICLES
+	CharacterPreview.orbitalParticles = {}
+	for i = 1, 6 do
+		local orb = Instance.new("Part")
+		orb.Name = "OrbitalParticle"..i
+		orb.Size = Vector3.new(0.5, 0.5, 0.5)
+		orb.Material = Enum.Material.Neon
+		orb.Shape = Enum.PartType.Ball
+		orb.Color = Color3.fromHSV((i-1)/6, 1, 1)
+		orb.CanCollide = false
+		orb.Anchored = true
+		orb.Parent = vfxContainer
+		
+		-- Add glow
+		local pointLight = Instance.new("PointLight")
+		pointLight.Color = orb.Color
+		pointLight.Brightness = 2
+		pointLight.Range = 3
+		pointLight.Parent = orb
+		
+		-- Add particle emitter for trail
+		local emitter = Instance.new("ParticleEmitter")
+		emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		emitter.Rate = 20
+		emitter.Lifetime = NumberRange.new(0.5, 1)
+		emitter.Speed = NumberRange.new(1)
+		emitter.SpreadAngle = Vector2.new(10, 10)
+		emitter.Color = ColorSequence.new(orb.Color)
+		emitter.LightEmission = 1
+		emitter.LightInfluence = 0
+		emitter.Size = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(0.5, 0.2),
+			NumberSequenceKeypoint.new(1, 0)
+		}
+		emitter.Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.7, 0.3),
+			NumberSequenceKeypoint.new(1, 1)
+		}
+		emitter.Parent = orb
+		
+		table.insert(CharacterPreview.orbitalParticles, orb)
+	end
+
+	-- CREATE ENERGY RINGS
+	CharacterPreview.energyRings = {}
+	for i = 1, 3 do
+		local ring = Instance.new("Part")
+		ring.Name = "EnergyRing"..i
+		ring.Size = Vector3.new(0.2, 0.2, 0.2)
+		ring.Transparency = 1
+		ring.CanCollide = false
+		ring.Anchored = true
+		ring.Parent = vfxContainer
+		
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshId = "rbxassetid://3270017"
+		mesh.Scale = Vector3.new(4 + i * 2, 4 + i * 2, 0.5)
+		mesh.Parent = ring
+		
+		local decal = Instance.new("Decal")
+		decal.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		decal.Face = Enum.NormalId.Top
+		decal.Color3 = config.HeadColor
+		decal.Transparency = 0.7
+		decal.Parent = ring
+		
+		table.insert(CharacterPreview.energyRings, ring)
+	end
+
+	-- Position camera for cinematic view
+	camera.CFrame = CFrame.new(Vector3.new(12, 8, -5), Vector3.new(0, 0, -10))
+	camera.FieldOfView = 35
 
 	-- Store references
 	CharacterPreview.currentModel = snakeModel
@@ -490,9 +566,12 @@ function CharacterPreview.create(viewport)
 	CharacterPreview.currentHeadParts = headParts
 	CharacterPreview.currentBody = segments
 	CharacterPreview.currentCamera = camera
+	CharacterPreview.vfxContainer = vfxContainer
 
-	-- Start rotation animation
+	-- Start animations
 	CharacterPreview.startRotation()
+	CharacterPreview.startVFXAnimations()
+	CharacterPreview.startBodyWave()
 
 	return snakeModel
 end
@@ -561,17 +640,126 @@ function CharacterPreview.startRotation()
 	end)
 end
 
+-- AMAZING VFX ANIMATIONS
+function CharacterPreview.startVFXAnimations()
+	if not CharacterPreview.orbitalParticles then return end
+	
+	local vfxConnection
+	vfxConnection = RunService.Heartbeat:Connect(function()
+		local time = tick()
+		
+		-- Animate orbital particles
+		if CharacterPreview.currentHead and CharacterPreview.orbitalParticles then
+			for i, orb in ipairs(CharacterPreview.orbitalParticles) do
+				if orb and orb.Parent then
+					local angle = (time * 2) + ((i-1) * math.pi * 2 / #CharacterPreview.orbitalParticles)
+					local radius = 4 + math.sin(time * 3 + i) * 0.5
+					local height = math.sin(time * 4 + i * 0.5) * 1
+					local headPos = CharacterPreview.currentHead.Position
+					
+					orb.Position = headPos + Vector3.new(
+						math.cos(angle) * radius,
+						height,
+						math.sin(angle) * radius
+					)
+					
+					-- Pulse effect
+					local scale = 1 + math.sin(time * 5 + i) * 0.2
+					orb.Size = Vector3.new(0.5, 0.5, 0.5) * scale
+					
+					-- Color shift for VIP skins
+					if uiState.selectedSkin and uiState.selectedSkin:match("VIP") then
+						orb.Color = Color3.fromHSV((time * 0.5 + i/6) % 1, 1, 1)
+						local light = orb:FindFirstChild("PointLight")
+						if light then
+							light.Color = orb.Color
+						end
+					end
+				end
+			end
+		else
+			vfxConnection:Disconnect()
+		end
+		
+		-- Animate energy rings
+		if CharacterPreview.currentHead and CharacterPreview.energyRings then
+			for i, ring in ipairs(CharacterPreview.energyRings) do
+				if ring and ring.Parent then
+					local headPos = CharacterPreview.currentHead.Position
+					ring.Position = headPos
+					ring.CFrame = CFrame.new(headPos) * CFrame.Angles(
+						math.rad(90),
+						time * (i * 0.5),
+						math.sin(time * 2 + i) * 0.2
+					)
+					
+					-- Pulse transparency
+					local transparency = 0.5 + math.sin(time * 3 + i) * 0.3
+					local decal = ring:FindFirstChild("Decal")
+					if decal then
+						decal.Transparency = transparency
+					end
+				end
+			end
+		end
+	end)
+	
+	CharacterPreview.vfxConnection = vfxConnection
+end
+
+-- SMOOTH SNAKE BODY WAVE
+function CharacterPreview.startBodyWave()
+	if not CharacterPreview.currentBody then return end
+	
+	local waveConnection
+	waveConnection = RunService.Heartbeat:Connect(function()
+		local time = tick()
+		
+		if CharacterPreview.currentBody then
+			for i, segment in ipairs(CharacterPreview.currentBody) do
+				if segment and segment.Parent then
+					local offset = math.sin(time * 3 - i * 0.5) * 0.3
+					local basePos = Vector3.new(0, 0, -10 - (i * 2.8))
+					segment.Position = basePos + Vector3.new(offset, 0, 0)
+					
+					-- Subtle size pulse for premium skins
+					if uiState.selectedSkin and SKIN_DATA[uiState.selectedSkin] and SKIN_DATA[uiState.selectedSkin].robux then
+						local scale = 1 + math.sin(time * 4 - i * 0.3) * 0.05
+						segment.Size = Vector3.new(2.5, 2.5, 2.5) * scale
+					end
+				end
+			end
+		else
+			waveConnection:Disconnect()
+		end
+	end)
+	
+	CharacterPreview.waveConnection = waveConnection
+end
+
 function CharacterPreview.destroy(viewport)
 	if viewport then
 		for _, child in pairs(viewport:GetChildren()) do
 			child:Destroy()
 		end
 	end
+	
+	-- Clean up all connections
+	if CharacterPreview.vfxConnection then
+		CharacterPreview.vfxConnection:Disconnect()
+	end
+	if CharacterPreview.waveConnection then
+		CharacterPreview.waveConnection:Disconnect()
+	end
+	
 	CharacterPreview.currentModel = nil
 	CharacterPreview.currentHead = nil
 	CharacterPreview.currentHeadParts = nil
 	CharacterPreview.currentBody = nil
 	CharacterPreview.currentCamera = nil
+	CharacterPreview.orbitalParticles = nil
+	CharacterPreview.energyRings = nil
+	CharacterPreview.vfxContainer = nil
 end
 
 -- Ultra Modern Configuration
@@ -658,26 +846,88 @@ local SKIN_CATEGORIES = {
 		icon = "🌟",
 		color = Color3.fromRGB(255, 0, 255),
 		skins = {"Rainbow"}
+	},
+	{
+		name = "Gamepasses",
+		description = "Power-Ups & Boosts",
+		icon = "🚀",
+		color = Color3.fromRGB(0, 255, 127),
+		skins = {} -- Will show gamepasses instead
 	}
 }
 
--- Skin pricing with Robux options
+-- Skin pricing - Basic patterns for coins, premium for Robux
 local SKIN_DATA = {
+	-- FREE
 	["Default"] = {price = 0, robux = nil, tag = nil},
-	["Crimson"] = {price = 250, robux = nil, tag = "Popular"},
-	["Arctic"] = {price = 350, robux = nil, tag = nil},
-	["Emerald"] = {price = 500, robux = nil, tag = "New"},
-	["Void"] = {price = 1000, robux = nil, tag = "Hot"},
-	["Plasma"] = {price = 1500, robux = 25, tag = "Trending"},
-	["Galaxy"] = {price = 2000, robux = 35, tag = "Bestseller"},
-	["Ocean"] = {price = 2500, robux = 45, tag = nil},
-	["Shadow"] = {price = 3000, robux = 50, tag = "Mysterious"},
-	["Cyber"] = {price = 4000, robux = 75, tag = "Tech"},
-	["Dragon"] = {price = 5000, robux = 99, tag = "Epic"},
-	["VIP Diamond"] = {price = 10000, robux = 149, tag = "VIP"},
-	["VIP Inferno"] = {price = 15000, robux = 199, tag = "VIP"},
-	["VIP Cosmic"] = {price = 20000, robux = 299, tag = "VIP"},
-	["Rainbow"] = {price = 7500, robux = 125, tag = "Special"},
+	
+	-- BASIC PATTERNS (Coins only - simple color variations)
+	["Crimson"] = {price = 100, robux = nil, tag = "Popular"},
+	["Arctic"] = {price = 150, robux = nil, tag = nil},
+	["Emerald"] = {price = 200, robux = nil, tag = "New"},
+	
+	-- PREMIUM PATTERNS (Both options - cooler effects)
+	["Void"] = {price = 1000, robux = 25, tag = "Hot"},
+	["Ocean"] = {price = 1500, robux = 35, tag = nil},
+	["Shadow"] = {price = 2000, robux = 45, tag = "Mysterious"},
+	
+	-- ULTRA PREMIUM (Robux preferred - amazing effects)
+	["Plasma"] = {price = 5000, robux = 75, tag = "Trending"},
+	["Galaxy"] = {price = 7500, robux = 99, tag = "Bestseller"},
+	["Cyber"] = {price = 10000, robux = 125, tag = "Tech"},
+	["Dragon"] = {price = 15000, robux = 149, tag = "Epic"},
+	["Rainbow"] = {price = 20000, robux = 199, tag = "Special"},
+	
+	-- VIP EXCLUSIVE (Robux only - insane effects)
+	["VIP Diamond"] = {price = nil, robux = 299, tag = "VIP"},
+	["VIP Inferno"] = {price = nil, robux = 399, tag = "VIP"},
+	["VIP Cosmic"] = {price = nil, robux = 499, tag = "VIP"},
+}
+
+-- Gamepass data
+local GAMEPASS_DATA = {
+	["2x Coins"] = {
+		id = nil, -- Add your gamepass ID here
+		price = 99,
+		icon = "💰",
+		description = "Double all coin earnings!",
+		color = Color3.fromRGB(255, 215, 0)
+	},
+	["Speed Boost"] = {
+		id = nil, -- Add your gamepass ID here
+		price = 149,
+		icon = "⚡",
+		description = "25% faster movement speed!",
+		color = Color3.fromRGB(100, 200, 255)
+	},
+	["Extra Life"] = {
+		id = nil, -- Add your gamepass ID here
+		price = 199,
+		icon = "❤️",
+		description = "Respawn once per game!",
+		color = Color3.fromRGB(255, 100, 100)
+	},
+	["Magnet"] = {
+		id = nil, -- Add your gamepass ID here
+		price = 249,
+		icon = "🧲",
+		description = "Attract food from further away!",
+		color = Color3.fromRGB(200, 100, 255)
+	},
+	["VIP Access"] = {
+		id = nil, -- Add your gamepass ID here
+		price = 499,
+		icon = "👑",
+		description = "VIP chat tag + exclusive skins!",
+		color = Color3.fromRGB(255, 215, 0)
+	},
+	["Pet Ally"] = {
+		id = nil, -- Add your gamepass ID here
+		price = 799,
+		icon = "🐉",
+		description = "A dragon ally follows and protects you!",
+		color = Color3.fromRGB(255, 100, 0)
+	}
 }
 
 -- FIXED: Player data system (using JSON for arrays to avoid attribute errors)
@@ -753,7 +1003,7 @@ local function setupServerSync()
 				
 				-- Update UI
 				if ShopUI.isInitialized and ShopUI.uiElements and ShopUI.uiElements.coinAmount then
-					ShopUI.uiElements.coinAmount.Text = tostring(data.coins)
+					ShopUI.uiElements.coinAmount.Text = ShopUI.formatNumber(data.coins)
 				end
 			end
 			
@@ -1434,6 +1684,102 @@ local function createCategoryButton(category, index)
 	return btn
 end
 
+-- Create gamepass card
+local function createGamepassCard(passName, index)
+	local passData = GAMEPASS_DATA[passName]
+	if not passData then return end
+	
+	local card = Instance.new("TextButton")
+	card.Name = "GamepassCard_"..passName
+	card.Size = UDim2.new(0, SHOP_CONFIG.CARD_WIDTH, 0, SHOP_CONFIG.CARD_HEIGHT)
+	card.BackgroundColor3 = passData.color or SHOP_CONFIG.COLORS.TERTIARY
+	card.BackgroundTransparency = 0.2
+	card.Text = ""
+	card.Parent = ShopUI.uiElements.gridScroll
+	
+	-- Grid position
+	local columns = 5
+	local row = math.floor((index - 1) / columns)
+	local col = (index - 1) % columns
+	card.Position = UDim2.new(0, col * (SHOP_CONFIG.CARD_WIDTH + SHOP_CONFIG.GRID_SPACING) + 8, 
+		0, row * (SHOP_CONFIG.CARD_HEIGHT + SHOP_CONFIG.GRID_SPACING) + 8)
+	
+	createCorner(card, 12)
+	local cardStroke = createStroke(card, Color3.fromRGB(0, 255, 127), 2, 0.8)
+	
+	-- Icon
+	local iconLabel = Instance.new("TextLabel")
+	iconLabel.Size = UDim2.new(0.5, 0, 0.4, 0)
+	iconLabel.Position = UDim2.new(0.25, 0, 0.1, 0)
+	iconLabel.BackgroundTransparency = 1
+	iconLabel.Text = passData.icon
+	iconLabel.TextScaled = true
+	iconLabel.Font = Enum.Font.SourceSansBold
+	iconLabel.Parent = card
+	
+	-- Name
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size = UDim2.new(0.9, 0, 0.15, 0)
+	nameLabel.Position = UDim2.new(0.05, 0, 0.5, 0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = passName
+	nameLabel.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
+	nameLabel.TextScaled = true
+	nameLabel.Font = SHOP_CONFIG.FONTS.HEADING
+	nameLabel.Parent = card
+	
+	-- Description
+	local descLabel = Instance.new("TextLabel")
+	descLabel.Size = UDim2.new(0.9, 0, 0.12, 0)
+	descLabel.Position = UDim2.new(0.05, 0, 0.65, 0)
+	descLabel.BackgroundTransparency = 1
+	descLabel.Text = passData.description
+	descLabel.TextColor3 = SHOP_CONFIG.COLORS.TEXT_SECONDARY
+	descLabel.TextScaled = true
+	descLabel.Font = SHOP_CONFIG.FONTS.BUTTON
+	descLabel.Parent = card
+	
+	-- Price
+	local priceLabel = Instance.new("TextLabel")
+	priceLabel.Size = UDim2.new(0.9, 0, 0.12, 0)
+	priceLabel.Position = UDim2.new(0.05, 0, 0.82, 0)
+	priceLabel.BackgroundTransparency = 1
+	priceLabel.Text = "R$ " .. tostring(passData.price)
+	priceLabel.TextColor3 = Color3.fromRGB(0, 255, 127)
+	priceLabel.TextScaled = true
+	priceLabel.Font = SHOP_CONFIG.FONTS.PRICE
+	priceLabel.Parent = card
+	
+	-- Hover effects
+	card.MouseEnter:Connect(function()
+		playSound("HOVER", 0.1)
+		TweenService:Create(card, TweenInfo.new(0.2), {
+			Size = UDim2.new(0, SHOP_CONFIG.CARD_WIDTH * SHOP_CONFIG.HOVER_SCALE, 
+				0, SHOP_CONFIG.CARD_HEIGHT * SHOP_CONFIG.HOVER_SCALE)
+		}):Play()
+		TweenService:Create(cardStroke, TweenInfo.new(0.2), {
+			Thickness = 3
+		}):Play()
+	end)
+	
+	card.MouseLeave:Connect(function()
+		TweenService:Create(card, TweenInfo.new(0.2), {
+			Size = UDim2.new(0, SHOP_CONFIG.CARD_WIDTH, 0, SHOP_CONFIG.CARD_HEIGHT)
+		}):Play()
+		TweenService:Create(cardStroke, TweenInfo.new(0.2), {
+			Thickness = 2
+		}):Play()
+	end)
+	
+	-- Click to purchase
+	card.MouseButton1Click:Connect(function()
+		playSound("SELECT")
+		-- Placeholder for gamepass purchase
+		print("🛒 Gamepass purchase:", passName, "for", passData.price, "Robux")
+		-- In production, use MarketplaceService:PromptGamePassPurchase
+	end)
+end
+
 -- Create skin card
 local function createSkinCard(skinName, index)
 	local skinData = SKIN_DATA[skinName]
@@ -1654,11 +2000,28 @@ function ShopUI.updateSkinGrid()
 	local category = SKIN_CATEGORIES[uiState.currentCategory]
 	local totalHeight = 0
 
-	for i, skinName in ipairs(category.skins) do
-		createSkinCard(skinName, i)
+	-- Check if this is the gamepasses category
+	if category.name == "Gamepasses" then
+		-- Show gamepasses instead of skins
+		local passNames = {}
+		for passName, _ in pairs(GAMEPASS_DATA) do
+			table.insert(passNames, passName)
+		end
+		
+		for i, passName in ipairs(passNames) do
+			createGamepassCard(passName, i)
+			
+			local rows = math.ceil(i / 5)
+			totalHeight = rows * (SHOP_CONFIG.CARD_HEIGHT + SHOP_CONFIG.GRID_SPACING) + 25
+		end
+	else
+		-- Show skins
+		for i, skinName in ipairs(category.skins) do
+			createSkinCard(skinName, i)
 
-		local rows = math.ceil(i / 5)
-		totalHeight = rows * (SHOP_CONFIG.CARD_HEIGHT + SHOP_CONFIG.GRID_SPACING) + 25
+			local rows = math.ceil(i / 5)
+			totalHeight = rows * (SHOP_CONFIG.CARD_HEIGHT + SHOP_CONFIG.GRID_SPACING) + 25
+		end
 	end
 
 	ShopUI.uiElements.gridScroll.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
@@ -1721,9 +2084,13 @@ function ShopUI.updateInfo()
 	if isCurrent then
 		ShopUI.uiElements.applyBtn.Text = "EQUIPPED"
 		ShopUI.uiElements.applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.TERTIARY
-	else
-		ShopUI.uiElements.applyBtn.Text = "APPLY"
+		ShopUI.uiElements.applyBtn.Visible = true
+	elseif isOwned then
+		ShopUI.uiElements.applyBtn.Text = "EQUIP"
 		ShopUI.uiElements.applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
+		ShopUI.uiElements.applyBtn.Visible = true
+	else
+		ShopUI.uiElements.applyBtn.Visible = false
 	end
 
 	if isOwned then
@@ -1801,8 +2168,8 @@ function ShopUI.purchaseSkin(useRobux)
 		return
 	end
 
-	-- Handle coin purchase
-	if ShopUI.playerData.coins >= skinData.price then
+	-- Handle coin purchase (only if coin price exists)
+	if skinData.price and ShopUI.playerData.coins >= skinData.price then
 		-- FIXED: Use server-side purchase through PurchaseItem RemoteEvent
 		print("🛒 Attempting to purchase", uiState.selectedSkin, "through server...")
 
