@@ -441,23 +441,23 @@ local SnakeSkinsData = {
 	}
 }
 
--- PERFECT PREVIEW WITH AMAZING ANIMATION
+-- FIX FOR LENGTH COMPRESSION IN REAL GAME
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 20, -- Perfect amount
-	SEGMENT_SPACING = 15, -- 15 spacing as requested!
-	HEAD_SIZE = Vector3.new(3, 3, 3),
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
-	SIZE_REDUCTION = 0.98,
-	CAMERA_DISTANCE = 45, -- Adjusted for 15 spacing
-	CAMERA_HEIGHT = 15,
+	SEGMENT_COUNT = 30, -- More segments for better length
+	SEGMENT_SPACING = 15.5, -- Increased spacing to prevent compression
+	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
+	SIZE_REDUCTION = 0.98, -- Normal taper
+	CAMERA_DISTANCE = 25, -- Further back to see full snake
+	CAMERA_HEIGHT = 20, -- Higher for better view
 	ROTATION_SPEED = 0.3,
-	-- Snake movement - PERFECTED
-	SLITHER_AMPLITUDE = 8, -- Bigger figure-8
-	SLITHER_FREQUENCY = 1.2, -- Slower curves to show pattern
-	SLITHER_SPEED = 0.8, -- Slower to show off skin
-	SEGMENT_DELAY = 0.12, -- Smoother delay between segments
+	-- Snake movement
+	SLITHER_AMPLITUDE = 4,
+	SLITHER_FREQUENCY = 1.5,
+	SLITHER_SPEED = 1.0,
+	SEGMENT_DELAY = 0.08,
 	-- Snake positioning
-	SNAKE_RADIUS = 15, -- Bigger figure-8 pattern
+	SNAKE_RADIUS = 12, -- Larger movement circle
 	SNAKE_CENTER_Z = 0,
 }
 
@@ -466,11 +466,11 @@ function CharacterPreview.create(viewport)
 
 	-- Clear viewport efficiently
 	viewport:ClearAllChildren()
-	
+
 	-- CRITICAL FIX: Create WorldModel for proper rendering in real game
 	local worldModel = Instance.new("WorldModel")
 	worldModel.Parent = viewport
-	
+
 	-- Create massive reference part to establish scale
 	local scaleReference = Instance.new("Part")
 	scaleReference.Name = "ScaleReference"
@@ -543,7 +543,7 @@ function CharacterPreview.create(viewport)
 		eye.CanCollide = false
 		eye.Anchored = true
 		eye.Parent = model
-		
+
 		-- Eye glow for visibility
 		local eyeGlow = Instance.new("PointLight")
 		eyeGlow.Brightness = 8
@@ -583,9 +583,9 @@ function CharacterPreview.create(viewport)
 		segment.CanTouch = false
 		segment.Anchored = true
 		segment.Parent = model
-		
-		-- Initial position
-		segment.Position = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
+
+		-- Initial position - spread out in Z axis
+		segment.Position = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING * 3)
 
 		-- Color pattern
 		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
@@ -598,10 +598,10 @@ function CharacterPreview.create(viewport)
 		glow.Color = segment.Color
 		glow.Parent = segment
 
-		-- Store segment data
+		-- Store segment data with PROPER Z offset
 		table.insert(segments, {
 			part = segment,
-			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING),
+			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING * 2), -- Double spacing in Z
 			size = currentSize,
 			colorIndex = colorIndex
 		})
@@ -627,54 +627,39 @@ function CharacterPreview.create(viewport)
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
 
-		-- DYNAMIC CAMERA THAT FOLLOWS THE ACTION
+		-- Camera rotation with proper positioning
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
-		
-		-- Camera follows the snake's center mass
-		local snakeCenter = head.Position
-		if #segments > 10 then
-			-- Look at middle of snake for better framing
-			snakeCenter = segments[10].part.Position:Lerp(head.Position, 0.5)
-		end
-		
-		-- Smooth camera orbit with vertical variation
-		local camHeight = PREVIEW_CONFIG.CAMERA_HEIGHT + math.sin(time * 0.5) * 3
-		local camDistance = PREVIEW_CONFIG.CAMERA_DISTANCE + math.sin(time * 0.3) * 5
-		
+		local focusPoint = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
+
 		camera.CFrame = CFrame.lookAt(
-			snakeCenter + Vector3.new(
-				math.sin(camAngle) * camDistance,
-				camHeight,
-				math.cos(camAngle) * camDistance
+			focusPoint + Vector3.new(
+				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
+				PREVIEW_CONFIG.CAMERA_HEIGHT,
+				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
 			),
-			snakeCenter
+			focusPoint
 		)
 
 		-- Ensure camera type is scriptable
 		camera.CameraType = Enum.CameraType.Scriptable
 
-		-- SIMPLE SMOOTH BACK AND FORTH MOVEMENT
-		local moveAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
-		
-		-- Simple left-right movement to show off skin
-		local headX = math.sin(moveAngle) * PREVIEW_CONFIG.SNAKE_RADIUS
-		local headZ = 0
-		local headY = 0
-		
-		-- Add smooth S-curve along the body
-		local waveOffset = math.sin(moveAngle * 2) * 3
-		
-		local finalPos = Vector3.new(headX, headY, headZ + waveOffset)
+		-- Head movement - continuous circular slithering pattern
+		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
+		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
+		local headX = math.sin(slitherAngle) * radius
+		local headZ = math.cos(slitherAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
 
-		-- Face the direction of movement
-		local velocity = math.cos(moveAngle) * PREVIEW_CONFIG.SNAKE_RADIUS
-		local lookDir = Vector3.new(velocity, 0, 0)
-		
-		if lookDir.Magnitude > 0.1 then
-			head.CFrame = CFrame.lookAt(finalPos, finalPos + lookDir)
-		else
-			head.Position = finalPos
-		end
+		-- Add wave motion for more natural movement
+		local waveX = math.sin(slitherAngle * 3) * 2
+		local finalPos = Vector3.new(headX + waveX, 0, headZ)
+
+		-- Calculate direction snake is moving
+		local nextAngle = slitherAngle + 0.1
+		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+		local nextZ = math.cos(nextAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
+
+		-- Set head CFrame to face movement direction
+		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
 
 		-- Position eyes properly on the FRONT of the head
 		-- The -Z direction is forward when using CFrame
@@ -704,16 +689,19 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- SIMPLE SMOOTH SEGMENT FOLLOWING
+		-- Update segments to follow the trail with PROPER SPACING
 		for i, seg in ipairs(segments) do
-			-- Each segment follows a bit behind the previous
-			local historyIndex = i * 3 -- Simple spacing in history
-			
+			-- Each segment follows where the head was N frames ago
+			-- More segments back = more frames back in history
+			local framesBack = i * 2 -- This controls segment spacing
+			local historyIndex = math.min(framesBack, #CharacterPreview.positionHistory)
+
 			if CharacterPreview.positionHistory[historyIndex] then
+				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				
-				-- Simple smooth following
-				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.3)
+				-- Add offset to maintain proper spacing even when stationary
+				local spacingOffset = (head.Position - targetPos).Unit * PREVIEW_CONFIG.SEGMENT_SPACING * i * 0.1
+				seg.part.Position = seg.part.Position:Lerp(targetPos + spacingOffset, 0.5)
 			end
 		end
 	end)
