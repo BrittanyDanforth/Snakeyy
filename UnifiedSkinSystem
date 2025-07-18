@@ -147,21 +147,34 @@ local function handlePurchase(player, itemName)
 		return
 	end
 
-	-- Handle Robux purchase differently
-	if isRobuxPurchase then
+	local skinData = SnakeSkins[serverSkinName]
+
+	-- Handle different purchase types
+	if isRobuxPurchase or skinData.RobuxPrice then
 		-- For Robux purchases, we need to verify the purchase through MarketplaceService
 		-- This is a placeholder - in production, you'd use ProcessReceipt
-		print("💎 Robux purchase requested for:", skinName)
+		print("💎 Robux purchase requested for:", skinName, "Price:", skinData.RobuxPrice or "Unknown")
 
 		-- For now, we'll just grant the skin (in production, this would be after payment verification)
 		table.insert(data.ownedSkins, skinName)
 
 		-- Log the Robux purchase
 		print("✅ Robux purchase completed for:", skinName)
+	elseif skinData.GamepassId then
+		-- Handle gamepass skins
+		print("🎮 Gamepass skin requested:", skinName, "GamepassId:", skinData.GamepassId)
+		
+		-- Check gamepass ownership (placeholder - implement actual check)
+		table.insert(data.ownedSkins, skinName)
+		print("✅ Gamepass skin granted:", skinName)
 	else
 		-- Check price for coin purchase
-		local skinData = SnakeSkins[serverSkinName]
-		local price = skinData.Price or 0
+		local price = skinData.Price
+		
+		if not price then
+			warn("❌ Skin has no price set:", serverSkinName)
+			return
+		end
 
 		if data.coins < price then
 			warn("❌ Not enough coins:", data.coins, "<", price)
