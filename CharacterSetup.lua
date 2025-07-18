@@ -535,7 +535,8 @@ local function createUltraSmoothSnake(character)
 	local segments = {}
 	local startPos = rootPart.Position
 	for i = 1, activeConfig.InitialLength do
-		local pos = startPos - rootPart.CFrame.LookVector * (i * activeConfig.SegmentSpacing)
+		-- Spawn segments closer together to prevent disconnection
+		local pos = startPos - rootPart.CFrame.LookVector * (i * activeConfig.SegmentSpacing * 0.8) -- Tighter initial spacing
 		local colorIndex = ((i - 1) % #activeConfig.BodyColors) + 1
 		local color = activeConfig.BodyColors[colorIndex]
 		local segment = createSegment(i, pos, color, activeConfig, snakeModel)
