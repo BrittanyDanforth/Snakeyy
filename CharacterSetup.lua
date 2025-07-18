@@ -694,7 +694,19 @@ local function createUltraSmoothSnake(character)
 
 		local isBoosting = humanoid.WalkSpeed > 16.1
 		-- Higher follow speed when boosting to prevent stretching
-		local followSpeed = isBoosting and 0.985 or activeConfig.FollowSpeed
+		-- EVEN HIGHER for longer snakes to prevent massive stretching
+		local followSpeed
+		if isBoosting then
+			if currentLength > 100 then
+				followSpeed = 0.995 -- Super tight following for long snakes
+			elseif currentLength > 50 then
+				followSpeed = 0.99
+			else
+				followSpeed = 0.985 -- Baby snakes
+			end
+		else
+			followSpeed = activeConfig.FollowSpeed
+		end
 
 		local currentPos = rootPart.Position
 		local currentCFrame = rootPart.CFrame
@@ -766,7 +778,23 @@ local function createUltraSmoothSnake(character)
 					-- Normal movement after spawn
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
-					local delay = (i == 1) and 1 or mathFloor(i * 0.9)
+					
+					-- SMART DELAY BASED ON SNAKE LENGTH
+					local baseDelay = 0.9
+					if isBoosting then
+						-- Longer snakes need MUCH less stretching
+						if currentLength > 100 then
+							baseDelay = 0.4 -- Very tight for long snakes
+						elseif currentLength > 50 then
+							baseDelay = 0.5 -- Tight for medium snakes
+						elseif currentLength > 25 then
+							baseDelay = 0.6 -- Moderate for growing snakes
+						else
+							baseDelay = 0.7 -- Baby snakes can stretch more
+						end
+					end
+					
+					local delay = (i == 1) and 1 or mathFloor(i * baseDelay)
 					local targetData = getFromHistory(delay)
 					if targetData then
 						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
