@@ -6,7 +6,7 @@
 -- FIXED: Integrated with SelectSkin RemoteEvent and CharacterSetup system
 -- FIXED: All buttons working perfectly
 -- FIXED: Proper scope and initialization order
- 
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -44,10 +44,8 @@ pcall(function()
 	RespawnSnakeRemote = ReplicatedStorage:WaitForChild("RespawnSnake", 5)
 end)
 
--- FIXED: Using external CharacterPreview module
-local CharacterPreviewModule = nil
-local CharacterPreview = nil
-local CharacterPreviewLoaded = false
+-- FIXED: Character Preview using YOUR EXACT CharacterSetup functions
+local CharacterPreview = {}
 
 -- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
@@ -443,77 +441,8 @@ local SnakeSkinsData = {
 	}
 }
 
--- Initialize CharacterPreview module after SnakeSkinsData is defined
-local function initializeCharacterPreview()
-	if CharacterPreviewLoaded then return end
-	CharacterPreviewLoaded = true
-	
-	local success, err = pcall(function()
-		local module = ReplicatedStorage:FindFirstChild("CharacterPreview")
-		if module then
-			CharacterPreviewModule = require(module)
-			if CharacterPreviewModule and CharacterPreviewModule.setSkinData and SnakeSkinsData then
-				-- Pass our skin data to the module
-				CharacterPreviewModule.setSkinData(SnakeSkinsData)
-				print("✅ CharacterPreview module loaded successfully")
-			end
-		end
-	end)
-	
-	if not success then
-		warn("Failed to load CharacterPreview module:", err)
-	end
-	
-	-- If no external module, use built-in preview
-	if not CharacterPreviewModule then
-		print("⚠️ Using built-in preview system")
-		CharacterPreview = {}
-	end
-end
-
--- Initialize immediately
-initializeCharacterPreview()
-
--- Create wrapper functions for CharacterPreview
-if CharacterPreviewModule then
-	-- Use external module
-	CharacterPreview = {
-		instance = nil,
-		create = function(viewport)
-			if CharacterPreview.instance then
-				CharacterPreview.instance:destroy()
-			end
-			CharacterPreview.instance = CharacterPreviewModule.new(viewport)
-		end,
-		update = function(skinName)
-			if CharacterPreview.instance then
-				CharacterPreview.instance:updateSkin(skinName)
-			end
-		end,
-		destroy = function(viewport)
-			if CharacterPreview.instance then
-				CharacterPreview.instance:destroy()
-				CharacterPreview.instance = nil
-			end
-		end,
-		-- Legacy properties for compatibility
-		startRotation = function() end,
-		startVFXAnimations = function() end,
-		startBodyWave = function() end,
-		currentModel = nil,
-		currentHead = nil,
-		currentHeadParts = nil,
-		currentBody = nil,
-		currentCamera = nil,
-		orbitalParticles = nil,
-		energyRings = nil,
-		vfxContainer = nil,
-		currentSkinName = "Default"
-	}
-else
-	-- Use built-in preview system
-	-- ULTRA PREMIUM PREVIEW with AMAZING VFX
-	function CharacterPreview.create(viewport)
+-- ULTRA PREMIUM PREVIEW with AMAZING VFX
+function CharacterPreview.create(viewport)
 	if not viewport then return end
 
 	-- Clear existing content
@@ -1003,7 +932,6 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.energyRings = nil
 	CharacterPreview.vfxContainer = nil
 end
-end -- End of built-in preview system
 
 -- UI State (moved to top to be accessible everywhere)
 local uiState = {
@@ -2757,16 +2685,6 @@ end
 task.spawn(function()
 	wait(0.5)
 	initialize()
-	
-	-- Create the shop GUI immediately but keep it hidden
-	-- This allows ShopManager to find and enhance it
-	wait(1)
-	print("🏪 Pre-creating shop GUI for ShopManager...")
-	local gui = ShopUI.init()
-	if gui then
-		gui.Enabled = false -- Keep it hidden
-		print("✅ Shop GUI created and ready for ShopManager")
-	end
 end)
 
 -- Export for global access
