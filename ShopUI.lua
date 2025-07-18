@@ -606,32 +606,53 @@ function CharacterPreview.create(viewport)
 			Vector3.new(0, 0, -10)
 		)
 		
-		-- Head movement - smooth S-curve slithering
-		local slitherX = math.sin(time * PREVIEW_CONFIG.SLITHER_SPEED) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-		local slitherZ = math.cos(time * PREVIEW_CONFIG.SLITHER_SPEED * 0.5) * 2
-		head.Position = Vector3.new(slitherX, 0, -10 + slitherZ)
+		-- Head movement - continuous circular slithering pattern
+		local radius = 8
+		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
+		local headX = math.sin(slitherAngle) * radius
+		local headZ = math.cos(slitherAngle) * radius - 10
 		
-		-- Update eyes to follow head perfectly
-		leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
-		rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
-		leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
-		rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
+		-- Add wave motion for more natural movement
+		local waveX = math.sin(slitherAngle * 3) * 2
+		head.Position = Vector3.new(headX + waveX, 0, headZ)
 		
-		-- REAL SLITHERING ANIMATION
-		-- Each segment follows the path of the head with delay
+		-- Calculate head direction for eye positioning
+		local nextAngle = slitherAngle + 0.1
+		local nextX = math.sin(nextAngle) * radius
+		local nextZ = math.cos(nextAngle) * radius - 10
+		local lookDir = (Vector3.new(nextX, 0, nextZ) - head.Position).Unit
+		
+		-- Update eyes to follow movement direction
+		local eyeOffset = Vector3.new(lookDir.X * 0.3, 0.5, lookDir.Z * 0.3 + 0.8)
+		leftEye.Position = head.Position + eyeOffset + Vector3.new(-0.6, 0, 0)
+		rightEye.Position = head.Position + eyeOffset + Vector3.new(0.6, 0, 0)
+		leftPupil.Position = leftEye.Position + lookDir * 0.2
+		rightPupil.Position = rightEye.Position + lookDir * 0.2
+		
+		-- SMOOTH FOLLOWING ANIMATION
+		-- Store head positions for trail
+		if not CharacterPreview.positionHistory then
+			CharacterPreview.positionHistory = {}
+		end
+		
+		-- Add current head position to history
+		table.insert(CharacterPreview.positionHistory, 1, head.Position)
+		
+		-- Keep history limited to prevent memory issues
+		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 3
+		if #CharacterPreview.positionHistory > maxHistory then
+			table.remove(CharacterPreview.positionHistory)
+		end
+		
+		-- Update segments to follow the trail
 		for i, seg in ipairs(segments) do
-			-- Calculate delayed time for this segment
-			local segmentTime = time - (i * PREVIEW_CONFIG.SEGMENT_DELAY)
+			local historyIndex = math.floor(i * 2.5) -- Spacing in the history
 			
-			-- Calculate position based on delayed time
-			local segX = math.sin(segmentTime * PREVIEW_CONFIG.SLITHER_SPEED) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-			local segZ = math.cos(segmentTime * PREVIEW_CONFIG.SLITHER_SPEED * 0.5) * 2 - (i * PREVIEW_CONFIG.SEGMENT_SPACING)
-			
-			-- Add some natural curve variation
-			local curveOffset = math.sin(segmentTime * PREVIEW_CONFIG.SLITHER_FREQUENCY + i * 0.2) * 0.5
-			
-			-- Set final position
-			seg.part.Position = Vector3.new(segX + curveOffset, 0, -10 + segZ)
+			if CharacterPreview.positionHistory[historyIndex] then
+				-- Follow the historical position
+				local targetPos = CharacterPreview.positionHistory[historyIndex]
+				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.5)
+			end
 		end
 	end)
 	
@@ -707,6 +728,11 @@ function CharacterPreview.destroy()
 	CharacterPreview.currentHead = nil
 	CharacterPreview.currentSegments = nil
 	CharacterPreview.rotationConnection = nil
+	CharacterPreview.positionHistory = nil
+	CharacterPreview.leftEye = nil
+	CharacterPreview.rightEye = nil
+	CharacterPreview.leftPupil = nil
+	CharacterPreview.rightPupil = nil
 end
 
 -- Compatibility functions (already handled in create)
