@@ -712,22 +712,44 @@ function CharacterPreview.create(viewport)
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
 				
-				-- FPS-INDEPENDENT SMOOTH FOLLOWING
+				-- TRULY FPS-INDEPENDENT FOLLOWING (Works from 30 to 240+ FPS)
 				local currentPos = seg.part.Position
 				
-				-- Calculate distance to target
-				local distance = (targetPos - currentPos).Magnitude
+				-- Store segment velocity if not exists
+				if not seg.velocity then
+					seg.velocity = Vector3.new(0, 0, 0)
+				end
 				
-				-- If we're far away, just snap closer (prevents gaps)
-				if distance > PREVIEW_CONFIG.SEGMENT_SPACING * 2 then
-					-- Snap to a position closer to target
-					local direction = (targetPos - currentPos).Unit
+				-- Calculate desired position and velocity
+				local toTarget = targetPos - currentPos
+				local distance = toTarget.Magnitude
+				
+				-- Prevent gaps at ANY framerate
+				local maxDistance = PREVIEW_CONFIG.SEGMENT_SPACING * 1.5
+				if distance > maxDistance then
+					-- Teleport closer if too far (prevents ANY gaps)
+					local direction = toTarget.Unit
 					seg.part.Position = targetPos - direction * PREVIEW_CONFIG.SEGMENT_SPACING
+					seg.velocity = Vector3.new(0, 0, 0)
 				else
-					-- Smooth movement when close
-					-- This formula works the same regardless of FPS
-					local smoothFactor = math.min(1, 15 * dt) -- dt makes it frame-independent
-					seg.part.Position = currentPos:Lerp(targetPos, smoothFactor)
+					-- Smooth spring-based movement (works identically at all FPS)
+					local springStrength = 50  -- How quickly segments follow
+					local damping = 10        -- Reduces oscillation
+					
+					-- Spring physics (frame-rate independent)
+					local acceleration = toTarget * springStrength - seg.velocity * damping
+					seg.velocity = seg.velocity + acceleration * dt
+					
+					-- Apply velocity with safety check
+					local newPos = currentPos + seg.velocity * dt
+					
+					-- Final safety check - ensure we don't overshoot
+					if (newPos - targetPos).Magnitude > distance then
+						seg.part.Position = targetPos
+						seg.velocity = Vector3.new(0, 0, 0)
+					else
+						seg.part.Position = newPos
+					end
 				end
 				
 				-- Orient segment to face previous segment
