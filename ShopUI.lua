@@ -441,49 +441,44 @@ local SnakeSkinsData = {
 	}
 }
 
--- EXTREME MASSIVE PREVIEW FOR REAL GAME VISIBILITY
+-- MATCHING CHARACTERSETUP EXACTLY
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 50, -- TONS of segments for massive snake
-	SEGMENT_SPACING = 4, -- HUGE spacing for bigger snake
-	HEAD_SIZE = Vector3.new(12, 12, 12), -- GIGANTIC head
-	SEGMENT_SIZE = Vector3.new(10, 10, 10), -- MASSIVE segments
-	SIZE_REDUCTION = 0.985, -- Very gradual taper
-	CAMERA_DISTANCE = 100, -- Camera WAY back
-	CAMERA_HEIGHT = 30, -- Much higher view
-	ROTATION_SPEED = 0.3,
+	SEGMENT_COUNT = 15, -- Match CharacterSetup InitialLength
+	SEGMENT_SPACING = 2.2, -- EXACT same as CharacterSetup
+	HEAD_SIZE = Vector3.new(3, 3, 3), -- EXACT same as CharacterSetup
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- EXACT same as CharacterSetup
+	SIZE_REDUCTION = 1, -- No size reduction in CharacterSetup for preview
+	CAMERA_DISTANCE = 25,
+	CAMERA_HEIGHT = 8,
+	ROTATION_SPEED = 0.4,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 10, -- Bigger movements
+	SLITHER_AMPLITUDE = 3,
 	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 1.0,
-	SEGMENT_DELAY = 0.06,
+	SLITHER_SPEED = 1.2,
+	SEGMENT_DELAY = 0.08, -- Tighter following
 	-- Snake positioning
-	SNAKE_RADIUS = 30, -- HUGE movement radius
+	SNAKE_RADIUS = 8,
 	SNAKE_CENTER_Z = -5,
 }
 
 function CharacterPreview.create(viewport)
 	if not viewport then return end
-	
+
 	-- Clear viewport efficiently
 	viewport:ClearAllChildren()
-	
-	-- Create WorldModel for proper rendering
-	local worldModel = Instance.new("WorldModel")
-	worldModel.Parent = viewport
-	
-	-- Create camera with WIDE field of view for massive snake
+
+	-- Create camera with proper field of view
 	local camera = Instance.new("Camera")
-	camera.FieldOfView = 90 -- Maximum FOV for huge view
+	camera.FieldOfView = 50 -- Wider FOV to show snake better
 	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = CFrame.new(0, 50, 120) * CFrame.Angles(-0.3, 0, 0) -- Way back for massive snake
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
-	
-	-- Create model inside WorldModel
+
+	-- Create model
 	local model = Instance.new("Model")
 	model.Name = "SnakePreview"
-	model.Parent = worldModel
-	
+	model.Parent = viewport
+
 	-- Get skin data
 	local skin = SnakeSkinsData["Default"] or {
 		HeadColor = Color3.fromRGB(76, 217, 100),
@@ -499,7 +494,7 @@ function CharacterPreview.create(viewport)
 		GlowIntensity = 2,
 		GlowRange = 6,
 	}
-	
+
 	-- Create head
 	local head = Instance.new("Part")
 	head.Name = "Head"
@@ -513,35 +508,27 @@ function CharacterPreview.create(viewport)
 	head.CanQuery = false
 	head.CanTouch = false
 	head.Anchored = true
-	head.Position = Vector3.new(0, 0, 0) -- Simple center position
+	head.Position = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 	head.Parent = model
-	
-	-- Super bright head glow for massive snake
+
+	-- Head glow
 	local headGlow = Instance.new("PointLight")
-	headGlow.Brightness = 5 -- Very bright
-	headGlow.Range = 30 -- Huge range
+	headGlow.Brightness = skin.GlowIntensity * 1.5
+	headGlow.Range = skin.GlowRange * 1.5
 	headGlow.Color = skin.HeadColor
 	headGlow.Parent = head
-	
-	-- Add surface light for extra visibility
-	local surfaceGlow = Instance.new("SurfaceLight")
-	surfaceGlow.Brightness = 3
-	surfaceGlow.Range = 20
-	surfaceGlow.Color = skin.HeadColor
-	surfaceGlow.Face = Enum.NormalId.Front
-	surfaceGlow.Parent = head
-	
-	-- Create HUGE eyes
+
+	-- Create eyes
 	local function createEye(xOffset)
 		local eye = Instance.new("Part")
-		eye.Size = Vector3.new(2.5, 2.5, 2.5) -- Massive eyes
+		eye.Size = Vector3.new(0.6, 0.6, 0.6)
 		eye.Shape = Enum.PartType.Ball
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
 		eye.CanCollide = false
 		eye.Anchored = true
 		eye.Parent = model
-		
+
 		local pupil = Instance.new("Part")
 		pupil.Size = Vector3.new(0.3, 0.3, 0.3)
 		pupil.Shape = Enum.PartType.Ball
@@ -550,17 +537,17 @@ function CharacterPreview.create(viewport)
 		pupil.CanCollide = false
 		pupil.Anchored = true
 		pupil.Parent = model
-		
+
 		return eye, pupil
 	end
-	
+
 	local leftEye, leftPupil = createEye(-0.6)
 	local rightEye, rightPupil = createEye(0.6)
-	
+
 	-- Create body segments with proper spacing
 	local segments = {}
 	local currentSize = PREVIEW_CONFIG.SEGMENT_SIZE
-	
+
 	for i = 1, PREVIEW_CONFIG.SEGMENT_COUNT do
 		local segment = Instance.new("Part")
 		segment.Name = "Segment" .. i
@@ -574,18 +561,18 @@ function CharacterPreview.create(viewport)
 		segment.CanTouch = false
 		segment.Anchored = true
 		segment.Parent = model
-		
+
 		-- Color pattern
 		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
 		segment.Color = skin.BodyColors[colorIndex]
-		
-		-- Bright segment glow for massive visibility
+
+		-- Segment glow
 		local glow = Instance.new("PointLight")
-		glow.Brightness = 3 -- Bright segments
-		glow.Range = 20 -- Large glow range
+		glow.Brightness = skin.GlowIntensity
+		glow.Range = skin.GlowRange
 		glow.Color = segment.Color
 		glow.Parent = segment
-		
+
 		-- Store segment data
 		table.insert(segments, {
 			part = segment,
@@ -593,99 +580,102 @@ function CharacterPreview.create(viewport)
 			size = currentSize,
 			colorIndex = colorIndex
 		})
-		
-		-- Slight size reduction for smooth taper
-		currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
+
+		-- No size reduction - keep segments same size like CharacterSetup
+		-- currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
 	end
-	
+
 	-- Animation variables
 	local time = 0
 	local rotationConnection
 	local segmentTrail = {} -- Store trail positions for smooth following
-	
+
 	-- Initialize segment positions in a straight line WITH PROPER SPACING
 	for i, seg in ipairs(segments) do
-		-- Start in a curved line for smooth appearance
-		local curve = math.sin((i / PREVIEW_CONFIG.SEGMENT_COUNT) * math.pi) * 2
-		seg.part.Position = head.Position + Vector3.new(curve, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
-		-- Size is already set during creation
+		-- Exact same spacing as CharacterSetup
+		seg.part.Position = head.Position + Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
+		seg.part.Size = PREVIEW_CONFIG.SEGMENT_SIZE -- Force consistent size
+		segmentTrail[i] = {}
 	end
-	
-	-- Initialize position history with starting positions
-	CharacterPreview.positionHistory = {}
-	for i = 1, 50 do
-		table.insert(CharacterPreview.positionHistory, head.Position)
-	end
-	
+
 	-- Main animation loop - PERFECT SLITHERING
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
-		
-		-- Camera orbit for massive snake
+
+		-- Camera rotation with proper positioning
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
-		camera.CFrame = CFrame.new(
-			math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
-			PREVIEW_CONFIG.CAMERA_HEIGHT,
-			math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
-		) * CFrame.Angles(-0.4, 0, 0)
-		
-		-- Massive circular movement
-		local angle = time * PREVIEW_CONFIG.SLITHER_SPEED
-		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
-		local finalPos = Vector3.new(
-			math.sin(angle) * radius,
-			0,
-			math.cos(angle) * radius
+		local focusPoint = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
+
+		camera.CFrame = CFrame.lookAt(
+			focusPoint + Vector3.new(
+				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
+				PREVIEW_CONFIG.CAMERA_HEIGHT,
+				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
+			),
+			focusPoint
 		)
-		
+
+		-- Ensure camera type is scriptable
+		camera.CameraType = Enum.CameraType.Scriptable
+
+		-- Head movement - continuous circular slithering pattern
+		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
+		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
+		local headX = math.sin(slitherAngle) * radius
+		local headZ = math.cos(slitherAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
+
+		-- Add wave motion for more natural movement
+		local waveX = math.sin(slitherAngle * 3) * 2
+		local finalPos = Vector3.new(headX + waveX, 0, headZ)
+
 		-- Calculate direction snake is moving
-		local nextAngle = angle + 0.1
-		local nextX = math.sin(nextAngle) * radius
-		local nextZ = math.cos(nextAngle) * radius
-		
+		local nextAngle = slitherAngle + 0.1
+		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+		local nextZ = math.cos(nextAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
+
 		-- Set head CFrame to face movement direction
 		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
-		
+
 		-- Position eyes properly on the FRONT of the head
 		-- The -Z direction is forward when using CFrame
 		local eyeHeight = 0.6
 		local eyeForward = -1.4 -- Negative Z is forward
 		local eyeSeparation = 0.55 -- Reduced from 0.7 for closer eyes
-		
+
 		leftEye.CFrame = head.CFrame * CFrame.new(-eyeSeparation, eyeHeight, eyeForward)
 		rightEye.CFrame = head.CFrame * CFrame.new(eyeSeparation, eyeHeight, eyeForward)
-		
+
 		-- Pupils slightly in front of eyes
 		leftPupil.CFrame = leftEye.CFrame * CFrame.new(0, 0, -0.25)
 		rightPupil.CFrame = rightEye.CFrame * CFrame.new(0, 0, -0.25)
-		
+
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
 		if not CharacterPreview.positionHistory then
 			CharacterPreview.positionHistory = {}
 		end
-		
+
 		-- Add current head position to history
 		table.insert(CharacterPreview.positionHistory, 1, head.Position)
-		
+
 		-- Keep history limited to prevent memory issues
 		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 3
 		if #CharacterPreview.positionHistory > maxHistory then
 			table.remove(CharacterPreview.positionHistory)
 		end
-		
-		-- Update segments to follow the trail SMOOTHLY
+
+		-- Update segments to follow the trail
 		for i, seg in ipairs(segments) do
-			local historyIndex = math.floor(i * 2.8) -- Good spacing for smooth following
-			
+			local historyIndex = math.floor(i * 4) -- MORE SPACING IN HISTORY - NO BUNCHING!
+
 			if CharacterPreview.positionHistory[historyIndex] then
 				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.7) -- Smooth following
+				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.6) -- Faster lerp for responsiveness
 			end
 		end
 	end)
-	
+
 	-- Store references
 	CharacterPreview.currentModel = model
 	CharacterPreview.currentHead = head
@@ -697,28 +687,28 @@ function CharacterPreview.create(viewport)
 	CharacterPreview.rightPupil = rightPupil
 	CharacterPreview.currentCamera = camera
 	CharacterPreview.currentSkinName = "Default"
-	
+
 	-- Compatibility properties
 	CharacterPreview.currentBody = {}
 	for i, seg in ipairs(segments) do
 		CharacterPreview.currentBody[i] = seg.part
 	end
-	
+
 	return model
 end
 
 -- OPTIMIZED: Update preview with no lag
 function CharacterPreview.update(skinName)
 	if not CharacterPreview.currentModel then return end
-	
+
 	CharacterPreview.currentSkinName = skinName
 	local skin = SnakeSkinsData[skinName] or SnakeSkinsData["Default"]
-	
+
 	-- Update head
 	if CharacterPreview.currentHead then
 		CharacterPreview.currentHead.Color = skin.HeadColor
 		CharacterPreview.currentHead.Material = skin.HeadMaterial or Enum.Material.ForceField
-		
+
 		local light = CharacterPreview.currentHead:FindFirstChild("PointLight")
 		if light then
 			light.Color = skin.HeadColor
@@ -726,7 +716,7 @@ function CharacterPreview.update(skinName)
 		end
 	end
 
-	
+
 	-- Update segments
 	if CharacterPreview.currentSegments then
 		for i, seg in ipairs(CharacterPreview.currentSegments) do
@@ -734,7 +724,7 @@ function CharacterPreview.update(skinName)
 			if skin.BodyColors and skin.BodyColors[colorIndex] then
 				seg.part.Color = skin.BodyColors[colorIndex]
 				seg.part.Material = skin.BodyMaterial or Enum.Material.Neon
-				
+
 				local light = seg.part:FindFirstChild("PointLight")
 				if light then
 					light.Color = seg.part.Color
@@ -749,11 +739,11 @@ function CharacterPreview.destroy()
 	if CharacterPreview.rotationConnection then
 		CharacterPreview.rotationConnection:Disconnect()
 	end
-	
+
 	if CharacterPreview.currentModel then
 		CharacterPreview.currentModel:Destroy()
 	end
-	
+
 	CharacterPreview.currentModel = nil
 	CharacterPreview.currentHead = nil
 	CharacterPreview.currentSegments = nil
@@ -1566,11 +1556,9 @@ local function createMainShop()
 	viewport.Position = UDim2.new(0.05, 0, 0.11, 0)
 	viewport.BackgroundColor3 = SHOP_CONFIG.COLORS.BACKGROUND
 	viewport.BackgroundTransparency = 0.6
-	viewport.Ambient = Color3.new(0.8, 0.8, 0.8) -- Brighter ambient
+	viewport.Ambient = Color3.new(0.5, 0.5, 0.5)
 	viewport.LightColor = Color3.new(1, 1, 1)
-	viewport.LightDirection = Vector3.new(-1, -1, -1).Unit
-	viewport.ImageColor3 = Color3.new(1, 1, 1) -- Ensure no tinting
-	viewport.ImageTransparency = 0 -- Full opacity
+	viewport.LightDirection = Vector3.new(-1, -1, -1)
 	viewport.Parent = previewContainer
 
 	createCorner(viewport, 8)
