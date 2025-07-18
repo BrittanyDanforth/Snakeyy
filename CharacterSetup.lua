@@ -85,7 +85,7 @@ local taskWait = task.wait
 local Config = {
 	HeadSize = Vector3new(3, 3, 3),
 	SegmentSize = Vector3new(2.5, 2.5, 2.5),
-	SegmentSpacing = 2.2,
+	SegmentSpacing = 1.8, -- Reduced from 2.2 for tighter segments
 	InitialLength = 15,
 	MaxSegments = 2450,
 	HeadColor = Color3.fromRGB(180, 0, 255), -- Default purple (will be overridden by skins)
@@ -497,7 +497,8 @@ local function createUltraSmoothSnake(character)
 	local segments = {}
 	local startPos = rootPart.Position
 	for i = 1, activeConfig.InitialLength do
-		local pos = startPos - rootPart.CFrame.LookVector * (i * activeConfig.SegmentSpacing)
+		-- Use tighter spacing for initial creation too
+		local pos = startPos - rootPart.CFrame.LookVector * (i * activeConfig.SegmentSpacing * 0.85)
 		local colorIndex = ((i - 1) % #activeConfig.BodyColors) + 1
 		local color = activeConfig.BodyColors[colorIndex]
 		local segment = createSegment(i, pos, color, activeConfig, snakeModel)
@@ -649,14 +650,14 @@ local function createUltraSmoothSnake(character)
 		local isBoosting = humanoid.WalkSpeed > 16.1
 		
 		-- SMOOTH FOLLOWING PARAMETERS
-		local baseFollowSpeed = 0.92 -- High follow speed for smoothness
-		local boostFollowSpeed = 0.95 -- Even higher when boosting
+		local baseFollowSpeed = 0.94 -- Increased for tighter following
+		local boostFollowSpeed = 0.97 -- Even higher when boosting
 		local followSpeed = isBoosting and boostFollowSpeed or baseFollowSpeed
 		
-		-- Distance maintenance
-		local idealSpacing = activeConfig.SegmentSpacing
-		local maxSpacing = idealSpacing * 1.3 -- Maximum allowed gap
-		local minSpacing = idealSpacing * 0.7 -- Minimum spacing to prevent overlap
+		-- Distance maintenance - tighter spacing for continuous appearance
+		local idealSpacing = activeConfig.SegmentSpacing * 0.9 -- Slightly less than configured for overlap
+		local maxSpacing = idealSpacing * 1.2 -- Maximum allowed gap (reduced)
+		local minSpacing = idealSpacing * 0.6 -- Minimum spacing to prevent too much overlap
 
 		local currentPos = rootPart.Position
 		local currentCFrame = rootPart.CFrame
@@ -677,8 +678,8 @@ local function createUltraSmoothSnake(character)
 				local targetLookDir
 				
 				if i == 1 then
-					-- First segment follows the head
-					targetPos = headPos - lookVector * idealSpacing
+					-- First segment follows the head very closely
+					targetPos = headPos - lookVector * (idealSpacing * 0.8) -- Even closer to head
 					targetLookDir = lookVector
 				else
 					-- Other segments follow the previous segment
@@ -733,19 +734,19 @@ local function createUltraSmoothSnake(character)
 				-- Dynamic follow speed based on gap size
 				local dynamicFollowSpeed = followSpeed
 				if actualDistance > maxSpacing and prevPos then
-					-- Gap is too large - increase follow speed smoothly
-					local gapRatio = mathMin(actualDistance / idealSpacing, 2.5)
-					dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.05, 0.98)
+					-- Gap is too large - increase follow speed more aggressively
+					local gapRatio = mathMin(actualDistance / idealSpacing, 3.0)
+					dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.08, 0.99)
 					
-					-- Also pull segment closer to ideal position
+					-- Pull segment closer to ideal position more strongly
 					local pullDirection = (prevPos - currentSegmentPos).Unit
 					local idealPos = prevPos + pullDirection * idealSpacing
-					targetPos = currentSegmentPos:Lerp(idealPos, 0.2) -- Gentle correction
+					targetPos = currentSegmentPos:Lerp(idealPos, 0.35) -- Stronger correction
 				elseif actualDistance < minSpacing and prevPos then
 					-- Too close - push away slightly
 					local pushDirection = (currentSegmentPos - prevPos).Unit
 					targetPos = prevPos + pushDirection * idealSpacing
-					dynamicFollowSpeed = followSpeed * 0.9 -- Slower to create space
+					dynamicFollowSpeed = followSpeed * 0.85 -- Slower to maintain proper spacing
 				end
 				
 				-- Store target for next frame
