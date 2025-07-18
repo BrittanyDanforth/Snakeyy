@@ -1,43 +1,46 @@
 --[[
-ULTRA HIGH-QUALITY CHARACTER PREVIEW SYSTEM V1.0
-Matches the in-game CharacterSetup snake appearance perfectly
+ULTRA HIGH-QUALITY CHARACTER PREVIEW SYSTEM V2.0 - MASSIVE SIZE FIX
+Completely overhauled for visibility in published games
 Features:
-- Smooth connected segments (not orbs!)
-- Properly welded eyes that follow the head
-- Natural snake curves and animations
-- Skin-specific VFX and materials
-- Optimized for shop preview
+- HUGE snake with many segments for better visibility
+- WorldModel rendering for proper display in real game
+- Optimized segment following with position history
+- Perfect eye positioning that stays with head
+- Zero lag with efficient calculations
 --]]
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-
--- Load skins data
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CharacterPreview = {}
 CharacterPreview.__index = CharacterPreview
 
--- Get skins data from parent module (ShopUI will provide this)
+-- Get skins data from parent module
 local SnakeSkinsData = nil
 
--- This will be set by ShopUI when it loads
 function CharacterPreview.setSkinData(skinData)
 	SnakeSkinsData = skinData
 end
 
--- Constants for smooth snake appearance
+-- MASSIVELY INCREASED SIZES FOR REAL GAME VISIBILITY
 local PREVIEW_CONFIG = {
-	SegmentCount = 12,
-	SegmentSpacing = 1.8,
-	WaveAmplitude = 2,
-	WaveFrequency = 2,
-	WaveSpeed = 1.5,
-	RotationSpeed = 0.8,
-	CameraDistance = 25,
-	CameraHeight = 8,
-	SmoothnessFactor = 0.98,
-	SegmentSizeGradient = 0.85, -- Each segment is 85% size of previous
+	SEGMENT_COUNT = 30,           -- Way more segments for bigger snake
+	SEGMENT_SPACING = 2.5,        -- Much bigger spacing
+	HEAD_SIZE = Vector3.new(6, 6, 6),         -- Double the head size
+	SEGMENT_SIZE = Vector3.new(5.5, 5.5, 5.5), -- Much bigger segments
+	SIZE_REDUCTION = 0.98,        -- Gradual size reduction
+	CAMERA_DISTANCE = 50,         -- Camera pulled way back
+	CAMERA_HEIGHT = 15,           -- Higher camera
+	CAMERA_FOV = 70,             -- Wide FOV
+	ORBIT_SPEED = 0.5,           -- Slower orbit
+	MOVEMENT_RADIUS = 15,        -- Larger movement area
+	MOVEMENT_SPEED = 1,          -- Movement speed
+	POSITION_HISTORY_SIZE = 35,  -- More history for smoother following
+	EYE_SIZE = Vector3.new(1.2, 1.2, 1.2),    -- Bigger eyes
+	EYE_SPACING = 0.7,           -- Eye horizontal spacing
+	EYE_FORWARD = -1.8,          -- Eye forward offset
+	EYE_UP = 0.7,                -- Eye vertical offset
 }
 
 function CharacterPreview.new(viewport)
@@ -45,13 +48,16 @@ function CharacterPreview.new(viewport)
 	
 	self.viewport = viewport
 	self.camera = nil
+	self.worldModel = nil
 	self.model = nil
 	self.head = nil
 	self.segments = {}
+	self.eyes = {}
 	self.connections = {}
 	self.vfxParts = {}
 	self.currentSkin = "Default"
 	self.time = 0
+	self.positionHistory = {}
 	
 	self:initialize()
 	
@@ -61,18 +67,30 @@ end
 function CharacterPreview:initialize()
 	-- Clear viewport
 	for _, child in pairs(self.viewport:GetChildren()) do
-		child:Destroy()
+		if child:IsA("WorldModel") or child:IsA("Camera") then
+			child:Destroy()
+		end
 	end
 	
-	-- Create camera
+	-- Create WorldModel for proper rendering in published game
+	self.worldModel = Instance.new("WorldModel")
+	self.worldModel.Parent = self.viewport
+	
+	-- Set viewport properties for best rendering
+	self.viewport.Ambient = Color3.new(0.7, 0.7, 0.7)
+	self.viewport.LightColor = Color3.new(1, 1, 1)
+	self.viewport.LightDirection = Vector3.new(-1, -1, -1)
+	
+	-- Create camera with proper FOV
 	self.camera = Instance.new("Camera")
+	self.camera.FieldOfView = PREVIEW_CONFIG.CAMERA_FOV
 	self.camera.Parent = self.viewport
 	self.viewport.CurrentCamera = self.camera
 	
-	-- Create model
+	-- Create model inside WorldModel
 	self.model = Instance.new("Model")
 	self.model.Name = "SnakePreview"
-	self.model.Parent = self.viewport
+	self.model.Parent = self.worldModel
 	
 	-- Create the snake
 	self:createSnake()
@@ -82,7 +100,7 @@ function CharacterPreview:initialize()
 end
 
 function CharacterPreview:createSnake()
-	-- Default skin data if SnakeSkinsData not loaded
+	-- Default skin data
 	local defaultSkin = {
 		HeadColor = Color3.fromRGB(76, 217, 100),
 		BodyColors = {
@@ -92,20 +110,20 @@ function CharacterPreview:createSnake()
 			Color3.fromRGB(80, 200, 100),
 			Color3.fromRGB(60, 180, 80),
 		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		HeadSize = PREVIEW_CONFIG.HEAD_SIZE,
+		SegmentSize = PREVIEW_CONFIG.SEGMENT_SIZE,
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 1.5,
-		GlowRange = 4,
+		GlowIntensity = 2,
+		GlowRange = 8,
 	}
 	
 	local skinData = (SnakeSkinsData and SnakeSkinsData[self.currentSkin]) or defaultSkin
 	
-	-- Create head (exactly like CharacterSetup)
+	-- Create massive head
 	local head = Instance.new("Part")
 	head.Name = "SnakeHead"
-	head.Size = skinData.HeadSize or Vector3.new(3, 3, 3)
+	head.Size = skinData.HeadSize or PREVIEW_CONFIG.HEAD_SIZE
 	head.Material = skinData.HeadMaterial or Enum.Material.ForceField
 	head.Color = skinData.HeadColor
 	head.Shape = Enum.PartType.Ball
@@ -113,71 +131,59 @@ function CharacterPreview:createSnake()
 	head.Anchored = true
 	head.TopSurface = Enum.SurfaceType.Smooth
 	head.BottomSurface = Enum.SurfaceType.Smooth
-	head.Position = Vector3.new(0, 0, -15)
+	head.Position = Vector3.new(0, 5, 0)
 	head.Parent = self.model
 	
-	-- Head glow
+	-- Enhanced head glow for visibility
 	local headLight = Instance.new("PointLight")
 	headLight.Color = skinData.HeadColor
-	headLight.Brightness = (skinData.GlowIntensity or 1.5) + 1
-	headLight.Range = (skinData.GlowRange or 4) + 2
+	headLight.Brightness = (skinData.GlowIntensity or 2) * 2
+	headLight.Range = (skinData.GlowRange or 8) * 2
 	headLight.Parent = head
 	
-	-- Create eyes with proper welds
+	-- Create bigger eyes
 	local function createEye(name, offsetX)
 		local eye = Instance.new("Part")
 		eye.Name = name
-		eye.Size = Vector3.new(0.6, 0.6, 0.6)
+		eye.Size = PREVIEW_CONFIG.EYE_SIZE
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
 		eye.Shape = Enum.PartType.Ball
 		eye.CanCollide = false
-		eye.Anchored = false
-		eye.Parent = head
-		
-		-- Position relative to head
-		eye.CFrame = head.CFrame * CFrame.new(offsetX, 0.55, 0.8)
-		
-		-- Weld to head
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = head
-		weld.Part1 = eye
-		weld.Parent = head
+		eye.Anchored = true
+		eye.Parent = self.model
 		
 		-- Create pupil
 		local pupil = Instance.new("Part")
 		pupil.Name = name .. "Pupil"
-		pupil.Size = Vector3.new(0.25, 0.25, 0.25)
+		pupil.Size = PREVIEW_CONFIG.EYE_SIZE * 0.4
 		pupil.Material = Enum.Material.Neon
 		pupil.Color = Color3.fromRGB(0, 0, 0)
 		pupil.Shape = Enum.PartType.Ball
 		pupil.CanCollide = false
-		pupil.Anchored = false
-		pupil.Parent = eye
+		pupil.Anchored = true
+		pupil.Parent = self.model
 		
-		-- Position pupil
-		pupil.CFrame = eye.CFrame * CFrame.new(0, 0, -0.2)
-		
-		-- Weld pupil to eye
-		local pupilWeld = Instance.new("WeldConstraint")
-		pupilWeld.Part0 = eye
-		pupilWeld.Part1 = pupil
-		pupilWeld.Parent = eye
-		
+		table.insert(self.eyes, {eye = eye, pupil = pupil, offsetX = offsetX})
 		return eye, pupil
 	end
 	
-	createEye("LeftEye", -0.6)
-	createEye("RightEye", 0.6)
+	createEye("LeftEye", -PREVIEW_CONFIG.EYE_SPACING)
+	createEye("RightEye", PREVIEW_CONFIG.EYE_SPACING)
 	
 	self.head = head
 	self.model.PrimaryPart = head
 	
-	-- Create body segments with smooth size gradient
-	local currentSize = skinData.SegmentSize or Vector3.new(2.5, 2.5, 2.5)
-	local prevSegment = head
+	-- Initialize position history with starting positions
+	local startPos = head.Position
+	for i = 1, PREVIEW_CONFIG.POSITION_HISTORY_SIZE do
+		table.insert(self.positionHistory, startPos - Vector3.new(0, 0, i * PREVIEW_CONFIG.SEGMENT_SPACING * 0.5))
+	end
 	
-	for i = 1, PREVIEW_CONFIG.SegmentCount do
+	-- Create many large body segments
+	local currentSize = skinData.SegmentSize or PREVIEW_CONFIG.SEGMENT_SIZE
+	
+	for i = 1, PREVIEW_CONFIG.SEGMENT_COUNT do
 		local segment = Instance.new("Part")
 		segment.Name = "Segment" .. i
 		segment.Size = currentSize
@@ -193,34 +199,23 @@ function CharacterPreview:createSnake()
 		local colorIndex = ((i - 1) % #skinData.BodyColors) + 1
 		segment.Color = skinData.BodyColors[colorIndex]
 		
-		-- Initial S-curve position
-		local curve = math.sin((i / PREVIEW_CONFIG.SegmentCount) * math.pi * 2) * PREVIEW_CONFIG.WaveAmplitude
-		segment.Position = head.Position + Vector3.new(
-			curve,
-			0,
-			-i * PREVIEW_CONFIG.SegmentSpacing
-		)
+		-- Add glow to segments for visibility
+		local segmentLight = Instance.new("PointLight")
+		segmentLight.Color = segment.Color
+		segmentLight.Brightness = 1
+		segmentLight.Range = 6
+		segmentLight.Parent = segment
 		
-		-- Segment glow
-		local light = Instance.new("PointLight")
-		light.Color = segment.Color
-		light.Brightness = skinData.GlowIntensity or 1.5
-		light.Range = skinData.GlowRange or 4
-		light.Parent = segment
+		-- Position in a line initially
+		segment.Position = startPos - Vector3.new(0, 0, i * PREVIEW_CONFIG.SEGMENT_SPACING)
 		
-		-- Store segment
-		table.insert(self.segments, {
-			part = segment,
-			baseOffset = segment.Position - head.Position,
-			colorIndex = colorIndex
-		})
+		table.insert(self.segments, segment)
 		
-		-- Reduce size for next segment (smooth taper)
-		currentSize = currentSize * PREVIEW_CONFIG.SegmentSizeGradient
-		prevSegment = segment
+		-- Reduce size gradually
+		currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
 	end
 	
-	-- Apply skin-specific VFX
+	-- Apply VFX if the skin has them
 	self:applyVFX(skinData)
 end
 
@@ -291,40 +286,56 @@ function CharacterPreview:startAnimations()
 	local connection = RunService.Heartbeat:Connect(function(dt)
 		self.time = self.time + dt
 		
-		-- Rotate camera around snake
-		local cameraAngle = self.time * PREVIEW_CONFIG.RotationSpeed
-		local cameraPos = self.head.Position + Vector3.new(
-			math.sin(cameraAngle) * PREVIEW_CONFIG.CameraDistance,
-			PREVIEW_CONFIG.CameraHeight,
-			math.cos(cameraAngle) * PREVIEW_CONFIG.CameraDistance
+		-- Animate head in a large circular path
+		local headAngle = self.time * PREVIEW_CONFIG.MOVEMENT_SPEED
+		self.head.Position = Vector3.new(
+			math.cos(headAngle) * PREVIEW_CONFIG.MOVEMENT_RADIUS,
+			5 + math.sin(headAngle * 2) * 2,
+			math.sin(headAngle) * PREVIEW_CONFIG.MOVEMENT_RADIUS
 		)
-		self.camera.CFrame = CFrame.lookAt(cameraPos, self.head.Position)
 		
-		-- Animate snake segments with smooth following
-		local headPos = self.head.Position
-		local prevPos = headPos
+		-- Update position history
+		table.insert(self.positionHistory, 1, self.head.Position)
+		if #self.positionHistory > PREVIEW_CONFIG.POSITION_HISTORY_SIZE then
+			table.remove(self.positionHistory)
+		end
 		
-		for i, segmentData in ipairs(self.segments) do
-			local segment = segmentData.part
-			local baseOffset = segmentData.baseOffset
+		-- Update eyes to stay with head
+		for _, eyeData in ipairs(self.eyes) do
+			local eye = eyeData.eye
+			local pupil = eyeData.pupil
 			
-			-- Create natural wave motion
-			local waveOffset = math.sin(self.time * PREVIEW_CONFIG.WaveSpeed + (i * 0.5)) * PREVIEW_CONFIG.WaveAmplitude
-			local targetPos = headPos + baseOffset + Vector3.new(waveOffset, 0, 0)
-			
-			-- Smooth following motion
-			local currentPos = segment.Position
-			local smoothPos = currentPos:Lerp(targetPos, 1 - PREVIEW_CONFIG.SmoothnessFactor)
-			
-			-- Ensure minimum spacing from previous segment
-			local toPrev = (smoothPos - prevPos).Unit
-			if toPrev.Magnitude > 0 then
-				smoothPos = prevPos + toPrev * PREVIEW_CONFIG.SegmentSpacing
+			-- Position eyes relative to head facing direction
+			local headLookDir = self.head.CFrame.LookVector
+			if #self.positionHistory > 1 then
+				local velocity = (self.head.Position - self.positionHistory[2]).Unit
+				if velocity.Magnitude > 0 then
+					headLookDir = velocity
+				end
 			end
 			
-			segment.Position = smoothPos
-			prevPos = smoothPos
+			local headCFrame = CFrame.lookAt(self.head.Position, self.head.Position + headLookDir)
+			eye.CFrame = headCFrame * CFrame.new(eyeData.offsetX, PREVIEW_CONFIG.EYE_UP, PREVIEW_CONFIG.EYE_FORWARD)
+			pupil.CFrame = eye.CFrame * CFrame.new(0, 0, -0.3)
 		end
+		
+		-- Animate segments using position history
+		for i, segment in ipairs(self.segments) do
+			local historyIndex = math.min(i + 1, #self.positionHistory)
+			if self.positionHistory[historyIndex] then
+				segment.Position = self.positionHistory[historyIndex]
+			end
+		end
+		
+		-- Update camera to orbit around snake center
+		local cameraAngle = self.time * PREVIEW_CONFIG.ORBIT_SPEED
+		local snakeCenter = self.head.Position
+		local cameraPos = snakeCenter + Vector3.new(
+			math.sin(cameraAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
+			PREVIEW_CONFIG.CAMERA_HEIGHT,
+			math.cos(cameraAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
+		)
+		self.camera.CFrame = CFrame.lookAt(cameraPos, snakeCenter)
 		
 		-- Animate VFX
 		for _, vfx in pairs(self.vfxParts) do
@@ -375,8 +386,8 @@ function CharacterPreview:updateSkin(skinName)
 			},
 			HeadMaterial = Enum.Material.ForceField,
 			BodyMaterial = Enum.Material.Neon,
-			GlowIntensity = 1.5,
-			GlowRange = 4,
+			GlowIntensity = 2,
+			GlowRange = 8,
 		}
 	end
 	
@@ -388,13 +399,27 @@ function CharacterPreview:updateSkin(skinName)
 	local headLight = self.head:FindFirstChild("PointLight")
 	if headLight then
 		headLight.Color = skinData.HeadColor
-		headLight.Brightness = (skinData.GlowIntensity or 1.5) + 1
+		headLight.Brightness = (skinData.GlowIntensity or 2) * 2
+	end
+	
+	-- Update eyes
+	for _, eyeData in ipairs(self.eyes) do
+		local eye = eyeData.eye
+		local pupil = eyeData.pupil
+		
+		eye.Color = Color3.fromRGB(255, 255, 255)
+		eye.Material = Enum.Material.Neon
+		
+		pupil.Color = Color3.fromRGB(0, 0, 0)
+		pupil.Material = Enum.Material.Neon
+		
+		eye.CFrame = self.head.CFrame * CFrame.new(eyeData.offsetX, PREVIEW_CONFIG.EYE_UP, PREVIEW_CONFIG.EYE_FORWARD)
+		pupil.CFrame = eye.CFrame * CFrame.new(0, 0, -0.2)
 	end
 	
 	-- Update segments
-	for i, segmentData in ipairs(self.segments) do
-		local segment = segmentData.part
-		local colorIndex = segmentData.colorIndex
+	for i, segment in ipairs(self.segments) do
+		local colorIndex = ((i - 1) % #skinData.BodyColors) + 1
 		
 		segment.Color = skinData.BodyColors[colorIndex]
 		segment.Material = skinData.BodyMaterial or Enum.Material.Neon
@@ -403,7 +428,7 @@ function CharacterPreview:updateSkin(skinName)
 		local light = segment:FindFirstChild("PointLight")
 		if light then
 			light.Color = segment.Color
-			light.Brightness = skinData.GlowIntensity or 1.5
+			light.Brightness = 1
 		end
 	end
 	
@@ -426,10 +451,13 @@ function CharacterPreview:destroy()
 	-- Clear references
 	self.viewport = nil
 	self.camera = nil
+	self.worldModel = nil
 	self.model = nil
 	self.head = nil
 	self.segments = {}
+	self.eyes = {}
 	self.vfxParts = {}
+	self.positionHistory = {}
 end
 
 return CharacterPreview
