@@ -643,23 +643,36 @@ function CharacterPreview.create(viewport)
 		-- Ensure camera type is scriptable
 		camera.CameraType = Enum.CameraType.Scriptable
 
-		-- Head movement - continuous circular slithering pattern
+		-- SMOOTH INFINITY LOOP SLITHERING
+		local moveTime = time * PREVIEW_CONFIG.SLITHER_SPEED
 		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
-		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
-		local headX = math.sin(slitherAngle) * radius
-		local headZ = math.cos(slitherAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
+		
+		-- Create infinity symbol (∞) path for interesting movement
+		local t = moveTime * 2
+		local scale = radius
+		
+		-- Parametric equations for infinity symbol
+		local headX = scale * math.sin(t) / (1 + math.cos(t)^2)
+		local headZ = scale * math.sin(t) * math.cos(t) / (1 + math.cos(t)^2)
+		
+		-- Add additional wave for more fluid motion
+		local waveOffset = math.sin(moveTime * 3) * 3
+		headX = headX + waveOffset
+		
+		-- Gentle vertical movement
+		local headY = math.sin(moveTime * 2) * 1
+		
+		local finalPos = Vector3.new(headX, headY, headZ)
 
-		-- Add wave motion for more natural movement
-		local waveX = math.sin(slitherAngle * 3) * 2
-		local finalPos = Vector3.new(headX + waveX, 0, headZ)
+		-- Calculate movement direction by looking slightly ahead
+		local dt = 0.1
+		local futureT = (moveTime + dt) * 2
+		local futureX = scale * math.sin(futureT) / (1 + math.cos(futureT)^2) + math.sin((moveTime + dt) * 3) * 3
+		local futureZ = scale * math.sin(futureT) * math.cos(futureT) / (1 + math.cos(futureT)^2)
+		local futureY = math.sin((moveTime + dt) * 2) * 1
 
-		-- Calculate direction snake is moving
-		local nextAngle = slitherAngle + 0.1
-		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-		local nextZ = math.cos(nextAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
-
-		-- Set head CFrame to face movement direction
-		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
+		-- Smooth head orientation
+		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(futureX, futureY, futureZ))
 
 		-- Position eyes properly on the FRONT of the head
 		-- The -Z direction is forward when using CFrame
@@ -689,19 +702,30 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- Update segments to follow the trail with PROPER SPACING
+		-- SMOOTH SEGMENT FOLLOWING
 		for i, seg in ipairs(segments) do
-			-- Each segment follows where the head was N frames ago
-			-- More segments back = more frames back in history
-			local framesBack = i * 2 -- This controls segment spacing
-			local historyIndex = math.min(framesBack, #CharacterPreview.positionHistory)
+			-- Each segment follows based on delay
+			local delay = i * 2.5 -- Adjust for good spacing with 15 unit segments
+			local historyIndex = math.floor(delay)
+			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
 
 			if CharacterPreview.positionHistory[historyIndex] then
-				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				-- Add offset to maintain proper spacing even when stationary
-				local spacingOffset = (head.Position - targetPos).Unit * PREVIEW_CONFIG.SEGMENT_SPACING * i * 0.1
-				seg.part.Position = seg.part.Position:Lerp(targetPos + spacingOffset, 0.5)
+				
+				-- Smooth following with no jitter
+				local currentPos = seg.part.Position
+				local newPos = currentPos:Lerp(targetPos, 0.25) -- Smooth lerp
+				
+				seg.part.Position = newPos
+				
+				-- Orient segment to face previous segment
+				if i > 1 then
+					local prevSeg = segments[i-1].part
+					local direction = (prevSeg.Position - newPos).Unit
+					if direction.Magnitude > 0 then
+						seg.part.CFrame = CFrame.lookAt(newPos, prevSeg.Position)
+					end
+				end
 			end
 		end
 	end)
