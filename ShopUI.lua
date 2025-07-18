@@ -1920,10 +1920,7 @@ local function createCategoryButton(category, index)
 			if ShopUI.uiElements.priceLabel then
 				ShopUI.uiElements.priceLabel.Visible = true
 			end
-			-- Force hide robux button initially
-			if ShopUI.uiElements.robuxBtn then
-				ShopUI.uiElements.robuxBtn.Visible = false
-			end
+			-- Don't force hide robux button - let updatePreviewForSkin handle it
 			-- Refresh the current skin selection to update button states properly
 			if uiState.selectedSkin then
 				task.spawn(function()
@@ -2047,9 +2044,36 @@ local function createGamepassCard(passName, index)
 	-- Click to purchase
 	card.MouseButton1Click:Connect(function()
 		playSound("SELECT")
-		-- Placeholder for gamepass purchase
-		print("🛒 Gamepass purchase:", passName, "for", passData.price, "Robux")
-		-- In production, use MarketplaceService:PromptGamePassPurchase
+		
+		if passData.id then
+			-- Prompt gamepass purchase
+			local MarketplaceService = game:GetService("MarketplaceService")
+			local player = game:GetService("Players").LocalPlayer
+			
+			local success, err = pcall(function()
+				MarketplaceService:PromptGamePassPurchase(player, passData.id)
+			end)
+			
+			if not success then
+				warn("Failed to prompt gamepass purchase:", err)
+			end
+		else
+			-- Show message that gamepass ID needs to be configured
+			warn("⚠️ Gamepass ID not configured for:", passName)
+			warn("Add the gamepass ID to GAMEPASS_DATA['"..passName.."'].id")
+			
+			-- Create a temporary notification
+			local notification = Instance.new("TextLabel")
+			notification.Size = UDim2.new(0.3, 0, 0.1, 0)
+			notification.Position = UDim2.new(0.35, 0, 0.9, 0)
+			notification.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
+			notification.Text = "Gamepass ID not configured!"
+			notification.TextScaled = true
+			notification.Parent = ShopUI.uiElements.screenGui
+			
+			task.wait(2)
+			notification:Destroy()
+		end
 	end)
 end
 
