@@ -96,11 +96,11 @@ local Config = {
 		Color3.fromRGB(255, 0, 150),
 		Color3.fromRGB(180, 0, 255),
 	},
-	FollowSpeed = 0.88, -- Smoother following
-	UpdateRate = 60, -- Higher update rate for less gaps
-	MinDistance = 0.01, -- More precise movement
+	FollowSpeed = 0.75, -- Not used anymore but kept for compatibility
+	UpdateRate = 120, -- MAXIMUM update rate for zero gaps
+	MinDistance = 0.001, -- Ultra precise
 	BoostSpeed = 32,
-	BoostFollowSpeed = 0.92, -- Smoother boost following
+	BoostFollowSpeed = 0.85, -- Not used anymore but kept for compatibility
 	HeadMaterial = Enum.Material.ForceField,
 	BodyMaterial = Enum.Material.Neon,
 	GlowIntensity = 1.5,
@@ -658,75 +658,64 @@ local function createUltraSmoothSnake(character)
 		updateCounter = updateCounter + 1
 
 		local isBoosting = humanoid.WalkSpeed > 16.1
-		local followSpeed = isBoosting and activeConfig.BoostFollowSpeed or activeConfig.FollowSpeed
-
 		local currentPos = rootPart.Position
 		local currentCFrame = rootPart.CFrame
 		local lookVector = currentCFrame.LookVector
+
+		-- HEAD POSITIONING - keep this part
 		local headOffset = lookVector * 1.5
 		local headPos = currentPos + headOffset
-
 		if headParts.head and headParts.head.Parent then
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
-		-- SMOOTHER POSITION TRACKING
-		local lastPoint = positionHistory[1] or {position = currentPos, lookVector = lookVector}
-		local dist = (currentPos - lastPoint.position).Magnitude
+		-- COMPLETELY NEW GAP-FREE MOVEMENT SYSTEM
+		-- NO MORE POSITION HISTORY BULLSHIT!
 		
-		-- Lower threshold for more frequent updates = smoother movement
-		if dist > 0.05 then
-			-- Add intermediate points for smooth curves
-			if dist > activeConfig.SegmentSpacing * 0.5 then
-				local steps = math.min(math.ceil(dist / activeConfig.SegmentSpacing), 5)
-				for i = 1, steps do
-					local t = i / steps
-					local interpPos = lastPoint.position:Lerp(currentPos, t)
-					local interpLook = lastPoint.lookVector:Lerp(lookVector, t).Unit
-					table.insert(positionHistory, 1, {position = interpPos, lookVector = interpLook})
-				end
-			else
-				-- Just add current position
-				table.insert(positionHistory, 1, {position = currentPos, lookVector = lookVector})
-			end
+		-- First segment follows head directly
+		if segments[1] and segments[1].Parent then
+			local targetPos = headPos - lookVector * activeConfig.SegmentSpacing
+			segments[1].Position = segments[1].Position:Lerp(targetPos, 0.9)
+		end
+		
+		-- Each segment follows the previous one - ZERO GAPS GUARANTEED!
+		for i = 2, currentLength do
+			local segment = segments[i]
+			local prevSegment = segments[i-1]
 			
-			-- Keep history size reasonable
-			while #positionHistory > currentLength * 4 do
-				table.remove(positionHistory)
+			if segment and segment.Parent and prevSegment and prevSegment.Parent then
+				local currentDistance = (prevSegment.Position - segment.Position).Magnitude
+				
+				-- ANTI-GAP ENFORCEMENT
+				if currentDistance > activeConfig.SegmentSpacing * 1.5 then
+					-- TOO FAR! Snap closer immediately
+					local direction = (prevSegment.Position - segment.Position).Unit
+					segment.Position = prevSegment.Position - direction * activeConfig.SegmentSpacing
+				else
+					-- Normal smooth following
+					local direction = (prevSegment.Position - segment.Position).Unit
+					
+					if direction.Magnitude > 0 then
+						-- Target position maintains perfect spacing
+						local targetPos = prevSegment.Position - direction * activeConfig.SegmentSpacing
+						
+						-- AGGRESSIVE lerp speeds for tight following
+						local lerpSpeed = isBoosting and 0.9 or 0.8
+						
+						-- Update position
+						segment.Position = segment.Position:Lerp(targetPos, lerpSpeed)
+					else
+						-- No direction? Place directly behind
+						segment.Position = prevSegment.Position - lookVector * activeConfig.SegmentSpacing
+					end
+				end
+				
+				-- Always face previous segment
+				segment.CFrame = CFramelookAt(segment.Position, prevSegment.Position)
 			end
 		end
 
 		local currentTime = tick()
-
-		for i = 1, currentLength do
-			local segment = segments[i]
-			if segment and segment.Parent then
-				-- SMOOTHER DELAY CALCULATION - less gaps
-				local delay = i * 2.2 -- Increased from 1.15 for better spacing
-				local historyIndex = math.min(math.floor(delay), #positionHistory)
-				local targetData = positionHistory[historyIndex]
-				
-				if targetData then
-					-- Better position calculation
-					local targetPos = targetData.position
-					
-					-- Maintain proper spacing from previous segment
-					if i > 1 and segments[i-1] and segments[i-1].Parent then
-						local prevPos = segments[i-1].Position
-						local toPrev = (targetPos - prevPos).Unit
-						if toPrev.Magnitude > 0 then
-							targetPos = prevPos + toPrev * activeConfig.SegmentSpacing
-						end
-					end
-					
-					-- MUCH smoother lerping
-					local lerpSpeed = isBoosting and 0.92 or 0.88
-					segment.Position = segment.Position:Lerp(targetPos, lerpSpeed)
-					segment.CFrame = CFramenew(segment.Position)
-				end
-			end
-		end
-
 		if currentTime - lastNetworkUpdate > 0.1 then
 			lastNetworkUpdate = currentTime
 		end
