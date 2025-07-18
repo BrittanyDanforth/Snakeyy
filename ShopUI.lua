@@ -2639,6 +2639,35 @@ function ShopUI.init()
 
 	-- Initialize content
 	ShopUI.updateSkinGrid()
+	
+	-- Check if we're starting on gamepasses and hide preview if so
+	local isGamepass = SKIN_CATEGORIES[uiState.currentCategory].name == "Gamepasses"
+	if isGamepass then
+		if ShopUI.uiElements.previewContainer then
+			ShopUI.uiElements.previewContainer.Visible = false
+		end
+		if ShopUI.uiElements.skinName then
+			ShopUI.uiElements.skinName.Visible = false
+		end
+		if ShopUI.uiElements.skinTag then
+			ShopUI.uiElements.skinTag.Visible = false
+		end
+		if ShopUI.uiElements.priceLabel then
+			ShopUI.uiElements.priceLabel.Visible = false
+		end
+		if ShopUI.uiElements.applyBtn then
+			ShopUI.uiElements.applyBtn.Visible = false
+		end
+		if ShopUI.uiElements.purchaseBtn then
+			ShopUI.uiElements.purchaseBtn.Visible = false
+		end
+		if ShopUI.uiElements.robuxBtn then
+			ShopUI.uiElements.robuxBtn.Visible = false
+		end
+		if ShopUI.uiElements.favoriteBtn then
+			ShopUI.uiElements.favoriteBtn.Visible = false
+		end
+	end
 	ShopUI.updatePreview()
 	ShopUI.updateInfo()
 
