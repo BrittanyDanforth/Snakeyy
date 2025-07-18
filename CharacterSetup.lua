@@ -542,6 +542,14 @@ local function createUltraSmoothSnake(character)
 		local segment = createSegment(i, pos, color, activeConfig, snakeModel)
 		segments[i] = segment
 	end
+	
+	-- DEBUG: Check initial segment positions
+	print("🐍 Initial segment positions:")
+	for i = 1, math.min(5, #segments) do
+		if segments[i] then
+			print("  Segment", i, "at", segments[i].Position)
+		end
+	end
 
 	local currentLength = activeConfig.InitialLength
 	local maxHistorySize = mathMin(mathFloor(activeConfig.MaxSegments * 1.1) + 10, 2000)
@@ -682,9 +690,11 @@ local function createUltraSmoothSnake(character)
 
 	-- ADD SPAWN STABILIZATION DELAY
 	local spawnStabilizing = true
+	local framesSinceSpawn = 0
 	task.spawn(function()
-		task.wait(0.1) -- Small delay to let everything initialize
+		task.wait(0.2) -- Increased delay
 		spawnStabilizing = false
+		print("✅ Spawn stabilization complete")
 	end)
 
 	local heartbeatConn
@@ -725,43 +735,53 @@ local function createUltraSmoothSnake(character)
 		local currentTime = tick()
 
 		-- POSITION HISTORY BASED MOVEMENT WITH ANTI-GAP FOR BOOSTING
+		framesSinceSpawn = framesSinceSpawn + 1
+		
 		for i = 1, currentLength do
 			local segment = segments[i]
 			if segment and segment.Parent then
-				-- CONSISTENT DELAY - Make segments follow closer together
-				-- Special handling for first segment to prevent detachment
-				local delay = (i == 1) and 1 or mathFloor(i * 0.9)
-				local targetData = getFromHistory(delay)
-				if targetData then
-					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
-					local currentSegmentPos = segment.Position
-					
-					-- IMPROVED ANTI-GAP - Works for both normal and boost
-					local dynamicFollowSpeed = followSpeed
-					
-					-- During spawn stabilization, use very high follow speed
-					if spawnStabilizing then
-						dynamicFollowSpeed = 0.99 -- Very high follow speed to snap to position
-					elseif i > 1 then
-						local prevSegment = segments[i - 1]
-						if prevSegment and prevSegment.Parent then
-							local gap = (currentSegmentPos - prevSegment.Position).Magnitude
-							local idealGap = activeConfig.SegmentSpacing
-							
-							-- Smooth adjustment based on gap size
-							if gap > idealGap * 1.2 then
-								-- Gap too big - speed up to catch up
-								local gapRatio = gap / idealGap
-								dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.02, 0.985)
-							elseif gap < idealGap * 0.8 then
-								-- Too close - slow down slightly
-								dynamicFollowSpeed = followSpeed * 0.95
+				-- SPAWN FIX: Force segments to stay in line for first few frames
+				if framesSinceSpawn < 10 then
+					-- Manual positioning during spawn
+					local targetPos = headPos - lookVector * (i * activeConfig.SegmentSpacing * 0.9)
+					segment.CFrame = CFramenew(segment.Position:Lerp(targetPos, 0.5))
+				else
+					-- Normal movement after spawn
+					-- CONSISTENT DELAY - Make segments follow closer together
+					-- Special handling for first segment to prevent detachment
+					local delay = (i == 1) and 1 or mathFloor(i * 0.9)
+					local targetData = getFromHistory(delay)
+					if targetData then
+						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
+						local currentSegmentPos = segment.Position
+						
+						-- IMPROVED ANTI-GAP - Works for both normal and boost
+						local dynamicFollowSpeed = followSpeed
+						
+						-- During spawn stabilization, use very high follow speed
+						if spawnStabilizing then
+							dynamicFollowSpeed = 0.99 -- Very high follow speed to snap to position
+						elseif i > 1 then
+							local prevSegment = segments[i - 1]
+							if prevSegment and prevSegment.Parent then
+								local gap = (currentSegmentPos - prevSegment.Position).Magnitude
+								local idealGap = activeConfig.SegmentSpacing
+								
+								-- Smooth adjustment based on gap size
+								if gap > idealGap * 1.2 then
+									-- Gap too big - speed up to catch up
+									local gapRatio = gap / idealGap
+									dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.02, 0.985)
+								elseif gap < idealGap * 0.8 then
+									-- Too close - slow down slightly
+									dynamicFollowSpeed = followSpeed * 0.95
+								end
 							end
 						end
+						
+						local newPos = currentSegmentPos:Lerp(segmentPos, dynamicFollowSpeed)
+						segment.CFrame = CFramenew(newPos)
 					end
-					
-					local newPos = currentSegmentPos:Lerp(segmentPos, dynamicFollowSpeed)
-					segment.CFrame = CFramenew(newPos)
 				end
 			end
 		end
