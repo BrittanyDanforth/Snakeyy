@@ -1736,7 +1736,7 @@ local function createMainShop()
 	local applyBtn = Instance.new("TextButton")
 	applyBtn.Name = "ApplyButton"
 	applyBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
-	applyBtn.Position = UDim2.new(0.26, 0, 0.26, 0)
+	applyBtn.Position = UDim2.new(0.26, 0, 0.24, 0)
 	applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
 	applyBtn.Text = "EQUIP"
 	applyBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
@@ -2231,11 +2231,6 @@ function ShopUI.updateSkinGrid()
 
 	-- Check if this is the gamepasses category
 	if category.name == "Gamepasses" then
-		-- Hide viewport for gamepasses
-		if ShopUI.uiElements.viewport then
-			ShopUI.uiElements.viewport.Visible = false
-		end
-		
 		-- Show gamepasses instead of skins
 		local passNames = {}
 		for passName, _ in pairs(GAMEPASS_DATA) do
@@ -2249,11 +2244,6 @@ function ShopUI.updateSkinGrid()
 			totalHeight = rows * (SHOP_CONFIG.CARD_HEIGHT + SHOP_CONFIG.GRID_SPACING) + 25
 		end
 	else
-		-- Show viewport for skins
-		if ShopUI.uiElements.viewport then
-			ShopUI.uiElements.viewport.Visible = true
-		end
-		
 		-- Show skins
 		for i, skinName in ipairs(category.skins) do
 			createSkinCard(skinName, i)
