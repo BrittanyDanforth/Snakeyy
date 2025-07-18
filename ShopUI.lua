@@ -441,21 +441,23 @@ local SnakeSkinsData = {
 	}
 }
 
--- PERFECT SLITHER.IO SNAKE PREVIEW - ZERO LAG
+-- PERFECT SLITHER.IO SNAKE PREVIEW - WORKS IN PUBLISHED GAME
 local PREVIEW_CONFIG = {
 	SEGMENT_COUNT = 20,
-	SEGMENT_SPACING = 0.8, -- Very close for smooth look
+	SEGMENT_SPACING = 0.8,
 	HEAD_SIZE = Vector3.new(3, 3, 3),
 	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8),
-	SIZE_REDUCTION = 0.98, -- Very gradual taper
-	CAMERA_DISTANCE = 22,
-	CAMERA_HEIGHT = 10,
+	SIZE_REDUCTION = 0.98,
+	CAMERA_DISTANCE = 28, -- Increased for better view
+	CAMERA_HEIGHT = 12,
 	ROTATION_SPEED = 0.4,
 	-- Snake movement
 	SLITHER_AMPLITUDE = 3,
 	SLITHER_FREQUENCY = 1.5,
 	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.15, -- Delay between segments for wave effect
+	SEGMENT_DELAY = 0.15,
+	-- Snake positioning
+	SNAKE_CENTER_Z = -12, -- Center of the circular path
 }
 
 function CharacterPreview.create(viewport)
@@ -464,8 +466,9 @@ function CharacterPreview.create(viewport)
 	-- Clear viewport efficiently
 	viewport:ClearAllChildren()
 	
-	-- Create camera
+	-- Create camera with proper field of view
 	local camera = Instance.new("Camera")
+	camera.FieldOfView = 40
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 	
@@ -595,16 +598,21 @@ function CharacterPreview.create(viewport)
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
 		
-		-- Camera rotation
+		-- Camera rotation with proper positioning
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
+		local focusPoint = Vector3.new(0, 0, -12) -- Center of snake path
+		
 		camera.CFrame = CFrame.lookAt(
-			Vector3.new(
+			focusPoint + Vector3.new(
 				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
 				PREVIEW_CONFIG.CAMERA_HEIGHT,
-				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE - 10
+				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
 			),
-			Vector3.new(0, 0, -10)
+			focusPoint
 		)
+		
+		-- Ensure camera type is scriptable
+		camera.CameraType = Enum.CameraType.Scriptable
 		
 		-- Head movement - continuous circular slithering pattern
 		local radius = 8
@@ -1544,6 +1552,9 @@ local function createMainShop()
 	viewport.Position = UDim2.new(0.05, 0, 0.11, 0)
 	viewport.BackgroundColor3 = SHOP_CONFIG.COLORS.BACKGROUND
 	viewport.BackgroundTransparency = 0.6
+	viewport.Ambient = Color3.new(0.5, 0.5, 0.5)
+	viewport.LightColor = Color3.new(1, 1, 1)
+	viewport.LightDirection = Vector3.new(-1, -1, -1)
 	viewport.Parent = previewContainer
 
 	createCorner(viewport, 8)
