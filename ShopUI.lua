@@ -441,23 +441,24 @@ local SnakeSkinsData = {
 	}
 }
 
--- PERFECT SLITHER.IO SNAKE PREVIEW - WORKS IN PUBLISHED GAME
+-- PERFECT SLITHER.IO SNAKE PREVIEW - FIXED FOR PUBLISHED GAME
 local PREVIEW_CONFIG = {
 	SEGMENT_COUNT = 20,
 	SEGMENT_SPACING = 0.8,
 	HEAD_SIZE = Vector3.new(3, 3, 3),
 	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8),
 	SIZE_REDUCTION = 0.98,
-	CAMERA_DISTANCE = 28, -- Increased for better view
-	CAMERA_HEIGHT = 12,
+	CAMERA_DISTANCE = 15, -- Much closer camera
+	CAMERA_HEIGHT = 5, -- Lower camera
 	ROTATION_SPEED = 0.4,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 3,
+	SLITHER_AMPLITUDE = 2, -- Smaller movement radius
 	SLITHER_FREQUENCY = 1.5,
 	SLITHER_SPEED = 1.2,
 	SEGMENT_DELAY = 0.15,
 	-- Snake positioning
-	SNAKE_CENTER_Z = -12, -- Center of the circular path
+	SNAKE_RADIUS = 5, -- Smaller circle for movement
+	SNAKE_CENTER_Z = 0, -- Closer to camera
 }
 
 function CharacterPreview.create(viewport)
@@ -468,7 +469,8 @@ function CharacterPreview.create(viewport)
 	
 	-- Create camera with proper field of view
 	local camera = Instance.new("Camera")
-	camera.FieldOfView = 40
+	camera.FieldOfView = 50 -- Wider FOV to show snake better
+	camera.CameraType = Enum.CameraType.Scriptable
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 	
@@ -506,7 +508,7 @@ function CharacterPreview.create(viewport)
 	head.CanQuery = false
 	head.CanTouch = false
 	head.Anchored = true
-	head.Position = Vector3.new(0, 0, -10)
+	head.Position = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 	head.Parent = model
 	
 	-- Head glow
@@ -600,7 +602,7 @@ function CharacterPreview.create(viewport)
 		
 		-- Camera rotation with proper positioning
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
-		local focusPoint = Vector3.new(0, 0, -12) -- Center of snake path
+		local focusPoint = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 		
 		camera.CFrame = CFrame.lookAt(
 			focusPoint + Vector3.new(
@@ -615,10 +617,10 @@ function CharacterPreview.create(viewport)
 		camera.CameraType = Enum.CameraType.Scriptable
 		
 		-- Head movement - continuous circular slithering pattern
-		local radius = 8
+		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
 		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
 		local headX = math.sin(slitherAngle) * radius
-		local headZ = math.cos(slitherAngle) * radius - 10
+		local headZ = math.cos(slitherAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
 		
 		-- Add wave motion for more natural movement
 		local waveX = math.sin(slitherAngle * 3) * 2
@@ -626,8 +628,8 @@ function CharacterPreview.create(viewport)
 		
 		-- Calculate direction snake is moving
 		local nextAngle = slitherAngle + 0.1
-		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * 2
-		local nextZ = math.cos(nextAngle) * radius - 10
+		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+		local nextZ = math.cos(nextAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
 		
 		-- Set head CFrame to face movement direction
 		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
@@ -636,7 +638,7 @@ function CharacterPreview.create(viewport)
 		-- The -Z direction is forward when using CFrame
 		local eyeHeight = 0.6
 		local eyeForward = -1.4 -- Negative Z is forward
-		local eyeSeparation = 0.7
+		local eyeSeparation = 0.55 -- Reduced from 0.7 for closer eyes
 		
 		leftEye.CFrame = head.CFrame * CFrame.new(-eyeSeparation, eyeHeight, eyeForward)
 		rightEye.CFrame = head.CFrame * CFrame.new(eyeSeparation, eyeHeight, eyeForward)
