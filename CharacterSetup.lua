@@ -531,6 +531,7 @@ local function createUltraSmoothSnake(character)
 	local updateCounter = 0
 	local networkUpdateInterval = 2
 	local lastNetworkUpdate = 0
+	local vfxParts = {} -- Store VFX parts for cleanup
 
 	local function growSnake(amount)
 		amount = amount or 5
@@ -597,8 +598,8 @@ local function createUltraSmoothSnake(character)
 		end
 
 		-- Clean up VFX parts
-		if snakeInstance.vfxParts then
-			for _, vfxPart in pairs(snakeInstance.vfxParts) do
+		if vfxParts then
+			for _, vfxPart in pairs(vfxParts) do
 				if vfxPart and vfxPart.Parent then
 					vfxPart:Destroy()
 				end
@@ -725,7 +726,7 @@ local function createUltraSmoothSnake(character)
 		if not skinData or not skinData.Type then return end
 
 		-- Limit VFX to prevent lag
-		local vfxParts = {}
+		-- Using the outer vfxParts variable for cleanup
 
 		-- Apply VFX to head only (not every segment to prevent lag)
 		if skinData.Type == "Fire" and headParts.head then
@@ -806,8 +807,7 @@ local function createUltraSmoothSnake(character)
 			table.insert(vfxParts, attachment2)
 		end
 
-		-- Store VFX parts for cleanup
-		snakeInstance.vfxParts = vfxParts
+		-- VFX parts are stored in the local vfxParts variable for cleanup
 	end
 
 	-- Apply VFX after a short delay to ensure snake is fully created
