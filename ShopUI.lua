@@ -1665,7 +1665,7 @@ local function createMainShop()
 
 	local skinTag = Instance.new("TextLabel")
 	skinTag.Name = "SkinTag"
-	skinTag.Size = UDim2.new(0.22, 0, 0.25, 0)
+	skinTag.Size = UDim2.new(0.35, 0, 0.25, 0)
 	skinTag.Position = UDim2.new(0, 0, 0.75, 0)
 	skinTag.BackgroundColor3 = SHOP_CONFIG.COLORS.ACCENT
 	skinTag.Text = "NEW"
@@ -1705,7 +1705,7 @@ local function createMainShop()
 
 	local purchaseBtn = Instance.new("TextButton")
 	purchaseBtn.Name = "PurchaseButton"
-	purchaseBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
+	purchaseBtn.Size = UDim2.new(1, 0, 0.22, 0)
 	purchaseBtn.Position = UDim2.new(0, 0, 0, 0)
 	purchaseBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.ACCENT
 	purchaseBtn.Text = "BUY WITH COINS"
@@ -1720,8 +1720,8 @@ local function createMainShop()
 	-- Robux purchase button
 	local robuxBtn = Instance.new("TextButton")
 	robuxBtn.Name = "RobuxButton"
-	robuxBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
-	robuxBtn.Position = UDim2.new(0.52, 0, 0, 0)
+	robuxBtn.Size = UDim2.new(1, 0, 0.22, 0)
+	robuxBtn.Position = UDim2.new(0, 0, 0.24, 0)
 	robuxBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 127) -- Robux green
 	robuxBtn.Text = "BUY WITH ROBUX"
 	robuxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1735,8 +1735,8 @@ local function createMainShop()
 
 	local applyBtn = Instance.new("TextButton")
 	applyBtn.Name = "ApplyButton"
-	applyBtn.Size = UDim2.new(0.48, 0, 0.18, 0)
-	applyBtn.Position = UDim2.new(0.26, 0, 0.24, 0)
+	applyBtn.Size = UDim2.new(1, 0, 0.22, 0)
+	applyBtn.Position = UDim2.new(0, 0, 0.48, 0)
 	applyBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
 	applyBtn.Text = "EQUIP"
 	applyBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_PRIMARY
@@ -1750,7 +1750,7 @@ local function createMainShop()
 	local favoriteBtn = Instance.new("TextButton")
 	favoriteBtn.Name = "FavoriteButton"
 	favoriteBtn.Size = UDim2.new(1, 0, 0.22, 0)
-	favoriteBtn.Position = UDim2.new(0, 0, 0.48, 0)
+	favoriteBtn.Position = UDim2.new(0, 0, 0.72, 0)
 	favoriteBtn.BackgroundColor3 = SHOP_CONFIG.COLORS.TERTIARY
 	favoriteBtn.Text = "ADD TO FAVORITES"
 	favoriteBtn.TextColor3 = SHOP_CONFIG.COLORS.TEXT_SECONDARY
@@ -2394,13 +2394,18 @@ function ShopUI.updateInfo()
 		if skinData.robux then
 			ShopUI.uiElements.robuxBtn.Visible = true
 			ShopUI.uiElements.robuxBtn.Text = "R$ " .. tostring(skinData.robux)
-			-- Adjust button positions for two buttons
+			-- Keep buttons in vertical layout
 			ShopUI.uiElements.purchaseBtn.Position = UDim2.new(0, 0, 0, 0)
-			ShopUI.uiElements.robuxBtn.Position = UDim2.new(0.52, 0, 0, 0)
+			ShopUI.uiElements.robuxBtn.Position = UDim2.new(0, 0, 0.24, 0)
+			-- Move other buttons down
+			ShopUI.uiElements.applyBtn.Position = UDim2.new(0, 0, 0.48, 0)
+			ShopUI.uiElements.favoriteBtn.Position = UDim2.new(0, 0, 0.72, 0)
 		else
 			ShopUI.uiElements.robuxBtn.Visible = false
-			-- Center the purchase button
-			ShopUI.uiElements.purchaseBtn.Position = UDim2.new(0.26, 0, 0, 0)
+			-- Adjust positions when no robux button
+			ShopUI.uiElements.purchaseBtn.Position = UDim2.new(0, 0, 0, 0)
+			ShopUI.uiElements.applyBtn.Position = UDim2.new(0, 0, 0.24, 0)
+			ShopUI.uiElements.favoriteBtn.Position = UDim2.new(0, 0, 0.48, 0)
 		end
 	end
 
