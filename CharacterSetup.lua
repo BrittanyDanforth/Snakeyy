@@ -767,21 +767,27 @@ local function createUltraSmoothSnake(character)
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
 					
-					-- AGGRESSIVE ANTI-STRETCH FOR BOOSTING
-					local delay
-					if isBoosting then
-						-- MUCH tighter delays to prevent stretching
-						-- Cap the delay to prevent excessive stretching
-						local maxBoostDelay = math.min(10 + (currentLength / 20), 30)
-						delay = math.min(i, maxBoostDelay)
-					else
-						-- Normal delay when not boosting
-						delay = (i == 1) and 1 or mathFloor(i * 0.9)
-					end
+					-- POSITION CALCULATION
+					local delay = (i == 1) and 1 or mathFloor(i * 0.9)
 					local targetData = getFromHistory(delay)
 					if targetData then
-						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
+						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05)
 						local currentSegmentPos = segment.Position
+						
+						-- HARD LIMIT ON STRETCHING WHEN BOOSTING
+						if isBoosting and i > 1 then
+							local prevSegment = segments[i - 1]
+							if prevSegment and prevSegment.Parent then
+								local distToPrev = (segmentPos - prevSegment.Position).Magnitude
+								local maxAllowedDist = activeConfig.SegmentSpacing * 1.5
+								
+								-- If target position would stretch too far, clamp it
+								if distToPrev > maxAllowedDist then
+									local dirToPrev = (prevSegment.Position - segmentPos).Unit
+									segmentPos = prevSegment.Position - dirToPrev * activeConfig.SegmentSpacing
+								end
+							end
+						end
 						
 						-- IMPROVED ANTI-GAP - Works for both normal and boost
 						local dynamicFollowSpeed = followSpeed

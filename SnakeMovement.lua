@@ -94,13 +94,17 @@ end
 
 -- 📍 NETWORK-OPTIMIZED PATH RECORDING
 function PathSystem:recordPoint(position, speed, time)
+	-- Dynamic recording rate based on speed (more frequent when boosting)
+	local dynamicInterval = speed > 50 and self.networkUpdateInterval * 0.5 or self.networkUpdateInterval
+	
 	-- Network throttling
-	if time - self.lastNetworkUpdate < self.networkUpdateInterval then
+	if time - self.lastNetworkUpdate < dynamicInterval then
 		return
 	end
 
-	-- Only record if we've moved enough
-	if self.lastRecordedPos and (position - self.lastRecordedPos).Magnitude < self.minRecordDistance then
+	-- Only record if we've moved enough (less distance required when boosting)
+	local dynamicMinDistance = speed > 50 and self.minRecordDistance * 0.5 or self.minRecordDistance
+	if self.lastRecordedPos and (position - self.lastRecordedPos).Magnitude < dynamicMinDistance then
 		return
 	end
 
