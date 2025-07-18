@@ -26,7 +26,7 @@ local function createSnakeSkinsModule()
 -- Pricing system and skin descriptions included
 
 return {
-	["Default"] = {
+	["Classic"] = { -- Server name for Default
 		HeadColor = Color3.fromRGB(76, 217, 100),
 		BodyColors = {
 			Color3.fromRGB(60, 180, 80),
@@ -46,7 +46,7 @@ return {
 		Description = "The original slither.io look!"
 	},
 	
-	["Crimson"] = {
+	["Lava Red"] = { -- Server name for Crimson
 		HeadColor = Color3.fromRGB(220, 50, 50),
 		BodyColors = {
 			Color3.fromRGB(180, 30, 30),
@@ -126,7 +126,7 @@ return {
 		Description = "From the depths of space!"
 	},
 	
-	["Plasma"] = {
+	["Electric Purple"] = { -- Server name for Plasma
 		HeadColor = Color3.fromRGB(255, 100, 200),
 		BodyColors = {
 			Color3.fromRGB(200, 50, 150),
@@ -166,7 +166,7 @@ return {
 		Description = "Born from distant galaxies!"
 	},
 	
-	["Ocean"] = {
+	["Ocean Blue"] = { -- Server name for Ocean
 		HeadColor = Color3.fromRGB(50, 150, 200),
 		BodyColors = {
 			Color3.fromRGB(30, 100, 180),
@@ -206,7 +206,7 @@ return {
 		Description = "Strike from the shadows!"
 	},
 	
-	["Cyber"] = {
+	["Cyberpunk"] = { -- Server name for Cyber
 		HeadColor = Color3.fromRGB(0, 255, 150),
 		BodyColors = {
 			Color3.fromRGB(0, 200, 100),
@@ -226,7 +226,7 @@ return {
 		Description = "From the digital future!"
 	},
 	
-	["Dragon"] = {
+	["Dragon Lord"] = { -- Server name for Dragon
 		HeadColor = Color3.fromRGB(255, 150, 0),
 		BodyColors = {
 			Color3.fromRGB(200, 100, 0),
@@ -306,7 +306,7 @@ return {
 		Description = "Cosmic VIP power!"
 	},
 	
-	["Rainbow"] = {
+	["Rainbow Prism"] = { -- Server name for Rainbow
 		HeadColor = Color3.fromRGB(255, 100, 255),
 		BodyColors = {
 			Color3.fromRGB(255, 0, 0),     -- Red
@@ -324,10 +324,71 @@ return {
 		GlowRange = 8,
 		Price = 7500,
 		Description = "All colors of the rainbow!"
+	},
+	
+	-- Additional server skins
+	["Phantom Viper"] = {
+		HeadColor = Color3.fromRGB(150, 50, 255),
+		BodyColors = {
+			Color3.fromRGB(100, 30, 200),
+			Color3.fromRGB(120, 40, 220),
+			Color3.fromRGB(140, 50, 240),
+			Color3.fromRGB(120, 40, 220),
+			Color3.fromRGB(100, 30, 200),
+		},
+		HeadSize = Vector3.new(3, 3, 3),
+		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		SegmentSpacing = 2.2,
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 2.5,
+		GlowRange = 8,
+		Price = 5000,
+		Description = "The phantom strikes!"
+	},
+	
+	["Golden Emperor"] = {
+		HeadColor = Color3.fromRGB(255, 215, 0),
+		BodyColors = {
+			Color3.fromRGB(255, 200, 0),
+			Color3.fromRGB(255, 215, 0),
+			Color3.fromRGB(255, 230, 0),
+			Color3.fromRGB(255, 215, 0),
+			Color3.fromRGB(255, 200, 0),
+		},
+		HeadSize = Vector3.new(3.5, 3.5, 3.5),
+		SegmentSize = Vector3.new(3, 3, 3),
+		SegmentSpacing = 2.5,
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 3.0,
+		GlowRange = 10,
+		Price = 10000,
+		Description = "Rule with golden power!"
+	},
+	
+	["Toxic Green"] = {
+		HeadColor = Color3.fromRGB(0, 255, 0),
+		BodyColors = {
+			Color3.fromRGB(0, 200, 0),
+			Color3.fromRGB(0, 225, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(0, 225, 0),
+			Color3.fromRGB(0, 200, 0),
+		},
+		HeadSize = Vector3.new(3, 3, 3),
+		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		SegmentSpacing = 2.2,
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 2.0,
+		GlowRange = 6,
+		Price = 3500,
+		Description = "Toxic and dangerous!"
 	}
 }]]
 
-	print("✅ Created SnakeSkins module in ReplicatedStorage with EXACT client-matching names")
+	print("✅ Created SnakeSkins module in ReplicatedStorage with SERVER skin names")
 	return snakeSkinsModule
 end
 

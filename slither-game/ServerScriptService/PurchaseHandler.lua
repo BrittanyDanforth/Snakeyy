@@ -342,13 +342,34 @@ local function handleSkinSelection(player, skinName)
 	player:SetAttribute("SelectedSkin", serverSkinName) -- For server/game logic
 	player:SetAttribute("ClientSelectedSkin", skinName) -- For client UI
 	
-	-- IMPORTANT: Update playerData to persist the selection
-	local playerData = PlayerDataStore[player]
-	if playerData then
-		playerData.selectedSkin = serverSkinName -- Store server name in data
-		playerData.clientSelectedSkin = skinName -- Store client name too
-		print("💾 Updated playerData.selectedSkin to:", serverSkinName, "client:", skinName)
-	end
+	-- IMPORTANT: Save the selection to persist it
+	-- Get current player data and update it
+	local ownedSkinsJson = player:GetAttribute("OwnedSkinsJSON") or "{}"
+	local favoritesJson = player:GetAttribute("FavoritesJSON") or "{}"
+	local ownedSkins = {"Default"}
+	local favorites = {}
+	
+	pcall(function()
+		ownedSkins = HttpService:JSONDecode(ownedSkinsJson)
+		favorites = HttpService:JSONDecode(favoritesJson)
+	end)
+	
+	local playerData = {
+		coins = player:GetAttribute("Coins") or 50000,
+		ownedSkins = ownedSkins,
+		selectedSkin = serverSkinName, -- Store server name
+		clientSelectedSkin = skinName, -- Store client name
+		favorites = favorites,
+		purchases = {},
+		stats = {
+			totalCoinsSpent = 0,
+			totalPurchases = 0,
+			favoriteCategory = "Featured"
+		}
+	}
+	
+	savePlayerData(player, playerData)
+	print("💾 Saved skin selection:", serverSkinName, "client:", skinName)
 
 	print("✅ Player", player.Name, "selected skin:", skinName, "(server name:", serverSkinName, ")")
 
