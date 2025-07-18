@@ -1,0 +1,13 @@
+ServerScriptService Scripts:
+1. SnakeSkinsLoader.server.lua - Creates and manages the SnakeSkins module in ReplicatedStorage
+2. PurchaseHandler.server.lua - Handles shop purchases and skin management
+3. CharacterSetup.server.lua - Main snake system with movement and visuals
+4. SelectSkinHandler.server.lua - Handles skin selection from shop
+
+StarterPlayer/StarterPlayerScripts:
+1. ShopUILoader.client.lua - Loads the shop UI
+2. ShopManager.client.lua - Manages shop functionality
+
+ReplicatedStorage ModuleScripts:
+1. ShopUI.lua - Main shop UI system
+2. SnakeSkins.lua - Snake skin configurations
