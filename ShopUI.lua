@@ -441,23 +441,23 @@ local SnakeSkinsData = {
 	}
 }
 
--- FIX FOR LENGTH COMPRESSION IN REAL GAME
+-- PERFECT PREVIEW WITH AMAZING ANIMATION
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 20, -- Good amount of segments
-	SEGMENT_SPACING = 2.5, -- Slightly increased spacing
-	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
-	SIZE_REDUCTION = 0.98, -- Normal taper
-	CAMERA_DISTANCE = 25, -- Close enough to see details
-	CAMERA_HEIGHT = 10, -- Good viewing angle
+	SEGMENT_COUNT = 20, -- Perfect amount
+	SEGMENT_SPACING = 10, -- As you said - 10 spacing!
+	HEAD_SIZE = Vector3.new(3, 3, 3),
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
+	SIZE_REDUCTION = 0.98,
+	CAMERA_DISTANCE = 35, -- Adjusted for longer snake
+	CAMERA_HEIGHT = 12,
 	ROTATION_SPEED = 0.4,
-	-- Snake movement
-	SLITHER_AMPLITUDE = 3,
-	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.08,
+	-- Snake movement - PERFECTED
+	SLITHER_AMPLITUDE = 5, -- Bigger waves
+	SLITHER_FREQUENCY = 2, -- More curves
+	SLITHER_SPEED = 1.5, -- Faster movement
+	SEGMENT_DELAY = 0.15, -- Smoother delay between segments
 	-- Snake positioning
-	SNAKE_RADIUS = 8, -- Normal movement circle
+	SNAKE_RADIUS = 10,
 	SNAKE_CENTER_Z = 0,
 }
 
@@ -627,39 +627,61 @@ function CharacterPreview.create(viewport)
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
 
-		-- Camera rotation with proper positioning
+		-- DYNAMIC CAMERA THAT FOLLOWS THE ACTION
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
-		local focusPoint = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
-
+		
+		-- Camera follows the snake's center mass
+		local snakeCenter = head.Position
+		if #segments > 10 then
+			-- Look at middle of snake for better framing
+			snakeCenter = segments[10].part.Position:Lerp(head.Position, 0.5)
+		end
+		
+		-- Smooth camera orbit with vertical variation
+		local camHeight = PREVIEW_CONFIG.CAMERA_HEIGHT + math.sin(time * 0.5) * 3
+		local camDistance = PREVIEW_CONFIG.CAMERA_DISTANCE + math.sin(time * 0.3) * 5
+		
 		camera.CFrame = CFrame.lookAt(
-			focusPoint + Vector3.new(
-				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
-				PREVIEW_CONFIG.CAMERA_HEIGHT,
-				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
+			snakeCenter + Vector3.new(
+				math.sin(camAngle) * camDistance,
+				camHeight,
+				math.cos(camAngle) * camDistance
 			),
-			focusPoint
+			snakeCenter
 		)
 
 		-- Ensure camera type is scriptable
 		camera.CameraType = Enum.CameraType.Scriptable
 
-		-- Head movement - continuous circular slithering pattern
+		-- PERFECT SLITHERING HEAD MOVEMENT
 		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
 		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
-		local headX = math.sin(slitherAngle) * radius
-		local headZ = math.cos(slitherAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
+		
+		-- Create smooth figure-8 pattern
+		local figure8Factor = math.sin(slitherAngle * 2) * 0.4
+		local headX = math.sin(slitherAngle) * radius * (1 + figure8Factor)
+		local headZ = math.cos(slitherAngle) * radius * (1 - figure8Factor)
+		
+		-- Add natural S-curve waves
+		local wavePhase = slitherAngle * PREVIEW_CONFIG.SLITHER_FREQUENCY
+		local waveX = math.sin(wavePhase) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+		local waveZ = math.cos(wavePhase * 0.7) * PREVIEW_CONFIG.SLITHER_AMPLITUDE * 0.3
+		
+		-- Slight vertical movement for realism
+		local headY = math.sin(slitherAngle * 2.5) * 1.5
+		
+		local finalPos = Vector3.new(headX + waveX, headY, headZ + waveZ)
 
-		-- Add wave motion for more natural movement
-		local waveX = math.sin(slitherAngle * 3) * 2
-		local finalPos = Vector3.new(headX + waveX, 0, headZ)
+		-- Calculate smooth look-ahead direction
+		local lookAheadTime = 0.15
+		local futureAngle = slitherAngle + lookAheadTime
+		local futureFigure8 = math.sin(futureAngle * 2) * 0.4
+		local futureX = math.sin(futureAngle) * radius * (1 + futureFigure8) + math.sin(futureAngle * PREVIEW_CONFIG.SLITHER_FREQUENCY) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+		local futureY = math.sin(futureAngle * 2.5) * 1.5
+		local futureZ = math.cos(futureAngle) * radius * (1 - futureFigure8) + math.cos(futureAngle * PREVIEW_CONFIG.SLITHER_FREQUENCY * 0.7) * PREVIEW_CONFIG.SLITHER_AMPLITUDE * 0.3
 
-		-- Calculate direction snake is moving
-		local nextAngle = slitherAngle + 0.1
-		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-		local nextZ = math.cos(nextAngle) * radius + PREVIEW_CONFIG.SNAKE_CENTER_Z
-
-		-- Set head CFrame to face movement direction
-		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(nextX, 0, nextZ))
+		-- Smooth head orientation
+		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(futureX, futureY, futureZ))
 
 		-- Position eyes properly on the FRONT of the head
 		-- The -Z direction is forward when using CFrame
@@ -689,19 +711,31 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- Update segments to follow the trail with PROPER SPACING
+		-- PERFECT SLITHERING ANIMATION
 		for i, seg in ipairs(segments) do
-			-- Each segment follows where the head was N frames ago
-			-- More segments back = more frames back in history
-			local framesBack = i * 2 -- This controls segment spacing
-			local historyIndex = math.min(framesBack, #CharacterPreview.positionHistory)
+			-- Each segment follows with a smooth delay
+			local delay = i * PREVIEW_CONFIG.SEGMENT_DELAY
+			local historyIndex = math.floor(delay * 10) + 1
+			historyIndex = math.min(historyIndex, #CharacterPreview.positionHistory)
 
 			if CharacterPreview.positionHistory[historyIndex] then
-				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				-- Add offset to maintain proper spacing even when stationary
-				local spacingOffset = (head.Position - targetPos).Unit * PREVIEW_CONFIG.SEGMENT_SPACING * i * 0.1
-				seg.part.Position = seg.part.Position:Lerp(targetPos + spacingOffset, 0.5)
+				
+				-- Add natural wave motion to each segment
+				local waveOffset = math.sin(time * PREVIEW_CONFIG.SLITHER_FREQUENCY - i * 0.3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE * 0.3
+				local sideOffset = Vector3.new(waveOffset, 0, 0)
+				
+				-- Smooth interpolation for fluid movement
+				local lerpSpeed = 0.2 + (i / PREVIEW_CONFIG.SEGMENT_COUNT) * 0.1 -- Tail moves slightly slower
+				seg.part.Position = seg.part.Position:Lerp(targetPos + sideOffset, lerpSpeed)
+				
+				-- Make segments face the direction they're moving
+				if i > 1 and segments[i-1] then
+					local lookDir = (segments[i-1].part.Position - seg.part.Position).Unit
+					if lookDir.Magnitude > 0 then
+						seg.part.CFrame = CFrame.lookAt(seg.part.Position, seg.part.Position + lookDir)
+					end
+				end
 			end
 		end
 	end)
