@@ -182,143 +182,243 @@ local function createSegment(index, position, color, config, parentModel)
 	return segment
 end
 
--- FIXED: Snake Skin Configurations (EXACTLY MATCHING YOUR SYSTEM FORMAT)
+-- ULTRA PREMIUM SNAKE SKIN CONFIGURATIONS WITH ENHANCED COLORS AND VFX
 local SnakeSkinsData = {
 	["Default"] = {
-		HeadColor = Color3.fromRGB(76, 217, 100),
+		HeadColor = Color3.fromRGB(90, 255, 120),
 		BodyColors = {
-			Color3.fromRGB(60, 180, 80),
-			Color3.fromRGB(80, 200, 100),
-			Color3.fromRGB(100, 220, 120),
-			Color3.fromRGB(80, 200, 100),
-			Color3.fromRGB(60, 180, 80),
+			Color3.fromRGB(70, 210, 95),
+			Color3.fromRGB(85, 235, 110),
+			Color3.fromRGB(100, 255, 125),
+			Color3.fromRGB(85, 235, 110),
+			Color3.fromRGB(70, 210, 95),
 		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
-		HeadMaterial = Enum.Material.ForceField,
-		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 1.5,
-		GlowRange = 4,
-		Description = "The original slither.io look!"
-	},
-	["Crimson"] = {
-		HeadColor = Color3.fromRGB(220, 50, 50),
-		BodyColors = {
-			Color3.fromRGB(180, 30, 30),
-			Color3.fromRGB(200, 50, 50),
-			Color3.fromRGB(220, 70, 70),
-			Color3.fromRGB(200, 50, 50),
-			Color3.fromRGB(180, 30, 30),
-		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		HeadSize = Vector3.new(3.2, 3.2, 3.2),
+		SegmentSize = Vector3.new(2.8, 2.8, 2.8),
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
 		GlowIntensity = 2.0,
 		GlowRange = 6,
-		Description = "Burn with crimson fire!"
+		Description = "The original slither.io look - Enhanced!",
+		VFX = {
+			Type = "Energy",
+			Color = Color3.fromRGB(100, 255, 130),
+			ParticleTexture = "rbxasset://textures/particles/sparkles_main.dds",
+			ParticleRate = 20,
+			SpeedMin = 2,
+			SpeedMax = 4,
+			LifetimeMin = 0.5,
+			LifetimeMax = 1.5,
+			SizeMin = 0.3,
+			SizeMax = 0.8,
+		}
 	},
-	["Arctic"] = {
-		HeadColor = Color3.fromRGB(200, 230, 255),
+	["Crimson"] = {
+		HeadColor = Color3.fromRGB(255, 65, 65),
 		BodyColors = {
-			Color3.fromRGB(150, 200, 240),
-			Color3.fromRGB(170, 210, 245),
-			Color3.fromRGB(190, 220, 250),
-			Color3.fromRGB(170, 210, 245),
-			Color3.fromRGB(150, 200, 240),
+			Color3.fromRGB(200, 20, 20),
+			Color3.fromRGB(235, 45, 45),
+			Color3.fromRGB(255, 85, 85),
+			Color3.fromRGB(235, 45, 45),
+			Color3.fromRGB(200, 20, 20),
 		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
-		HeadMaterial = Enum.Material.Ice,
-		BodyMaterial = Enum.Material.ForceField,
-		GlowIntensity = 1.8,
-		GlowRange = 5,
-		Description = "Cool as the arctic winds!"
-	},
-	["Emerald"] = {
-		HeadColor = Color3.fromRGB(50, 200, 100),
-		BodyColors = {
-			Color3.fromRGB(30, 150, 80),
-			Color3.fromRGB(40, 170, 90),
-			Color3.fromRGB(50, 190, 100),
-			Color3.fromRGB(40, 170, 90),
-			Color3.fromRGB(30, 150, 80),
-		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
-		HeadMaterial = Enum.Material.ForceField,
-		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 1.7,
-		GlowRange = 4,
-		Description = "Precious as emerald gems!"
-	},
-	["Void"] = {
-		HeadColor = Color3.fromRGB(50, 20, 80),
-		BodyColors = {
-			Color3.fromRGB(30, 10, 50),
-			Color3.fromRGB(40, 15, 60),
-			Color3.fromRGB(50, 20, 70),
-			Color3.fromRGB(40, 15, 60),
-			Color3.fromRGB(30, 10, 50),
-		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
-		HeadMaterial = Enum.Material.ForceField,
-		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 2.2,
-		GlowRange = 7,
-		Description = "From the depths of space!"
-	},
-	["Plasma"] = {
-		HeadColor = Color3.fromRGB(255, 100, 200),
-		BodyColors = {
-			Color3.fromRGB(200, 50, 150),
-			Color3.fromRGB(220, 70, 170),
-			Color3.fromRGB(240, 90, 190),
-			Color3.fromRGB(220, 70, 170),
-			Color3.fromRGB(200, 50, 150),
-		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		HeadSize = Vector3.new(3.3, 3.3, 3.3),
+		SegmentSize = Vector3.new(2.9, 2.9, 2.9),
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
 		GlowIntensity = 2.5,
 		GlowRange = 8,
-		Description = "Electric plasma energy!"
+		Description = "Burn with crimson fire!",
+		VFX = {
+			Type = "Fire",
+			Color = Color3.fromRGB(255, 100, 50),
+			ParticleTexture = "rbxasset://textures/particles/fire_main.dds",
+			ParticleRate = 40,
+			SpeedMin = 3,
+			SpeedMax = 6,
+			LifetimeMin = 0.3,
+			LifetimeMax = 1.0,
+			SizeMin = 0.5,
+			SizeMax = 1.2,
+			EmissionDirection = Enum.NormalId.Top,
+		}
+	},
+	["Arctic"] = {
+		HeadColor = Color3.fromRGB(220, 245, 255),
+		BodyColors = {
+			Color3.fromRGB(180, 220, 255),
+			Color3.fromRGB(200, 235, 255),
+			Color3.fromRGB(220, 245, 255),
+			Color3.fromRGB(200, 235, 255),
+			Color3.fromRGB(180, 220, 255),
+		},
+		HeadSize = Vector3.new(3.2, 3.2, 3.2),
+		SegmentSize = Vector3.new(2.8, 2.8, 2.8),
+		HeadMaterial = Enum.Material.Ice,
+		BodyMaterial = Enum.Material.ForceField,
+		GlowIntensity = 2.2,
+		GlowRange = 7,
+		Description = "Cool as the arctic winds!",
+		VFX = {
+			Type = "Frost",
+			Color = Color3.fromRGB(200, 240, 255),
+			ParticleTexture = "rbxasset://textures/particles/sparkles_main.dds",
+			ParticleRate = 30,
+			SpeedMin = 1,
+			SpeedMax = 3,
+			LifetimeMin = 1.0,
+			LifetimeMax = 2.0,
+			SizeMin = 0.2,
+			SizeMax = 0.6,
+			RotSpeed = NumberRange.new(-2, 2),
+		}
+	},
+	["Emerald"] = {
+		HeadColor = Color3.fromRGB(20, 255, 127),
+		BodyColors = {
+			Color3.fromRGB(0, 200, 100),
+			Color3.fromRGB(10, 225, 115),
+			Color3.fromRGB(20, 255, 127),
+			Color3.fromRGB(10, 225, 115),
+			Color3.fromRGB(0, 200, 100),
+		},
+		HeadSize = Vector3.new(3.3, 3.3, 3.3),
+		SegmentSize = Vector3.new(2.9, 2.9, 2.9),
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 2.5,
+		GlowRange = 8,
+		Description = "Precious as emerald gems!",
+		VFX = {
+			Type = "Sparkle",
+			Color = Color3.fromRGB(50, 255, 150),
+			ParticleTexture = "rbxasset://textures/particles/sparkles_main.dds",
+			ParticleRate = 35,
+			SpeedMin = 2,
+			SpeedMax = 5,
+			LifetimeMin = 0.5,
+			LifetimeMax = 1.5,
+			SizeMin = 0.3,
+			SizeMax = 1.0,
+			RotSpeed = NumberRange.new(-5, 5),
+		}
+	},
+	["Void"] = {
+		HeadColor = Color3.fromRGB(75, 0, 130),
+		BodyColors = {
+			Color3.fromRGB(50, 0, 100),
+			Color3.fromRGB(65, 0, 115),
+			Color3.fromRGB(75, 0, 130),
+			Color3.fromRGB(85, 0, 145),
+			Color3.fromRGB(75, 0, 130),
+		},
+		HeadSize = Vector3.new(3.4, 3.4, 3.4),
+		SegmentSize = Vector3.new(3.0, 3.0, 3.0),
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 3.0,
+		GlowRange = 10,
+		Description = "From the depths of space!",
+		VFX = {
+			Type = "Void",
+			Color = Color3.fromRGB(138, 43, 226),
+			ParticleTexture = "rbxasset://textures/particles/smoke_main.dds",
+			ParticleRate = 50,
+			SpeedMin = 1,
+			SpeedMax = 3,
+			LifetimeMin = 1.0,
+			LifetimeMax = 2.5,
+			SizeMin = 1.0,
+			SizeMax = 2.5,
+		}
+	},
+	["Plasma"] = {
+		HeadColor = Color3.fromRGB(255, 0, 255),
+		BodyColors = {
+			Color3.fromRGB(255, 0, 200),
+			Color3.fromRGB(255, 0, 225),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(255, 50, 255),
+			Color3.fromRGB(255, 0, 200),
+		},
+		HeadSize = Vector3.new(3.4, 3.4, 3.4),
+		SegmentSize = Vector3.new(3.0, 3.0, 3.0),
+		HeadMaterial = Enum.Material.ForceField,
+		BodyMaterial = Enum.Material.Neon,
+		GlowIntensity = 3.5,
+		GlowRange = 12,
+		Description = "Electric plasma energy!",
+		VFX = {
+			Type = "Lightning",
+			Color = Color3.fromRGB(255, 100, 255),
+			ParticleTexture = "rbxasset://textures/particles/sparkles_main.dds",
+			ParticleRate = 60,
+			SpeedMin = 5,
+			SpeedMax = 10,
+			LifetimeMin = 0.2,
+			LifetimeMax = 0.8,
+			SizeMin = 0.5,
+			SizeMax = 1.5,
+		}
 	},
 	["Galaxy"] = {
-		HeadColor = Color3.fromRGB(100, 50, 200),
+		HeadColor = Color3.fromRGB(148, 0, 211),
 		BodyColors = {
-			Color3.fromRGB(80, 30, 150),
-			Color3.fromRGB(90, 40, 170),
-			Color3.fromRGB(100, 50, 190),
-			Color3.fromRGB(90, 40, 170),
-			Color3.fromRGB(80, 30, 150),
+			Color3.fromRGB(75, 0, 130),
+			Color3.fromRGB(106, 90, 205),
+			Color3.fromRGB(148, 0, 211),
+			Color3.fromRGB(186, 85, 211),
+			Color3.fromRGB(148, 0, 211),
 		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		HeadSize = Vector3.new(3.5, 3.5, 3.5),
+		SegmentSize = Vector3.new(3.1, 3.1, 3.1),
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 2.3,
-		GlowRange = 7,
-		Description = "Born from distant galaxies!"
+		GlowIntensity = 3.0,
+		GlowRange = 10,
+		Description = "Born from distant galaxies!",
+		VFX = {
+			Type = "Galaxy",
+			Color = Color3.fromRGB(186, 85, 211),
+			ParticleTexture = "rbxasset://textures/particles/sparkles_main.dds",
+			ParticleRate = 45,
+			SpeedMin = 0.5,
+			SpeedMax = 2,
+			LifetimeMin = 2.0,
+			LifetimeMax = 4.0,
+			SizeMin = 0.5,
+			SizeMax = 1.5,
+			RotSpeed = NumberRange.new(-1, 1),
+		}
 	},
 	["Ocean"] = {
-		HeadColor = Color3.fromRGB(50, 150, 200),
+		HeadColor = Color3.fromRGB(0, 191, 255),
 		BodyColors = {
-			Color3.fromRGB(30, 100, 180),
-			Color3.fromRGB(40, 120, 190),
-			Color3.fromRGB(50, 140, 200),
-			Color3.fromRGB(40, 120, 190),
-			Color3.fromRGB(30, 100, 180),
+			Color3.fromRGB(0, 150, 255),
+			Color3.fromRGB(0, 170, 255),
+			Color3.fromRGB(0, 191, 255),
+			Color3.fromRGB(30, 200, 255),
+			Color3.fromRGB(0, 150, 255),
 		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
+		HeadSize = Vector3.new(3.3, 3.3, 3.3),
+		SegmentSize = Vector3.new(2.9, 2.9, 2.9),
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 1.9,
-		GlowRange = 5,
-		Description = "Dive into ocean depths!"
+		GlowIntensity = 2.5,
+		GlowRange = 8,
+		Description = "Dive into ocean depths!",
+		VFX = {
+			Type = "Water",
+			Color = Color3.fromRGB(0, 200, 255),
+			ParticleTexture = "rbxasset://textures/particles/sparkles_main.dds",
+			ParticleRate = 40,
+			SpeedMin = 1,
+			SpeedMax = 3,
+			LifetimeMin = 1.0,
+			LifetimeMax = 2.0,
+			SizeMin = 0.4,
+			SizeMax = 1.0,
+		}
 	},
 	["Shadow"] = {
 		HeadColor = Color3.fromRGB(40, 40, 40),
@@ -441,7 +541,7 @@ local SnakeSkinsData = {
 	}
 }
 
--- ULTRA PREMIUM PREVIEW with AMAZING VFX
+-- ULTRA PREMIUM 5X BETTER PREVIEW WITH UNIQUE VFX PER SKIN
 function CharacterPreview.create(viewport)
 	if not viewport then return end
 
@@ -450,7 +550,7 @@ function CharacterPreview.create(viewport)
 		child:Destroy()
 	end
 
-	-- Create camera
+	-- Create camera with cinematic positioning
 	local camera = Instance.new("Camera")
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
@@ -460,23 +560,8 @@ function CharacterPreview.create(viewport)
 	snakeModel.Name = "SnakePreview"
 	snakeModel.Parent = viewport
 
-	-- Use default config initially
-	local config = SnakeSkinsData["Default"] or {
-		HeadColor = Color3.fromRGB(76, 217, 100),
-		BodyColors = {
-			Color3.fromRGB(60, 180, 80),
-			Color3.fromRGB(80, 200, 100),
-			Color3.fromRGB(100, 220, 120),
-			Color3.fromRGB(80, 200, 100),
-			Color3.fromRGB(60, 180, 80),
-		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
-		HeadMaterial = Enum.Material.ForceField,
-		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 1.5,
-		GlowRange = 4,
-	}
+	-- Use enhanced default config
+	local config = SnakeSkinsData["Default"]
 
 	-- Create a fake root part for the preview
 	local fakeRoot = Instance.new("Part")
@@ -487,7 +572,7 @@ function CharacterPreview.create(viewport)
 	fakeRoot.Position = Vector3.new(0, 0, -10)
 	fakeRoot.Parent = snakeModel
 
-	-- Create head EXACTLY like CharacterSetup does
+	-- Create head with ENHANCED VISUALS - NOT JUST AN ORB
 	local headPart = Instance.new("Part")
 	headPart.Name = "SnakeHead"
 	headPart.Size = config.HeadSize
@@ -502,36 +587,59 @@ function CharacterPreview.create(viewport)
 	headPart.BottomSurface = Enum.SurfaceType.Smooth
 	headPart.Parent = snakeModel
 
-	-- Add head glow
+	-- Add ENHANCED head glow with multiple layers
 	local headLight = Instance.new("PointLight")
 	headLight.Color = config.HeadColor
-	headLight.Brightness = config.GlowIntensity + 1
-	headLight.Range = config.GlowRange + 2
+	headLight.Brightness = config.GlowIntensity + 2
+	headLight.Range = config.GlowRange + 4
+	headLight.Shadows = true
 	headLight.Parent = headPart
+	
+	-- Add secondary glow for depth
+	local innerGlow = Instance.new("PointLight")
+	innerGlow.Color = Color3.new(
+		math.min(config.HeadColor.R * 1.2, 1),
+		math.min(config.HeadColor.G * 1.2, 1),
+		math.min(config.HeadColor.B * 1.2, 1)
+	)
+	innerGlow.Brightness = config.GlowIntensity * 0.5
+	innerGlow.Range = config.GlowRange * 0.5
+	innerGlow.Parent = headPart
 
-	-- Add head outline
-	local headOutline = Instance.new("SelectionBox")
-	headOutline.Adornee = headPart
-	headOutline.Color3 = Color3.fromRGB(255, 255, 255)
-	headOutline.LineThickness = 0.08
-	headOutline.Transparency = 1
-	headOutline.Parent = headPart
+	-- Add premium surface light
+	local surfaceLight = Instance.new("SurfaceLight")
+	surfaceLight.Face = Enum.NormalId.Front
+	surfaceLight.Color = config.HeadColor
+	surfaceLight.Brightness = 2
+	surfaceLight.Range = 10
+	surfaceLight.Angle = 180
+	surfaceLight.Parent = headPart
 
-	-- Create eyes WITH WELDS - EXACTLY like CharacterSetup
+	-- Create ENHANCED eyes that are PROPERLY ATTACHED to head
 	local function createEye(name, position, parent)
 		local eye = Instance.new("Part")
 		eye.Name = name
-		eye.Size = Vector3.new(0.6, 0.6, 0.6)
+		eye.Size = Vector3.new(0.8, 0.8, 0.8) -- Bigger eyes
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
 		eye.Shape = Enum.PartType.Ball
 		eye.CanCollide = false
 		eye.CanQuery = false
 		eye.CanTouch = false
-		eye.Anchored = false -- NOT anchored, will be welded
+		eye.Anchored = false -- Will be welded
 		eye.Parent = parent
+		
+		-- Add eye glow
+		local eyeGlow = Instance.new("PointLight")
+		eyeGlow.Color = Color3.fromRGB(255, 255, 255)
+		eyeGlow.Brightness = 1
+		eyeGlow.Range = 2
+		eyeGlow.Parent = eye
+		
+		-- Position relative to head
 		eye.CFrame = parent.CFrame * CFrame.new(position)
-
+		
+		-- Weld to head
 		local weld = Instance.new("WeldConstraint")
 		weld.Part0 = parent
 		weld.Part1 = eye
@@ -543,17 +651,20 @@ function CharacterPreview.create(viewport)
 	local function createPupil(name, position, parent)
 		local pupil = Instance.new("Part")
 		pupil.Name = name
-		pupil.Size = Vector3.new(0.25, 0.25, 0.25)
+		pupil.Size = Vector3.new(0.35, 0.35, 0.35) -- Bigger pupils
 		pupil.Material = Enum.Material.Neon
 		pupil.Color = Color3.fromRGB(0, 0, 0)
 		pupil.Shape = Enum.PartType.Ball
 		pupil.CanCollide = false
 		pupil.CanQuery = false
 		pupil.CanTouch = false
-		pupil.Anchored = false -- NOT anchored, will be welded
+		pupil.Anchored = false -- Will be welded
 		pupil.Parent = parent
+		
+		-- Position relative to eye
 		pupil.CFrame = parent.CFrame * CFrame.new(position)
-
+		
+		-- Weld to eye
 		local weld = Instance.new("WeldConstraint")
 		weld.Part0 = parent
 		weld.Part1 = pupil
@@ -565,22 +676,24 @@ function CharacterPreview.create(viewport)
 	-- Position head
 	headPart.Position = fakeRoot.Position
 
-	-- Create eyes with welds EXACTLY like CharacterSetup
-	local leftEye, leftEyeWeld = createEye("LeftEye", Vector3.new(-0.6, 0.55, 0.8), headPart)
-	local rightEye, rightEyeWeld = createEye("RightEye", Vector3.new(0.6, 0.55, 0.8), headPart)
-	local leftPupil, leftPupilWeld = createPupil("LeftPupil", Vector3.new(0, 0, -0.2), leftEye)
-	local rightPupil, rightPupilWeld = createPupil("RightPupil", Vector3.new(0, 0, -0.2), rightEye)
+	-- Create eyes PROPERLY POSITIONED ON HEAD SURFACE
+	local leftEye, leftEyeWeld = createEye("LeftEye", Vector3.new(-0.7, 0.6, 1.2), headPart)
+	local rightEye, rightEyeWeld = createEye("RightEye", Vector3.new(0.7, 0.6, 1.2), headPart)
+	local leftPupil, leftPupilWeld = createPupil("LeftPupil", Vector3.new(0, 0, -0.3), leftEye)
+	local rightPupil, rightPupilWeld = createPupil("RightPupil", Vector3.new(0, 0, -0.3), rightEye)
 
 	-- Set primary part
 	snakeModel.PrimaryPart = headPart
 
-	-- Create body segments EXACTLY like CharacterSetup
+	-- Create ENHANCED body segments - NOT JUST ORBS
 	local segments = {}
 	local startPos = fakeRoot.Position
-	for i = 1, 8 do
+	for i = 1, 12 do -- More segments for better appearance
 		local segment = Instance.new("Part")
 		segment.Name = "Segment" .. i
-		segment.Size = config.SegmentSize
+		-- Gradual size reduction for tapered snake look
+		local sizeMult = 1 - (i * 0.03)
+		segment.Size = config.SegmentSize * sizeMult
 		segment.Material = config.BodyMaterial
 		segment.Shape = Enum.PartType.Ball
 		segment.CanCollide = false
@@ -591,44 +704,54 @@ function CharacterPreview.create(viewport)
 		segment.BottomSurface = Enum.SurfaceType.Smooth
 		segment.Parent = snakeModel
 		
-		-- Apply color pattern
+		-- Apply enhanced color pattern with gradient
 		local colorIndex = ((i - 1) % #config.BodyColors) + 1
-		segment.Color = config.BodyColors[colorIndex]
-		
-		-- Position in a curve for preview
-		local angle = (i / 8) * math.pi * 0.5
-		segment.Position = startPos + Vector3.new(
-			math.sin(angle) * 3,
-			0,
-			-i * 2.2
+		local baseColor = config.BodyColors[colorIndex]
+		-- Add subtle darkening towards tail
+		local darkness = 1 - (i * 0.02)
+		segment.Color = Color3.new(
+			baseColor.R * darkness,
+			baseColor.G * darkness,
+			baseColor.B * darkness
 		)
 		
-		-- Add glow
+		-- Position in an S-curve for dynamic preview
+		local angle = (i / 12) * math.pi * 1.5
+		segment.Position = startPos + Vector3.new(
+			math.sin(angle) * 4 * (1 + i * 0.1),
+			math.cos(angle * 2) * 0.5,
+			-i * 1.8
+		)
+		
+		-- Add enhanced glow with falloff
 		local light = Instance.new("PointLight")
 		light.Name = "Glow"
 		light.Color = segment.Color
-		light.Brightness = config.GlowIntensity
-		light.Range = config.GlowRange
+		light.Brightness = config.GlowIntensity * (1 - i * 0.05)
+		light.Range = config.GlowRange * sizeMult
 		light.Enabled = true
 		light.Parent = segment
 		
-		-- Add outline
-		local outline = Instance.new("SelectionBox")
-		outline.Name = "Outline"
-		outline.Adornee = segment
-		outline.Color3 = Color3.fromRGB(255, 255, 255)
-		outline.LineThickness = 0.03
-		outline.Transparency = 1
-		outline.Parent = segment
+		-- Add surface light for depth
+		if i <= 6 then -- Only for front segments
+			local surfLight = Instance.new("SurfaceLight")
+			surfLight.Face = Enum.NormalId.Front
+			surfLight.Color = segment.Color
+			surfLight.Brightness = 1
+			surfLight.Range = 8
+			surfLight.Angle = 120
+			surfLight.Parent = segment
+		end
 		
 		segments[i] = segment
 	end
 	
-	-- Store head parts for update function - INCLUDING WELDS
+	-- Store head parts for update function
 	local headParts = {
 		head = headPart,
 		headLight = headLight,
-		headOutline = headOutline,
+		innerGlow = innerGlow,
+		surfaceLight = surfaceLight,
 		leftEye = leftEye,
 		rightEye = rightEye,
 		leftPupil = leftPupil,
@@ -639,11 +762,29 @@ function CharacterPreview.create(viewport)
 		rightPupilWeld = rightPupilWeld
 	}
 
-	-- NO VFX - Keep it clean and lag-free like the original
+	-- Create VFX attachment points
+	local vfxAttachments = {}
+	
+	-- Head VFX attachment
+	local headAttachment = Instance.new("Attachment")
+	headAttachment.Name = "HeadVFX"
+	headAttachment.Position = Vector3.new(0, 0, 0)
+	headAttachment.Parent = headPart
+	vfxAttachments.head = headAttachment
+	
+	-- Body VFX attachments
+	vfxAttachments.body = {}
+	for i = 1, 4 do -- VFX on first 4 segments
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "BodyVFX" .. i
+		attachment.Position = Vector3.new(0, 0, 0)
+		attachment.Parent = segments[i]
+		vfxAttachments.body[i] = attachment
+	end
 
-	-- Position camera for cinematic view
-	camera.CFrame = CFrame.new(Vector3.new(12, 8, -5), Vector3.new(0, 0, -10))
-	camera.FieldOfView = 35
+	-- Position camera for CINEMATIC view
+	camera.CFrame = CFrame.new(Vector3.new(10, 6, 5), Vector3.new(0, 0, -8))
+	camera.FieldOfView = 40
 
 	-- Store references
 	CharacterPreview.currentModel = snakeModel
@@ -652,61 +793,105 @@ function CharacterPreview.create(viewport)
 	CharacterPreview.currentBody = segments
 	CharacterPreview.currentCamera = camera
 	CharacterPreview.currentSkinName = "Default"
+	CharacterPreview.vfxAttachments = vfxAttachments
+	CharacterPreview.activeVFX = {}
 
-	-- Start animations (NO VFX)
+	-- Start animations
 	CharacterPreview.startRotation()
 	CharacterPreview.startBodyWave()
+	
+	-- Apply initial VFX
+	CharacterPreview.applyVFX("Default")
 
 	return snakeModel
 end
 
--- FIXED: Update preview with proper skin application
+-- ENHANCED Update preview with VFX
 function CharacterPreview.update(skinName)
 	if not CharacterPreview.currentModel or not SnakeSkinsData[skinName] then 
 		print("❌ No model or skin data for:", skinName)
 		return 
 	end
 	
-	-- Store current skin name for VFX
+	-- Store current skin name
 	CharacterPreview.currentSkinName = skinName
 
 	local skin = SnakeSkinsData[skinName]
 	local headParts = CharacterPreview.currentHeadParts
 	local bodyParts = CharacterPreview.currentBody
 
-	print("🎨 Updating preview with skin:", skinName)
+	print("🎨 Updating preview with enhanced skin:", skinName)
 
-	-- Update head
+	-- Update head with enhanced colors
 	if headParts and headParts.head then
-		headParts.head.Color = skin.HeadColor
+		-- Animate color transition
+		TweenService:Create(headParts.head, TweenInfo.new(0.5), {
+			Color = skin.HeadColor
+		}):Play()
 		headParts.head.Material = skin.HeadMaterial
 
-		-- Update head light
+		-- Update all head lights
 		if headParts.headLight then
 			headParts.headLight.Color = skin.HeadColor
-			headParts.headLight.Brightness = skin.GlowIntensity + 1
-			headParts.headLight.Range = skin.GlowRange + 2
+			headParts.headLight.Brightness = skin.GlowIntensity + 2
+			headParts.headLight.Range = skin.GlowRange + 4
+		end
+		
+		if headParts.innerGlow then
+			headParts.innerGlow.Color = Color3.new(
+				math.min(skin.HeadColor.R * 1.2, 1),
+				math.min(skin.HeadColor.G * 1.2, 1),
+				math.min(skin.HeadColor.B * 1.2, 1)
+			)
+			headParts.innerGlow.Brightness = skin.GlowIntensity * 0.5
+			headParts.innerGlow.Range = skin.GlowRange * 0.5
+		end
+		
+		if headParts.surfaceLight then
+			headParts.surfaceLight.Color = skin.HeadColor
 		end
 	end
 
-	-- Update body segments with proper colors from BodyColors array
+	-- Update body segments with gradient effect
 	for i, segment in ipairs(bodyParts) do
 		if segment and skin.BodyColors then
 			local colorIndex = ((i - 1) % #skin.BodyColors) + 1
-			segment.Color = skin.BodyColors[colorIndex]
+			local baseColor = skin.BodyColors[colorIndex]
+			
+			-- Apply gradient darkening
+			local darkness = 1 - (i * 0.02)
+			local finalColor = Color3.new(
+				baseColor.R * darkness,
+				baseColor.G * darkness,
+				baseColor.B * darkness
+			)
+			
+			-- Animate color transition
+			TweenService:Create(segment, TweenInfo.new(0.5), {
+				Color = finalColor
+			}):Play()
 			segment.Material = skin.BodyMaterial
 
-			-- Update segment light
+			-- Update segment lights
 			local light = segment:FindFirstChild("Glow")
 			if light then
-				light.Color = skin.BodyColors[colorIndex]
-				light.Brightness = skin.GlowIntensity
-				light.Range = skin.GlowRange
+				light.Color = finalColor
+				light.Brightness = skin.GlowIntensity * (1 - i * 0.05)
+				light.Range = skin.GlowRange * (1 - i * 0.03)
+			end
+			
+			-- Update surface lights
+			local surfLight = segment:FindFirstChild("SurfaceLight")
+			if surfLight then
+				surfLight.Color = finalColor
 			end
 		end
 	end
+	
+	-- Apply unique VFX for this skin
+	CharacterPreview.applyVFX(skinName)
 
-	print("✅ Preview updated successfully!")
+	print("✅ Preview updated with VFX!")
 end
 
 function CharacterPreview.startRotation()
@@ -729,9 +914,307 @@ function CharacterPreview.startRotation()
 	end)
 end
 
--- VFX REMOVED - No lag, clean preview
+-- UNIQUE VFX SYSTEM PER SKIN
+function CharacterPreview.applyVFX(skinName)
+	-- Clear existing VFX
+	CharacterPreview.clearVFX()
+	
+	local skin = SnakeSkinsData[skinName]
+	if not skin or not skin.VFX then return end
+	
+	local vfx = skin.VFX
+	local attachments = CharacterPreview.vfxAttachments
+	
+	if vfx.Type == "Fire" then
+		-- Fire effect for Crimson
+		local fire = Instance.new("Fire")
+		fire.Size = 8
+		fire.Heat = 10
+		fire.Color = vfx.Color
+		fire.SecondaryColor = Color3.new(vfx.Color.R * 0.7, vfx.Color.G * 0.7, vfx.Color.B * 0.7)
+		fire.Parent = CharacterPreview.currentHead
+		table.insert(CharacterPreview.activeVFX, fire)
+		
+		-- Add flame particles
+		for i, attachment in ipairs(attachments.body) do
+			local emitter = Instance.new("ParticleEmitter")
+			emitter.Texture = vfx.ParticleTexture
+			emitter.Rate = vfx.ParticleRate * (1 - i * 0.2)
+			emitter.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+			emitter.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+			emitter.VelocitySpread = 180
+			emitter.Color = ColorSequence.new(vfx.Color)
+			emitter.LightEmission = 1
+			emitter.LightInfluence = 0
+			emitter.Size = NumberSequence.new{
+				NumberSequenceKeypoint.new(0, vfx.SizeMin),
+				NumberSequenceKeypoint.new(0.5, vfx.SizeMax),
+				NumberSequenceKeypoint.new(1, 0)
+			}
+			emitter.Parent = attachment
+			table.insert(CharacterPreview.activeVFX, emitter)
+		end
+		
+	elseif vfx.Type == "Frost" then
+		-- Ice crystals for Arctic
+		local headEmitter = Instance.new("ParticleEmitter")
+		headEmitter.Texture = vfx.ParticleTexture
+		headEmitter.Rate = vfx.ParticleRate
+		headEmitter.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+		headEmitter.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+		headEmitter.VelocitySpread = 360
+		headEmitter.Color = ColorSequence.new(vfx.Color)
+		headEmitter.LightEmission = 0.8
+		headEmitter.LightInfluence = 0.2
+		headEmitter.RotSpeed = vfx.RotSpeed
+		headEmitter.Size = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, vfx.SizeMin),
+			NumberSequenceKeypoint.new(1, vfx.SizeMax)
+		}
+		headEmitter.Parent = attachments.head
+		table.insert(CharacterPreview.activeVFX, headEmitter)
+		
+		-- Add ice aura
+		for _, segment in ipairs(CharacterPreview.currentBody) do
+			if math.random() > 0.5 then
+				local iceGlow = Instance.new("PointLight")
+				iceGlow.Color = vfx.Color
+				iceGlow.Brightness = 3
+				iceGlow.Range = 6
+				iceGlow.Parent = segment
+				table.insert(CharacterPreview.activeVFX, iceGlow)
+			end
+		end
+		
+	elseif vfx.Type == "Energy" then
+		-- Energy orbs for Default/others
+		for _, attachment in ipairs(attachments.body) do
+			local emitter = Instance.new("ParticleEmitter")
+			emitter.Texture = vfx.ParticleTexture
+			emitter.Rate = vfx.ParticleRate
+			emitter.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+			emitter.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+			emitter.VelocitySpread = 45
+			emitter.Color = ColorSequence.new(vfx.Color)
+			emitter.LightEmission = 1
+			emitter.LightInfluence = 0
+			emitter.Size = NumberSequence.new(vfx.SizeMin, vfx.SizeMax)
+			emitter.Parent = attachment
+			table.insert(CharacterPreview.activeVFX, emitter)
+		end
+		
+	elseif vfx.Type == "Sparkle" then
+		-- Sparkle effect for Emerald
+		local headEmitter = Instance.new("ParticleEmitter")
+		headEmitter.Texture = vfx.ParticleTexture
+		headEmitter.Rate = vfx.ParticleRate * 2
+		headEmitter.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+		headEmitter.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+		headEmitter.VelocitySpread = 360
+		headEmitter.Color = ColorSequence.new(vfx.Color)
+		headEmitter.LightEmission = 1
+		headEmitter.LightInfluence = 0
+		headEmitter.RotSpeed = vfx.RotSpeed
+		headEmitter.Size = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.1, vfx.SizeMax),
+			NumberSequenceKeypoint.new(1, vfx.SizeMin)
+		}
+		headEmitter.Parent = attachments.head
+		table.insert(CharacterPreview.activeVFX, headEmitter)
+		
+		-- Body sparkles
+		for i, attachment in ipairs(attachments.body) do
+			local sparkle = Instance.new("ParticleEmitter")
+			sparkle.Texture = vfx.ParticleTexture
+			sparkle.Rate = vfx.ParticleRate
+			sparkle.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+			sparkle.Speed = NumberRange.new(vfx.SpeedMin * 0.5, vfx.SpeedMax * 0.5)
+			sparkle.VelocitySpread = 180
+			sparkle.Color = ColorSequence.new(vfx.Color)
+			sparkle.LightEmission = 1
+			sparkle.LightInfluence = 0
+			sparkle.RotSpeed = vfx.RotSpeed
+			sparkle.Size = NumberSequence.new(vfx.SizeMin, vfx.SizeMax)
+			sparkle.Parent = attachment
+			table.insert(CharacterPreview.activeVFX, sparkle)
+		end
+		
+	elseif vfx.Type == "Void" then
+		-- Dark void effect
+		local voidEmitter = Instance.new("ParticleEmitter")
+		voidEmitter.Texture = vfx.ParticleTexture
+		voidEmitter.Rate = vfx.ParticleRate
+		voidEmitter.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+		voidEmitter.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+		voidEmitter.VelocitySpread = 360
+		voidEmitter.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
+			ColorSequenceKeypoint.new(0.5, vfx.Color),
+			ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
+		}
+		voidEmitter.LightEmission = 0.5
+		voidEmitter.LightInfluence = 0
+		voidEmitter.Size = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, vfx.SizeMin),
+			NumberSequenceKeypoint.new(0.5, vfx.SizeMax),
+			NumberSequenceKeypoint.new(1, vfx.SizeMin)
+		}
+		voidEmitter.Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(0.5, 0),
+			NumberSequenceKeypoint.new(1, 1)
+		}
+		voidEmitter.ZOffset = -1
+		voidEmitter.Parent = attachments.head
+		table.insert(CharacterPreview.activeVFX, voidEmitter)
+		
+	elseif vfx.Type == "Lightning" then
+		-- Electric lightning effect
+		for _, attachment in ipairs(attachments.body) do
+			local lightning = Instance.new("ParticleEmitter")
+			lightning.Texture = vfx.ParticleTexture
+			lightning.Rate = vfx.ParticleRate
+			lightning.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+			lightning.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+			lightning.VelocitySpread = 0
+			lightning.Acceleration = Vector3.new(
+				math.random(-20, 20),
+				math.random(-20, 20),
+				math.random(-20, 20)
+			)
+			lightning.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+				ColorSequenceKeypoint.new(0.5, vfx.Color),
+				ColorSequenceKeypoint.new(1, vfx.Color)
+			}
+			lightning.LightEmission = 1
+			lightning.LightInfluence = 0
+			lightning.Size = NumberSequence.new{
+				NumberSequenceKeypoint.new(0, vfx.SizeMax),
+				NumberSequenceKeypoint.new(1, 0)
+			}
+			lightning.Parent = attachment
+			table.insert(CharacterPreview.activeVFX, lightning)
+		end
+		
+	elseif vfx.Type == "Galaxy" then
+		-- Galaxy stars effect
+		local starEmitter = Instance.new("ParticleEmitter")
+		starEmitter.Texture = vfx.ParticleTexture
+		starEmitter.Rate = vfx.ParticleRate
+		starEmitter.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+		starEmitter.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+		starEmitter.VelocitySpread = 360
+		starEmitter.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.3, vfx.Color),
+			ColorSequenceKeypoint.new(0.7, Color3.fromRGB(75, 0, 130)),
+			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
+		}
+		starEmitter.LightEmission = 1
+		starEmitter.LightInfluence = 0
+		starEmitter.RotSpeed = vfx.RotSpeed
+		starEmitter.Size = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.1, vfx.SizeMin),
+			NumberSequenceKeypoint.new(0.5, vfx.SizeMax),
+			NumberSequenceKeypoint.new(1, 0)
+		}
+		starEmitter.Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.2, 0),
+			NumberSequenceKeypoint.new(0.8, 0),
+			NumberSequenceKeypoint.new(1, 1)
+		}
+		starEmitter.Parent = attachments.head
+		table.insert(CharacterPreview.activeVFX, starEmitter)
+		
+		-- Add nebula effect to body
+		for i, attachment in ipairs(attachments.body) do
+			if i % 2 == 0 then -- Every other segment
+				local nebula = Instance.new("ParticleEmitter")
+				nebula.Texture = "rbxasset://textures/particles/smoke_main.dds"
+				nebula.Rate = 10
+				nebula.Lifetime = NumberRange.new(3, 5)
+				nebula.Speed = NumberRange.new(0.5, 1)
+				nebula.VelocitySpread = 360
+				nebula.Color = ColorSequence.new(vfx.Color)
+				nebula.LightEmission = 0.3
+				nebula.LightInfluence = 0
+				nebula.Size = NumberSequence.new(2, 4)
+				nebula.Transparency = NumberSequence.new{
+					NumberSequenceKeypoint.new(0, 0.8),
+					NumberSequenceKeypoint.new(0.5, 0.6),
+					NumberSequenceKeypoint.new(1, 1)
+				}
+				nebula.ZOffset = -2
+				nebula.Parent = attachment
+				table.insert(CharacterPreview.activeVFX, nebula)
+			end
+		end
+		
+	elseif vfx.Type == "Water" then
+		-- Water bubbles effect
+		for _, attachment in ipairs({attachments.head, unpack(attachments.body)}) do
+			local bubbles = Instance.new("ParticleEmitter")
+			bubbles.Texture = vfx.ParticleTexture
+			bubbles.Rate = vfx.ParticleRate
+			bubbles.Lifetime = NumberRange.new(vfx.LifetimeMin, vfx.LifetimeMax)
+			bubbles.Speed = NumberRange.new(vfx.SpeedMin, vfx.SpeedMax)
+			bubbles.VelocitySpread = 45
+			bubbles.Acceleration = Vector3.new(0, 2, 0) -- Bubbles float up
+			bubbles.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+				ColorSequenceKeypoint.new(0.5, vfx.Color),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 220, 255))
+			}
+			bubbles.LightEmission = 0.8
+			bubbles.LightInfluence = 0.2
+			bubbles.Size = NumberSequence.new{
+				NumberSequenceKeypoint.new(0, vfx.SizeMin),
+				NumberSequenceKeypoint.new(0.5, vfx.SizeMax),
+				NumberSequenceKeypoint.new(1, vfx.SizeMin * 0.5)
+			}
+			bubbles.Transparency = NumberSequence.new{
+				NumberSequenceKeypoint.new(0, 0.3),
+				NumberSequenceKeypoint.new(0.7, 0.1),
+				NumberSequenceKeypoint.new(1, 1)
+			}
+			bubbles.Parent = attachment
+			table.insert(CharacterPreview.activeVFX, bubbles)
+		end
+	end
+	
+	-- Add trail effect for ALL skins
+	if #CharacterPreview.currentBody >= 2 then
+		local trail = Instance.new("Trail")
+		trail.Attachment0 = attachments.head
+		trail.Attachment1 = attachments.body[math.min(3, #attachments.body)]
+		trail.Color = ColorSequence.new(skin.HeadColor)
+		trail.LightEmission = 1
+		trail.LightInfluence = 0
+		trail.Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.5, 0.3),
+			NumberSequenceKeypoint.new(1, 1)
+		}
+		trail.Lifetime = 0.5
+		trail.MinLength = 0
+		trail.FaceCamera = true
+		trail.Parent = CharacterPreview.currentModel
+		table.insert(CharacterPreview.activeVFX, trail)
+	end
+end
 
--- SMOOTH SNAKE BODY WAVE
+function CharacterPreview.clearVFX()
+	for _, vfx in ipairs(CharacterPreview.activeVFX) do
+		vfx:Destroy()
+	end
+	CharacterPreview.activeVFX = {}
+end
+
+-- ENHANCED SMOOTH SNAKE BODY WAVE
 function CharacterPreview.startBodyWave()
 	if not CharacterPreview.currentBody then return end
 	
@@ -742,15 +1225,23 @@ function CharacterPreview.startBodyWave()
 		if CharacterPreview.currentBody then
 			for i, segment in ipairs(CharacterPreview.currentBody) do
 				if segment and segment.Parent then
-					local offset = math.sin(time * 3 - i * 0.5) * 0.5
-					local angle = (i / 8) * math.pi * 0.5
+					-- Complex wave motion
+					local waveOffset = math.sin(time * 4 - i * 0.6) * 1.2
+					local verticalWave = math.cos(time * 3 - i * 0.4) * 0.3
+					local angle = (i / 12) * math.pi * 1.5
+					
+					-- Dynamic S-curve positioning
 					local basePos = Vector3.new(
-						math.sin(angle) * 3,
-						0,
-						-10 - (i * 2.2)
+						math.sin(angle) * 4 * (1 + i * 0.1) + waveOffset,
+						math.cos(angle * 2) * 0.5 + verticalWave,
+						-10 - (i * 1.8)
 					)
-					segment.Position = basePos + Vector3.new(offset, 0, 0)
-					-- NO SIZE PULSING - Keep it clean
+					segment.Position = basePos
+					
+					-- Subtle size pulsing for organic feel
+					local sizePulse = 1 + math.sin(time * 2 - i * 0.3) * 0.05
+					local baseSizeMult = 1 - (i * 0.03)
+					segment.Size = SnakeSkinsData[CharacterPreview.currentSkinName].SegmentSize * baseSizeMult * sizePulse
 				end
 			end
 		else
@@ -762,6 +1253,9 @@ function CharacterPreview.startBodyWave()
 end
 
 function CharacterPreview.destroy(viewport)
+	-- Clear VFX first
+	CharacterPreview.clearVFX()
+	
 	if viewport then
 		for _, child in pairs(viewport:GetChildren()) do
 			child:Destroy()
@@ -779,6 +1273,8 @@ function CharacterPreview.destroy(viewport)
 	CharacterPreview.currentBody = nil
 	CharacterPreview.currentCamera = nil
 	CharacterPreview.currentSkinName = nil
+	CharacterPreview.vfxAttachments = nil
+	CharacterPreview.activeVFX = {}
 end
 
 -- UI State (moved to top to be accessible everywhere)
