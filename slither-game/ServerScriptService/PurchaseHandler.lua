@@ -464,9 +464,14 @@ end
 
 -- Event connections
 PurchaseItemEvent.OnServerEvent:Connect(function(player, itemName)
-	if not player or not itemName then return end
+	print("🔔 PurchaseItemEvent fired by", player and player.Name or "nil", "for item:", itemName or "nil")
+	
+	if not player or not itemName then 
+		warn("❌ Invalid purchase request - missing player or itemName")
+		return 
+	end
 
-	print("💰 Received purchase request from", player.Name, "for item:", itemName)
+	print("💰 Processing purchase request from", player.Name, "for item:", itemName)
 
 	-- FIXED: Handle skin purchases vs other items
 	if itemName:sub(1, 5) == "skin_" then

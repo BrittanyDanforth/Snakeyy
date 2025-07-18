@@ -1681,50 +1681,53 @@ function ShopUI.purchaseSkin()
 		-- Fire to server for purchase
 		local PurchaseItemEvent = ReplicatedStorage:FindFirstChild("PurchaseItem")
 		if PurchaseItemEvent then
+			print("🚀 Found PurchaseItem event, firing to server: skin_" .. uiState.selectedSkin)
 			PurchaseItemEvent:FireServer("skin_" .. uiState.selectedSkin)
-
-			-- Optimistically update UI (server will sync back)
-			local coinDisplay = ShopUI.uiElements.coinAmount
-			local oldCoins = ShopUI.playerData.coins
-			ShopUI.playerData.coins = ShopUI.playerData.coins - skinData.price
-			table.insert(ShopUI.playerData.ownedSkins, uiState.selectedSkin)
-
-			-- Sync with attributes
-			syncPlayerData()
-
-			-- Coin animation
-			local startTime = tick()
-			local coinConnection
-			coinConnection = RunService.Heartbeat:Connect(function()
-				local elapsed = tick() - startTime
-				local progress = math.min(elapsed / 0.4, 1)
-				local currentCoins = math.floor(oldCoins - (oldCoins - ShopUI.playerData.coins) * progress)
-				coinDisplay.Text = tostring(currentCoins)
-				if progress >= 1 then
-					coinConnection:Disconnect()
-					coinDisplay.Text = tostring(ShopUI.playerData.coins)
-				end
-			end)
-
-			playSound("PURCHASE", 0.4)
-
-			-- Flash effect
-			local flash = Instance.new("Frame")
-			flash.Size = UDim2.new(1, 0, 1, 0)
-			flash.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
-			flash.BackgroundTransparency = 0.85
-			flash.Parent = ShopUI.uiElements.contentWindow
-
-			TweenService:Create(flash, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
-			Debris:AddItem(flash, 0.25)
-
-			ShopUI.updateSkinGrid()
-			ShopUI.updateInfo()
-
-			print("🎉 Purchased skin:", uiState.selectedSkin, "for", skinData.price, "coins!")
+			print("✅ FireServer called successfully")
 		else
-			warn("❌ PurchaseItem RemoteEvent not found!")
+			warn("❌ PurchaseItem RemoteEvent not found in ReplicatedStorage!")
+			return
 		end
+
+		-- Optimistically update UI (server will sync back)
+		local coinDisplay = ShopUI.uiElements.coinAmount
+		local oldCoins = ShopUI.playerData.coins
+		ShopUI.playerData.coins = ShopUI.playerData.coins - skinData.price
+		table.insert(ShopUI.playerData.ownedSkins, uiState.selectedSkin)
+
+		-- Sync with attributes
+		syncPlayerData()
+
+		-- Coin animation
+		local startTime = tick()
+		local coinConnection
+		coinConnection = RunService.Heartbeat:Connect(function()
+			local elapsed = tick() - startTime
+			local progress = math.min(elapsed / 0.4, 1)
+			local currentCoins = math.floor(oldCoins - (oldCoins - ShopUI.playerData.coins) * progress)
+			coinDisplay.Text = tostring(currentCoins)
+			if progress >= 1 then
+				coinConnection:Disconnect()
+				coinDisplay.Text = tostring(ShopUI.playerData.coins)
+			end
+		end)
+
+		playSound("PURCHASE", 0.4)
+
+		-- Flash effect
+		local flash = Instance.new("Frame")
+		flash.Size = UDim2.new(1, 0, 1, 0)
+		flash.BackgroundColor3 = SHOP_CONFIG.COLORS.SUCCESS
+		flash.BackgroundTransparency = 0.85
+		flash.Parent = ShopUI.uiElements.contentWindow
+
+		TweenService:Create(flash, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+		Debris:AddItem(flash, 0.25)
+
+		ShopUI.updateSkinGrid()
+		ShopUI.updateInfo()
+
+		print("🎉 Purchased skin:", uiState.selectedSkin, "for", skinData.price, "coins!")
 	else
 		playSound("ERROR")
 
