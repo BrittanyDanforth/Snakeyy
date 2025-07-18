@@ -12,24 +12,33 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- ENHANCED: Safe SnakeSkins loading with fallback
+-- ENHANCED: Direct SnakeSkins loading from server module
 local SnakeSkins = nil
 local function loadSnakeSkins()
+	-- Try direct server module first
 	local success, result = pcall(function()
-		local module = ReplicatedStorage:WaitForChild("SnakeSkins", 5)
+		return require(script.Parent:WaitForChild("SnakeSkinsData", 2))
+	end)
+	
+	if success and result then
+		SnakeSkins = result
+		print("✅ SnakeSkins loaded directly from server module")
+		return
+	end
+	
+	-- Fallback to ReplicatedStorage
+	success, result = pcall(function()
+		local module = ReplicatedStorage:WaitForChild("SnakeSkins", 2)
 		if module then
 			return require(module)
 		end
 	end)
+	
 	if success and result then
 		SnakeSkins = result
-		print("✅ SnakeSkins module loaded successfully")
+		print("✅ SnakeSkins loaded from ReplicatedStorage")
 	else
-		warn("❌ Failed to load SnakeSkins module:", result)
-	end
-
-	if not SnakeSkins then
-		warn("⚠️ SnakeSkins module not found, using default config")
+		warn("❌ Failed to load SnakeSkins from any source")
 		SnakeSkins = {}
 	end
 end
@@ -113,12 +122,18 @@ local function getActiveConfig(player)
 		
 		if SnakeSkins and SnakeSkins[playerSkinName] then
 			local skinData = SnakeSkins[playerSkinName]
+			print("📋 Applying skin data:", playerSkinName)
+			print("   HeadColor:", tostring(skinData.HeadColor))
+			print("   BodyColors count:", skinData.BodyColors and #skinData.BodyColors or "nil")
+			
 			for key, value in pairs(skinData) do
 				if key ~= "Price" and key ~= "Description" then
 					activeConfig[key] = value
+					print("   Set", key, "to", tostring(value))
 				end
 			end
 			print("✅ Applied skin config for", playerSkinName, "to player", player.Name)
+			print("   Final HeadColor:", tostring(activeConfig.HeadColor))
 		else
 			warn("❌ Skin", playerSkinName, "not found in SnakeSkins module!")
 			if SnakeSkins then
@@ -427,6 +442,15 @@ local function createUltraSmoothSnake(character)
 		print("⏳ Waiting for SnakeSkins to load...")
 		loadSnakeSkins()
 		task.wait(0.5)
+		
+		-- Check again
+		if not SnakeSkins or not next(SnakeSkins) then
+			warn("❌ SnakeSkins still not loaded after waiting!")
+		else
+			print("✅ SnakeSkins now loaded with", #getTableKeys(SnakeSkins), "skins")
+		end
+	else
+		print("✅ SnakeSkins already loaded with", #getTableKeys(SnakeSkins), "skins")
 	end
 	
 	local humanoid = character:FindFirstChild("Humanoid") or character:WaitForChild("Humanoid", 5)

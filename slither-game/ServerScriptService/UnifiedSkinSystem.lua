@@ -53,8 +53,17 @@ local PurchaseSuccessRemote = getOrCreateRemote("PurchaseSuccess")
 -- Load SnakeSkins module
 local SnakeSkins = nil
 pcall(function()
-	SnakeSkins = require(ReplicatedStorage:WaitForChild("SnakeSkins", 5))
+	-- Try direct server module first
+	SnakeSkins = require(script.Parent:WaitForChild("SnakeSkinsData", 2))
+	print("✅ UnifiedSkinSystem loaded skins from server module")
 end)
+
+if not SnakeSkins then
+	pcall(function()
+		SnakeSkins = require(ReplicatedStorage:WaitForChild("SnakeSkins", 5))
+		print("✅ UnifiedSkinSystem loaded skins from ReplicatedStorage")
+	end)
+end
 
 -- Player data storage
 local PlayerData = {}
