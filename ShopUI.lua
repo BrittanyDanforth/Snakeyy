@@ -835,199 +835,223 @@ function CharacterPreview.clearVFX()
 	CharacterPreview.vfxEffects = {}
 end
 
--- RAINBOW VFX - ULTIMATE RAINBOW AURA
+-- RAINBOW VFX - PROPER CIRCULAR AURA WITH CURVES
 function CharacterPreview.applyRainbowVFX()
 	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
 	
 	local head = CharacterPreview.currentHead
 	local model = CharacterPreview.currentModel
-	local segments = CharacterPreview.currentSegments or {}
 	
-	-- 1. CREATE RAINBOW DOME AURA
-	local rainbowColors = {
-		Color3.fromRGB(255, 0, 0),    -- Red
-		Color3.fromRGB(255, 127, 0),  -- Orange
-		Color3.fromRGB(255, 255, 0),  -- Yellow
-		Color3.fromRGB(0, 255, 0),    -- Green
-		Color3.fromRGB(0, 255, 255),  -- Cyan
-		Color3.fromRGB(0, 0, 255),    -- Blue
-		Color3.fromRGB(139, 0, 255),  -- Purple
-	}
+	-- Configuration
+	local EMITTER_COUNT = 8 -- Number of emitters in circle
+	local RADIUS = 4 -- Circle radius
+	local PARTICLE_RATE = 50 -- Particles per second per emitter
 	
-	-- Create rainbow bands (like actual rainbow stripes)
-	for i, color in ipairs(rainbowColors) do
-		-- Create curved rainbow band
-		local band = Instance.new("Part")
-		band.Name = "RainbowBand"..i
-		band.Size = Vector3.new(8, 0.5, 8)
-		band.Shape = Enum.PartType.Block
-		band.Material = Enum.Material.ForceField
-		band.Color = color
-		band.Transparency = 0.5
-		band.CanCollide = false
-		band.Anchored = true
-		band.Parent = model
+	-- Create circular arrangement of particle emitters
+	CharacterPreview.rainbowEmitters = {}
+	
+	for i = 1, EMITTER_COUNT do
+		local angle = (i - 1) * (math.pi * 2 / EMITTER_COUNT)
 		
-		-- Add inner glow
-		local innerGlow = Instance.new("PointLight")
-		innerGlow.Color = color
-		innerGlow.Brightness = 5
-		innerGlow.Range = 15
-		innerGlow.Parent = band
+		-- Create attachment for this position
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "RainbowAttachment"..i
+		attachment.Position = Vector3.new(
+			math.cos(angle) * RADIUS,
+			0,
+			math.sin(angle) * RADIUS
+		)
+		attachment.Parent = head
 		
-		-- Create additional neon accent
-		local neonStripe = Instance.new("Part")
-		neonStripe.Name = "NeonStripe"..i
-		neonStripe.Size = Vector3.new(7.5, 0.3, 7.5)
-		neonStripe.Material = Enum.Material.Neon
-		neonStripe.Color = color
-		neonStripe.Transparency = 0.3
-		neonStripe.CanCollide = false
-		neonStripe.Anchored = true
-		neonStripe.Parent = model
+		-- Create particle emitter
+		local emitter = Instance.new("ParticleEmitter")
+		emitter.Name = "RainbowEmitter"..i
+		emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 		
-		table.insert(CharacterPreview.vfxEffects, band)
-		table.insert(CharacterPreview.vfxEffects, neonStripe)
+		-- Start with initial color (will be animated)
+		local hue = (i - 1) / EMITTER_COUNT
+		emitter.Color = ColorSequence.new(Color3.fromHSV(hue, 1, 1))
+		
+		-- Particle properties for good flow
+		emitter.Lifetime = NumberRange.new(1, 2)
+		emitter.Rate = PARTICLE_RATE
+		emitter.Speed = NumberRange.new(3, 6)
+		emitter.SpreadAngle = Vector2.new(30, 30) -- Controlled spread
+		emitter.VelocityInheritance = 0
+		
+		-- Emission direction - outward from center
+		emitter.EmissionDirection = Enum.NormalId.Front
+		
+		-- Size animation (small → big → small)
+		emitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(0.3, 1.5),
+			NumberSequenceKeypoint.new(0.7, 1.2),
+			NumberSequenceKeypoint.new(1, 0)
+		})
+		
+		-- Transparency fade
+		emitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.8),
+			NumberSequenceKeypoint.new(0.2, 0),
+			NumberSequenceKeypoint.new(0.8, 0.2),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		
+		emitter.LightEmission = 1
+		emitter.LightInfluence = 0
+		emitter.ZOffset = 1
+		emitter.Parent = attachment
+		
+		-- Store reference
+		CharacterPreview.rainbowEmitters[i] = {
+			attachment = attachment,
+			emitter = emitter,
+			baseHue = hue,
+			angle = angle
+		}
+		
+		table.insert(CharacterPreview.vfxEffects, attachment)
 	end
 	
-	-- 2. RAINBOW GRADIENT PARTICLES (flowing rainbow mist)
-	local attachment = Instance.new("Attachment")
-	attachment.Parent = head
+	-- Create curved beams between emitters
+	for i = 1, EMITTER_COUNT do
+		local nextIndex = i % EMITTER_COUNT + 1
+		local currentAttachment = CharacterPreview.rainbowEmitters[i].attachment
+		local nextAttachment = CharacterPreview.rainbowEmitters[nextIndex].attachment
+		
+		local beam = Instance.new("Beam")
+		beam.Name = "RainbowBeam"..i
+		beam.Attachment0 = currentAttachment
+		beam.Attachment1 = nextAttachment
+		
+		-- Beam properties for nice curves
+		beam.CurveSize0 = 2 -- Curve at start
+		beam.CurveSize1 = -2 -- Curve at end
+		beam.FaceCamera = true
+		beam.Segments = 10
+		beam.Width0 = 0.5
+		beam.Width1 = 0.5
+		
+		-- Initial color
+		local hue = (i - 1) / EMITTER_COUNT
+		beam.Color = ColorSequence.new(Color3.fromHSV(hue, 1, 1))
+		
+		beam.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.6),
+			NumberSequenceKeypoint.new(0.5, 0.3),
+			NumberSequenceKeypoint.new(1, 0.6)
+		})
+		
+		beam.LightEmission = 1
+		beam.LightInfluence = 0
+		beam.Parent = head
+		
+		CharacterPreview.rainbowEmitters[i].beam = beam
+		table.insert(CharacterPreview.vfxEffects, beam)
+	end
 	
-	local rainbowMist = Instance.new("ParticleEmitter")
-	rainbowMist.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	rainbowMist.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-		ColorSequenceKeypoint.new(0.14, Color3.fromRGB(255, 127, 0)),
-		ColorSequenceKeypoint.new(0.28, Color3.fromRGB(255, 255, 0)),
-		ColorSequenceKeypoint.new(0.42, Color3.fromRGB(0, 255, 0)),
-		ColorSequenceKeypoint.new(0.57, Color3.fromRGB(0, 255, 255)),
-		ColorSequenceKeypoint.new(0.71, Color3.fromRGB(0, 0, 255)),
-		ColorSequenceKeypoint.new(0.85, Color3.fromRGB(139, 0, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+	-- Add central glow
+	local centerGlow = Instance.new("PointLight")
+	centerGlow.Color = Color3.fromRGB(255, 255, 255)
+	centerGlow.Brightness = 2
+	centerGlow.Range = 15
+	centerGlow.Parent = head
+	table.insert(CharacterPreview.vfxEffects, centerGlow)
+	
+	-- Add aura particle effect
+	local auraAttachment = Instance.new("Attachment")
+	auraAttachment.Parent = head
+	
+	local aura = Instance.new("ParticleEmitter")
+	aura.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	aura.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+	aura.Lifetime = NumberRange.new(2, 3)
+	aura.Rate = 20
+	aura.Speed = NumberRange.new(1, 2)
+	aura.SpreadAngle = Vector2.new(360, 360)
+	aura.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 2),
+		NumberSequenceKeypoint.new(0.5, 4),
+		NumberSequenceKeypoint.new(1, 6)
 	})
-	rainbowMist.Lifetime = NumberRange.new(3, 5)
-	rainbowMist.Rate = 30
-	rainbowMist.Speed = NumberRange.new(2, 4)
-	rainbowMist.SpreadAngle = Vector2.new(360, 360)
-	rainbowMist.LightEmission = 0.5
-	rainbowMist.LightInfluence = 0
-	rainbowMist.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 3),
-		NumberSequenceKeypoint.new(0.5, 5),
-		NumberSequenceKeypoint.new(1, 8)
-	})
-	rainbowMist.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.8),
-		NumberSequenceKeypoint.new(0.5, 0.5),
+	aura.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.9),
+		NumberSequenceKeypoint.new(0.5, 0.7),
 		NumberSequenceKeypoint.new(1, 1)
 	})
-	rainbowMist.VelocityInheritance = 0.2
-	rainbowMist.ZOffset = -1
-	rainbowMist.Parent = attachment
+	aura.LightEmission = 0.5
+	aura.ZOffset = -1
+	aura.Parent = auraAttachment
 	
-	table.insert(CharacterPreview.vfxEffects, attachment)
+	table.insert(CharacterPreview.vfxEffects, auraAttachment)
 	
-	-- 3. RAINBOW SELECTION BOX WITH PULSE
-	local selection = Instance.new("SelectionBox")
-	selection.Adornee = head
-	selection.Color3 = Color3.fromRGB(255, 255, 255)
-	selection.LineThickness = 0.4
-	selection.Transparency = 0
-	selection.SurfaceTransparency = 0.7
-	selection.Parent = head
-	table.insert(CharacterPreview.vfxEffects, selection)
-	
-	-- 4. TRAILING RAINBOW ON SEGMENTS
-	for i = 1, math.min(10, #segments), 2 do -- Every other segment
-		local seg = segments[i]
-		if seg and seg.part then
-			local segAttach = Instance.new("Attachment")
-			segAttach.Parent = seg.part
-			
-			local trail = Instance.new("ParticleEmitter")
-			trail.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-			trail.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
-			})
-			trail.Lifetime = NumberRange.new(0.3, 0.6)
-			trail.Rate = 30
-			trail.Speed = NumberRange.new(1, 2)
-			trail.SpreadAngle = Vector2.new(90, 90)
-			trail.LightEmission = 1
-			trail.Size = NumberSequence.new(0.8)
-			trail.Parent = segAttach
-			
-			table.insert(CharacterPreview.vfxEffects, segAttach)
-		end
-	end
-	
-	-- 5. ANIMATE RAINBOW DOME
+	-- Start color cycling animation
+	local colorUpdateCounter = 0
 	CharacterPreview.vfxConnection = RunService.Heartbeat:Connect(function()
 		local time = tick()
+		colorUpdateCounter = colorUpdateCounter + 1
 		
-		-- Animate rainbow bands to create dome effect
-		for i = 1, 7 do
-			local band = model:FindFirstChild("RainbowBand"..i)
-			local neonStripe = model:FindFirstChild("NeonStripe"..i)
+		-- Update colors every 3 frames for performance
+		if colorUpdateCounter % 3 == 0 then
+			-- Cycle through rainbow using HSV
+			for i, data in ipairs(CharacterPreview.rainbowEmitters) do
+				-- Calculate current hue with offset for spiral effect
+				local hue = (data.baseHue + time * 0.2) % 1
+				local color = Color3.fromHSV(hue, 1, 1)
+				
+				-- Update emitter color
+				data.emitter.Color = ColorSequence.new(color)
+				
+				-- Update beam color with gradient
+				if data.beam then
+					local nextHue = ((data.baseHue + 1/EMITTER_COUNT) + time * 0.2) % 1
+					data.beam.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0, color),
+						ColorSequenceKeypoint.new(0.5, Color3.fromHSV((hue + nextHue) / 2, 1, 1)),
+						ColorSequenceKeypoint.new(1, Color3.fromHSV(nextHue, 1, 1))
+					})
+				end
+			end
 			
-			if band then
-				-- Create dome shape - each color at different height
-				local baseHeight = 3 + (i - 1) * 1.2 -- Stack bands
-				local radius = 5 - (i - 1) * 0.3 -- Inner bands smaller
-				local wave = math.sin(time * 2 + i * 0.5) * 0.3
-				
-				-- Position band in dome formation
-				band.CFrame = CFrame.new(
-					head.Position + Vector3.new(0, baseHeight + wave, 0)
-				) * CFrame.Angles(
-					math.rad(10 * math.sin(time + i)), -- Slight rotation
-					time * 0.3, -- Slow spin
-					math.rad(5 * math.cos(time * 1.5 + i))
+			-- Update center glow to cycle through rainbow
+			local centerGlow = head:FindFirstChild("PointLight")
+			if centerGlow then
+				local hue = (time * 0.3) % 1
+				centerGlow.Color = Color3.fromHSV(hue, 1, 1)
+				centerGlow.Brightness = 2 + math.sin(time * 2) * 0.5
+			end
+		end
+		
+		-- Animate attachment positions for swirling effect
+		for i, data in ipairs(CharacterPreview.rainbowEmitters) do
+			local wobble = math.sin(time * 1.5 + i * 0.5) * 0.5
+			local lift = math.sin(time * 2 + i * 0.3) * 1
+			
+			data.attachment.Position = Vector3.new(
+				math.cos(data.angle) * (RADIUS + wobble),
+				lift,
+				math.sin(data.angle) * (RADIUS + wobble)
+			)
+			
+			-- Adjust emission direction for outward spiral
+			local angleOffset = time * 0.5
+			data.attachment.CFrame = CFrame.lookAt(
+				data.attachment.Position,
+				data.attachment.Position + Vector3.new(
+					math.cos(data.angle + angleOffset),
+					0.5,
+					math.sin(data.angle + angleOffset)
 				)
-				
-				-- Pulse transparency
-				band.Transparency = 0.3 + math.sin(time * 3 + i * 0.7) * 0.2
-				
-				-- Update neon stripe
-				if neonStripe then
-					neonStripe.CFrame = band.CFrame * CFrame.new(0, 0.1, 0)
-					neonStripe.Transparency = 0.2 + math.sin(time * 3 + i * 0.7) * 0.3
-				end
-				
-				-- Animate glow
-				local glow = band:FindFirstChild("PointLight")
-				if glow then
-					glow.Brightness = 5 + math.sin(time * 4 + i) * 2
-					glow.Range = 15 + math.sin(time * 2 + i * 0.5) * 5
-				end
-			end
+			)
 		end
 		
-		-- Animate selection box rainbow
-		local selection = nil
-		for _, effect in ipairs(CharacterPreview.vfxEffects) do
-			if effect:IsA("SelectionBox") then
-				selection = effect
-				break
-			end
-		end
-		
-		if selection and selection.Parent then
-			local hue = (time * 0.3) % 1
-			selection.Color3 = Color3.fromHSV(hue, 1, 1)
-			selection.LineThickness = 0.3 + math.sin(time * 8) * 0.1
-		end
-		
-		-- Pulse head glow with rainbow
-		if head then
-			local headGlow = head:FindFirstChild("PointLight")
-			if headGlow then
-				local hue = (time * 0.5) % 1
-				headGlow.Color = Color3.fromHSV(hue, 1, 1)
-				headGlow.Range = 10 + math.sin(time * 3) * 5
+		-- Animate beam curves for organic feel
+		for i, data in ipairs(CharacterPreview.rainbowEmitters) do
+			if data.beam then
+				local curve = math.sin(time * 3 + i) * 3
+				data.beam.CurveSize0 = curve
+				data.beam.CurveSize1 = -curve
 			end
 		end
 	end)
