@@ -441,19 +441,21 @@ local SnakeSkinsData = {
 	}
 }
 
--- ULTRA SMOOTH SLITHER.IO PREVIEW - NO LAG VERSION
+-- PERFECT SLITHER.IO SNAKE PREVIEW - ZERO LAG
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 15,
-	SEGMENT_SPACING = 1.2,
+	SEGMENT_COUNT = 20,
+	SEGMENT_SPACING = 0.8, -- Very close for smooth look
 	HEAD_SIZE = Vector3.new(3, 3, 3),
 	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8),
-	SIZE_REDUCTION = 0.95,
-	CAMERA_DISTANCE = 20,
-	CAMERA_HEIGHT = 8,
-	ROTATION_SPEED = 0.5,
-	WAVE_AMPLITUDE = 1.5,
-	WAVE_SPEED = 2,
-	FOLLOW_SPEED = 0.85,
+	SIZE_REDUCTION = 0.98, -- Very gradual taper
+	CAMERA_DISTANCE = 22,
+	CAMERA_HEIGHT = 10,
+	ROTATION_SPEED = 0.4,
+	-- Snake movement
+	SLITHER_AMPLITUDE = 3,
+	SLITHER_FREQUENCY = 1.5,
+	SLITHER_SPEED = 1.2,
+	SEGMENT_DELAY = 0.15, -- Delay between segments for wave effect
 }
 
 function CharacterPreview.create(viewport)
@@ -581,59 +583,55 @@ function CharacterPreview.create(viewport)
 	-- Animation variables
 	local time = 0
 	local rotationConnection
-	local segmentPositions = {}
+	local segmentTrail = {} -- Store trail positions for smooth following
 	
-	-- Initialize segment positions
+	-- Initialize segment positions in a straight line
 	for i, seg in ipairs(segments) do
-		segmentPositions[i] = head.Position + seg.offset
-		seg.part.Position = segmentPositions[i]
+		seg.part.Position = head.Position + Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
+		segmentTrail[i] = {}
 	end
 	
-	-- Main animation loop - OPTIMIZED FOR NO LAG
+	-- Main animation loop - PERFECT SLITHERING
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
 		
 		-- Camera rotation
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
 		camera.CFrame = CFrame.lookAt(
-			head.Position + Vector3.new(
+			Vector3.new(
 				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
 				PREVIEW_CONFIG.CAMERA_HEIGHT,
-				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
+				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE - 10
 			),
-			head.Position
+			Vector3.new(0, 0, -10)
 		)
 		
-		-- Head movement (subtle wave)
-		head.Position = Vector3.new(
-			math.sin(time * PREVIEW_CONFIG.WAVE_SPEED) * PREVIEW_CONFIG.WAVE_AMPLITUDE,
-			0,
-			-10
-		)
+		-- Head movement - smooth S-curve slithering
+		local slitherX = math.sin(time * PREVIEW_CONFIG.SLITHER_SPEED) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+		local slitherZ = math.cos(time * PREVIEW_CONFIG.SLITHER_SPEED * 0.5) * 2
+		head.Position = Vector3.new(slitherX, 0, -10 + slitherZ)
 		
-		-- Update eyes to follow head
+		-- Update eyes to follow head perfectly
 		leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
 		rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
 		leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
 		rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
 		
-		-- Smooth segment following (slither.io style)
-		local prevPos = head.Position
+		-- REAL SLITHERING ANIMATION
+		-- Each segment follows the path of the head with delay
 		for i, seg in ipairs(segments) do
-			-- Calculate target position based on previous segment
-			local direction = (prevPos - seg.part.Position)
-			if direction.Magnitude > 0 then
-				local targetPos = prevPos - direction.Unit * PREVIEW_CONFIG.SEGMENT_SPACING
-				
-				-- Smooth interpolation for natural movement
-				seg.part.Position = seg.part.Position:Lerp(targetPos, PREVIEW_CONFIG.FOLLOW_SPEED)
-				
-				-- Add slight wave motion
-				local waveOffset = math.sin(time * PREVIEW_CONFIG.WAVE_SPEED - i * 0.3) * 0.3
-				seg.part.Position = seg.part.Position + Vector3.new(waveOffset, 0, 0)
-			end
+			-- Calculate delayed time for this segment
+			local segmentTime = time - (i * PREVIEW_CONFIG.SEGMENT_DELAY)
 			
-			prevPos = seg.part.Position
+			-- Calculate position based on delayed time
+			local segX = math.sin(segmentTime * PREVIEW_CONFIG.SLITHER_SPEED) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
+			local segZ = math.cos(segmentTime * PREVIEW_CONFIG.SLITHER_SPEED * 0.5) * 2 - (i * PREVIEW_CONFIG.SEGMENT_SPACING)
+			
+			-- Add some natural curve variation
+			local curveOffset = math.sin(segmentTime * PREVIEW_CONFIG.SLITHER_FREQUENCY + i * 0.2) * 0.5
+			
+			-- Set final position
+			seg.part.Position = Vector3.new(segX + curveOffset, 0, -10 + segZ)
 		end
 	end)
 	
