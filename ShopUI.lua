@@ -1060,9 +1060,9 @@ ShopUI.SKIN_DATA = {
 	["Rainbow"] = {price = 20000, robux = 199, tag = "Special"},
 
 	-- VIP EXCLUSIVE (Robux only - insane effects)
-	["VIP Diamond"] = {price = nil, robux = 299, tag = "VIP"},
-	["VIP Inferno"] = {price = nil, robux = 399, tag = "VIP"},
-	["VIP Cosmic"] = {price = nil, robux = 499, tag = "VIP"},
+	["VIP Diamond"] = {price = 0, robux = 299, tag = "VIP"},
+	["VIP Inferno"] = {price = 0, robux = 399, tag = "VIP"},
+	["VIP Cosmic"] = {price = 0, robux = 499, tag = "VIP"},
 }
 
 -- Gamepass data
@@ -2057,8 +2057,14 @@ local function createSkinCard(skinName, index)
 			-- Create two price labels side by side
 			statusLabel.Size = UDim2.new(0.45, 0, 1, 0)
 			statusLabel.Position = UDim2.new(0, 0, 0, 0)
-			statusLabel.Text = "💰 "..tostring(skinData.price)
-			statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+			if skinData.price and skinData.price > 0 then
+				statusLabel.Text = "💰 "..tostring(skinData.price)
+				statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+			else
+				-- VIP skins - Robux only
+				statusLabel.Text = "VIP"
+				statusLabel.TextColor3 = SHOP_CONFIG.COLORS.VIP_GOLD
+			end
 
 			local robuxLabel = Instance.new("TextLabel")
 			robuxLabel.Name = "RobuxPrice"
@@ -2082,8 +2088,14 @@ local function createSkinCard(skinName, index)
 			orLabel.Font = SHOP_CONFIG.FONTS.BUTTON
 			orLabel.Parent = statusFrame
 		else
-			statusLabel.Text = "💰 "..tostring(skinData.price)
-			statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+			if skinData.price and skinData.price > 0 then
+				statusLabel.Text = "💰 "..tostring(skinData.price)
+				statusLabel.TextColor3 = SHOP_CONFIG.COLORS.WARNING
+			else
+				-- Special handling for items with no price (shouldn't happen)
+				statusLabel.Text = "SPECIAL"
+				statusLabel.TextColor3 = SHOP_CONFIG.COLORS.ACCENT
+			end
 		end
 	end
 
