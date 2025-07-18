@@ -264,6 +264,33 @@ end
 
 -- SHOP DETECTION AND ENHANCEMENT
 function ShopManager.findExistingShop()
+	-- First check if ShopUI module is available
+	local ShopUI = nil
+	pcall(function()
+		ShopUI = require(ReplicatedStorage:WaitForChild("ShopUI", 2))
+	end)
+	
+	if ShopUI then
+		-- Make it globally accessible
+		_G.ShopUI = ShopUI
+		
+		-- Force create the shop GUI if it doesn't exist
+		local shopGui = playerGui:FindFirstChild("SlitherShopUI")
+		if not shopGui then
+			print("🛒 Creating shop GUI from ShopUI module...")
+			local success, err = pcall(function()
+				shopGui = ShopUI.init()
+				if shopGui then
+					shopGui.Enabled = false -- Keep it hidden initially
+				end
+			end)
+			
+			if not success then
+				warn("Failed to init ShopUI:", err)
+			end
+		end
+	end
+	
 	-- Look for SlitherShopUI
 	local slitherShop = playerGui:FindFirstChild("SlitherShopUI")
 	if slitherShop then
