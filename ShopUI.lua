@@ -1,3 +1,4 @@
+
 -- SLITHER.IO ULTRA PREMIUM SHOP UI SYSTEM - COMPLETELY FIXED
 -- Modern, beautiful, and performance-optimized
 -- Fully integrated with CharacterPreview and Slither.io Menu
@@ -440,24 +441,24 @@ local SnakeSkinsData = {
 	}
 }
 
--- SIMPLE PREVIEW CONFIG
+-- FIX FOR LENGTH COMPRESSION IN REAL GAME
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 20,
-	SEGMENT_SPACING = 2.5,  -- Normal spacing
-	HEAD_SIZE = Vector3.new(3, 3, 3),
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5),
-	
-	-- Camera settings
-	CAMERA_DISTANCE = 35,
-	CAMERA_HEIGHT = 10,
+	SEGMENT_COUNT = 30, -- More segments for better length
+	SEGMENT_SPACING = 15.5, -- Increased spacing to prevent compression
+	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
+	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
+	SIZE_REDUCTION = 0.98, -- Normal taper
+	CAMERA_DISTANCE = 25, -- Further back to see full snake
+	CAMERA_HEIGHT = 20, -- Higher for better view
 	ROTATION_SPEED = 0.3,
-	
-	-- Snake animation
-	SNAKE_RADIUS = 12,
-	SLITHER_SPEED = 0.8,
-	
-	-- Debug
-	SHOW_FPS = true,
+	-- Snake movement
+	SLITHER_AMPLITUDE = 4,
+	SLITHER_FREQUENCY = 1.5,
+	SLITHER_SPEED = 1.0,
+	SEGMENT_DELAY = 0.08,
+	-- Snake positioning
+	SNAKE_RADIUS = 12, -- Larger movement circle
+	SNAKE_CENTER_Z = 0,
 }
 
 function CharacterPreview.create(viewport)
@@ -479,21 +480,6 @@ function CharacterPreview.create(viewport)
 	scaleReference.Anchored = true
 	scaleReference.CanCollide = false
 	scaleReference.Parent = worldModel
-	
-	-- FPS Display for debugging
-	local fpsLabel
-	if PREVIEW_CONFIG.SHOW_FPS then
-		fpsLabel = Instance.new("TextLabel")
-		fpsLabel.Size = UDim2.new(0, 200, 0, 50)
-		fpsLabel.Position = UDim2.new(0, 10, 0, 10)
-		fpsLabel.BackgroundTransparency = 0.5
-		fpsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
-		fpsLabel.TextColor3 = Color3.new(1, 1, 1)
-		fpsLabel.TextScaled = true
-		fpsLabel.Font = Enum.Font.SourceSans
-		fpsLabel.Text = "FPS: Calculating..."
-		fpsLabel.Parent = viewport
-	end
 
 	-- Create camera with proper FOV for viewport
 	local camera = Instance.new("Camera")
@@ -537,7 +523,7 @@ function CharacterPreview.create(viewport)
 	head.CanQuery = false
 	head.CanTouch = false
 	head.Anchored = true
-	head.Position = Vector3.new(0, 0, 0)
+	head.Position = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 	head.Parent = model
 
 	-- Head glow
@@ -628,11 +614,6 @@ function CharacterPreview.create(viewport)
 	local time = 0
 	local rotationConnection
 	local segmentTrail = {} -- Store trail positions for smooth following
-	
-	-- FPS tracking
-	local frameCount = 0
-	local fpsTime = 0
-	local currentFPS = 60
 
 	-- Initialize segment positions in a straight line WITH PROPER SPACING
 	for i, seg in ipairs(segments) do
@@ -645,23 +626,10 @@ function CharacterPreview.create(viewport)
 	-- Main animation loop - PERFECT SLITHERING
 	rotationConnection = RunService.Heartbeat:Connect(function(dt)
 		time = time + dt
-		
-		-- FPS calculation
-		if PREVIEW_CONFIG.SHOW_FPS then
-			frameCount = frameCount + 1
-			fpsTime = fpsTime + dt
-			
-			if fpsTime >= 1 then
-				currentFPS = frameCount / fpsTime
-				fpsLabel.Text = string.format("FPS: %.1f | DT: %.3fms", currentFPS, dt * 1000)
-				frameCount = 0
-				fpsTime = 0
-			end
-		end
 
 		-- Camera rotation with proper positioning
 		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
-		local focusPoint = Vector3.new(0, 0, 0)
+		local focusPoint = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 
 		camera.CFrame = CFrame.lookAt(
 			focusPoint + Vector3.new(
@@ -678,22 +646,22 @@ function CharacterPreview.create(viewport)
 		-- SMOOTH INFINITY LOOP SLITHERING
 		local moveTime = time * PREVIEW_CONFIG.SLITHER_SPEED
 		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
-		
+
 		-- Create infinity symbol (∞) path for interesting movement
 		local t = moveTime * 2
 		local scale = radius
-		
+
 		-- Parametric equations for infinity symbol
 		local headX = scale * math.sin(t) / (1 + math.cos(t)^2)
 		local headZ = scale * math.sin(t) * math.cos(t) / (1 + math.cos(t)^2)
-		
+
 		-- Add additional wave for more fluid motion
 		local waveOffset = math.sin(moveTime * 3) * 3
 		headX = headX + waveOffset
-		
+
 		-- Gentle vertical movement
 		local headY = math.sin(moveTime * 2) * 1
-		
+
 		local finalPos = Vector3.new(headX, headY, headZ)
 
 		-- Calculate movement direction by looking slightly ahead
@@ -729,63 +697,36 @@ function CharacterPreview.create(viewport)
 		table.insert(CharacterPreview.positionHistory, 1, head.Position)
 
 		-- Keep history limited to prevent memory issues
-		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10
+		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10 -- Much more history for bigger gaps
 		if #CharacterPreview.positionHistory > maxHistory then
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- SIMPLE BUT PERFECT SEGMENT FOLLOWING - WORKS AT ANY FPS
+		-- SMOOTH SEGMENT FOLLOWING - THIS CONTROLS THE ACTUAL SPACING!
 		for i, seg in ipairs(segments) do
-			-- Each segment follows with a fixed delay
-			local delay = i * 3.5 -- Delay multiplier for proper spacing
+			-- Each segment follows based on delay - THIS IS WHAT ACTUALLY CONTROLS GAPS
+			local delay = i * 6 -- MUCH bigger delay for real gaps in game!
 			local historyIndex = math.floor(delay)
 			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
-			
+
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				
-				-- Initialize smooth position if not exists
-				if not seg.smoothPos then
-					seg.smoothPos = seg.part.Position
-				end
-				
-				-- FRAMERATE-INDEPENDENT SMOOTHING
-				-- This formula works identically at 30 FPS or 240 FPS
-				local smoothingFactor = 0.15 -- How quickly segments follow (0-1)
-				local frameIndependentFactor = 1 - math.exp(-smoothingFactor * 60 * dt)
-				
-				-- Smooth movement towards target
-				seg.smoothPos = seg.smoothPos:Lerp(targetPos, frameIndependentFactor)
-				
-				-- ANTI-GAP SYSTEM
-				local prevPos = (i == 1) and head.Position or segments[i-1].part.Position
-				local toPrev = seg.smoothPos - prevPos
-				local distToPrev = toPrev.Magnitude
-				
-				-- Enforce proper spacing
-				local desiredSpacing = PREVIEW_CONFIG.SEGMENT_SPACING
-				if distToPrev > desiredSpacing * 1.2 then
-					-- Too far - pull closer
-					seg.smoothPos = prevPos + toPrev.Unit * desiredSpacing
-				elseif distToPrev < desiredSpacing * 0.8 and distToPrev > 0.1 then
-					-- Too close - push away
-					seg.smoothPos = prevPos + toPrev.Unit * desiredSpacing
-				end
-				
-				-- Apply final position
-				seg.part.Position = seg.smoothPos
-				
-				-- Simple orientation
+
+				-- Smooth following with no jitter (FPS-independent)
+				local currentPos = seg.part.Position
+				-- Use higher lerp value to reduce gaps on lower FPS
+				local lerpSpeed = 0.4 -- Increased from 0.25 for consistency
+				local newPos = currentPos:Lerp(targetPos, lerpSpeed)
+
+				seg.part.Position = newPos
+
+				-- Orient segment to face previous segment
 				if i > 1 then
-					local lookAt = segments[i-1].part.Position
-					seg.part.CFrame = CFrame.lookAt(seg.part.Position, lookAt)
-				end
-			else
-				-- No history yet - just follow previous segment
-				if not seg.smoothPos then
-					local prevPos = (i == 1) and head.Position or segments[i-1].part.Position
-					seg.smoothPos = prevPos + Vector3.new(0, 0, -PREVIEW_CONFIG.SEGMENT_SPACING)
-					seg.part.Position = seg.smoothPos
+					local prevSeg = segments[i-1].part
+					local direction = (prevSeg.Position - newPos).Unit
+					if direction.Magnitude > 0 then
+						seg.part.CFrame = CFrame.lookAt(newPos, prevSeg.Position)
+					end
 				end
 			end
 		end
