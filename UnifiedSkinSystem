@@ -184,6 +184,7 @@ local function handlePurchase(player, itemName)
 		-- Process coin purchase
 		data.coins = data.coins - price
 		table.insert(data.ownedSkins, skinName)
+		print("✅ Purchased:", skinName, "for", price, "coins")
 	end
 
 	-- Update player
@@ -205,8 +206,6 @@ local function handlePurchase(player, itemName)
 		ownedSkins = data.ownedSkins,
 		selectedSkin = data.clientSelectedSkin
 	})
-
-	print("✅ Purchased:", skinName, "for", price, "coins")
 end
 
 -- Handle skin selection
