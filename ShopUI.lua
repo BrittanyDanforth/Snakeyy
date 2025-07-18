@@ -653,35 +653,28 @@ function CharacterPreview.create(viewport)
 		-- Ensure camera type is scriptable
 		camera.CameraType = Enum.CameraType.Scriptable
 
-		-- PERFECT SLITHERING HEAD MOVEMENT
-		local radius = PREVIEW_CONFIG.SNAKE_RADIUS
-		local slitherAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
+		-- SIMPLE SMOOTH BACK AND FORTH MOVEMENT
+		local moveAngle = time * PREVIEW_CONFIG.SLITHER_SPEED
 		
-		-- Create smooth figure-8 pattern
-		local figure8Factor = math.sin(slitherAngle * 2) * 0.4
-		local headX = math.sin(slitherAngle) * radius * (1 + figure8Factor)
-		local headZ = math.cos(slitherAngle) * radius * (1 - figure8Factor)
+		-- Simple left-right movement to show off skin
+		local headX = math.sin(moveAngle) * PREVIEW_CONFIG.SNAKE_RADIUS
+		local headZ = 0
+		local headY = 0
 		
-		-- Add natural S-curve waves
-		local wavePhase = slitherAngle * PREVIEW_CONFIG.SLITHER_FREQUENCY
-		local waveX = math.sin(wavePhase) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-		local waveZ = math.cos(wavePhase * 0.7) * PREVIEW_CONFIG.SLITHER_AMPLITUDE * 0.3
+		-- Add smooth S-curve along the body
+		local waveOffset = math.sin(moveAngle * 2) * 3
 		
-		-- Slight vertical movement for realism
-		local headY = math.sin(slitherAngle * 2.5) * 1.5
-		
-		local finalPos = Vector3.new(headX + waveX, headY, headZ + waveZ)
+		local finalPos = Vector3.new(headX, headY, headZ + waveOffset)
 
-		-- Calculate smooth look-ahead direction
-		local lookAheadTime = 0.15
-		local futureAngle = slitherAngle + lookAheadTime
-		local futureFigure8 = math.sin(futureAngle * 2) * 0.4
-		local futureX = math.sin(futureAngle) * radius * (1 + futureFigure8) + math.sin(futureAngle * PREVIEW_CONFIG.SLITHER_FREQUENCY) * PREVIEW_CONFIG.SLITHER_AMPLITUDE
-		local futureY = math.sin(futureAngle * 2.5) * 1.5
-		local futureZ = math.cos(futureAngle) * radius * (1 - futureFigure8) + math.cos(futureAngle * PREVIEW_CONFIG.SLITHER_FREQUENCY * 0.7) * PREVIEW_CONFIG.SLITHER_AMPLITUDE * 0.3
-
-		-- Smooth head orientation
-		head.CFrame = CFrame.lookAt(finalPos, Vector3.new(futureX, futureY, futureZ))
+		-- Face the direction of movement
+		local velocity = math.cos(moveAngle) * PREVIEW_CONFIG.SNAKE_RADIUS
+		local lookDir = Vector3.new(velocity, 0, 0)
+		
+		if lookDir.Magnitude > 0.1 then
+			head.CFrame = CFrame.lookAt(finalPos, finalPos + lookDir)
+		else
+			head.Position = finalPos
+		end
 
 		-- Position eyes properly on the FRONT of the head
 		-- The -Z direction is forward when using CFrame
@@ -711,31 +704,16 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- PERFECT SLITHERING ANIMATION
+		-- SIMPLE SMOOTH SEGMENT FOLLOWING
 		for i, seg in ipairs(segments) do
-			-- Each segment follows with a smooth delay
-			local delay = i * PREVIEW_CONFIG.SEGMENT_DELAY
-			local historyIndex = math.floor(delay * 10) + 1
-			historyIndex = math.min(historyIndex, #CharacterPreview.positionHistory)
-
+			-- Each segment follows a bit behind the previous
+			local historyIndex = i * 3 -- Simple spacing in history
+			
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
 				
-				-- Add natural wave motion to each segment
-				local waveOffset = math.sin(time * PREVIEW_CONFIG.SLITHER_FREQUENCY - i * 0.3) * PREVIEW_CONFIG.SLITHER_AMPLITUDE * 0.3
-				local sideOffset = Vector3.new(waveOffset, 0, 0)
-				
-				-- Smooth interpolation for fluid movement
-				local lerpSpeed = 0.2 + (i / PREVIEW_CONFIG.SEGMENT_COUNT) * 0.1 -- Tail moves slightly slower
-				seg.part.Position = seg.part.Position:Lerp(targetPos + sideOffset, lerpSpeed)
-				
-				-- Make segments face the direction they're moving
-				if i > 1 and segments[i-1] then
-					local lookDir = (segments[i-1].part.Position - seg.part.Position).Unit
-					if lookDir.Magnitude > 0 then
-						seg.part.CFrame = CFrame.lookAt(seg.part.Position, seg.part.Position + lookDir)
-					end
-				end
+				-- Simple smooth following
+				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.3)
 			end
 		end
 	end)
