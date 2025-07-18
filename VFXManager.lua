@@ -1,34 +1,68 @@
--- VFXManager: Handles creation of visual effects for orbs and snakes
+-- VFXManager: Handles creation of visual effects with graphics mode support
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local VFXManager = {}
 
 -- Cache for effect templates to avoid recreating them
 local effectTemplates = {}
-local activeVFX = {}
+
+-- Graphics mode configurations
+local GRAPHICS_SETTINGS = {
+	High = {
+		orbGlow = true,
+		orbParticles = true,
+		particleCount = 20,
+		lightingEnabled = true,
+		glowBrightness = 2,
+		glowRange = 8,
+	},
+	Medium = {
+		orbGlow = true,
+		orbParticles = true,
+		particleCount = 10,
+		lightingEnabled = true,
+		glowBrightness = 1.5,
+		glowRange = 6,
+	},
+	Low = {
+		orbGlow = false,
+		orbParticles = false,
+		particleCount = 0,
+		lightingEnabled = false,
+		glowBrightness = 0,
+		glowRange = 0,
+	}
+}
 
 -- Helper to get graphics mode for a player (defaults to "High")
 local function getGraphicsModeForPlayer(player)
 	if not player then return "High" end
 	local mode = player:GetAttribute("GraphicsMode")
-	if mode == "Low" then
-		return "Low"
+	if mode == "Low" or mode == "Medium" then
+		return mode
 	end
 	return "High"
 end
 
+-- Get graphics settings
+function VFXManager.getGraphicsSettings(mode)
+	return GRAPHICS_SETTINGS[mode] or GRAPHICS_SETTINGS.High
+end
+
 -- Creates a template for the orb collection particle effect.
--- This is more efficient than creating a new one from scratch every time.
 local function createOrbEffectTemplate(graphicsMode)
-	if graphicsMode == "Low" then
-		-- No glow effect in low graphics mode
+	local settings = GRAPHICS_SETTINGS[graphicsMode] or GRAPHICS_SETTINGS.High
+	
+	if not settings.orbParticles then
+		-- No particles in low graphics mode
 		return nil
 	end
-	if effectTemplates.OrbCollect then
-		return effectTemplates.OrbCollect:Clone()
+	
+	local key = "OrbCollect_" .. graphicsMode
+	if effectTemplates[key] then
+		return effectTemplates[key]:Clone()
 	end
 
 	local attachment = Instance.new("Attachment")
@@ -36,26 +70,39 @@ local function createOrbEffectTemplate(graphicsMode)
 	emitter.Parent = attachment
 
 	emitter.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 170, 0))
-	emitter.LightEmission = 1
-	emitter.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
-		NumberSequenceKeypoint.new(0.5, 1.5),
-		NumberSequenceKeypoint.new(1, 1)
-	})
-	emitter.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(0.7, 0.5),
-		NumberSequenceKeypoint.new(1, 1)
-	})
+	emitter.LightEmission = settings.lightingEnabled and 1 or 0.5
+	
+	if graphicsMode == "High" then
+		emitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(0.5, 1.5),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		emitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.7, 0.5),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+	else -- Medium
+		emitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(1, 0.8)
+		})
+		emitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.2),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+	end
+	
 	emitter.Speed = NumberRange.new(5, 10)
 	emitter.Lifetime = NumberRange.new(0.3, 0.6)
-	emitter.Rate = 0 -- We will emit them all at once using :Emit()
+	emitter.Rate = 0
 	emitter.EmissionDirection = Enum.NormalId.Top
 	emitter.Shape = Enum.ParticleEmitterShape.Sphere
 	emitter.SpreadAngle = Vector2.new(360, 360)
 	emitter.ZOffset = 1
 
-	effectTemplates.OrbCollect = attachment
+	effectTemplates[key] = attachment
 	return attachment:Clone()
 end
 
@@ -71,13 +118,26 @@ function VFXManager.playOrbCollectVFX(position, player)
 	
 	local emitter = effect:FindFirstChildOfClass("ParticleEmitter")
 	if emitter then
-		emitter:Emit(20) -- Emit a burst of 20 particles
+		local settings = GRAPHICS_SETTINGS[graphicsMode]
+		emitter:Emit(settings.particleCount)
 	end
 
 	-- Clean up the effect from the workspace after it has finished playing.
 	task.delay(emitter.Lifetime.Max + 0.1, function()
 		effect:Destroy()
 	end)
+end
+
+-- Handle graphics mode changes
+local SetGraphicsModeEvent = ReplicatedStorage:FindFirstChild("SetGraphicsMode")
+if SetGraphicsModeEvent then
+	if game:GetService("RunService"):IsServer() then
+		SetGraphicsModeEvent.OnServerEvent:Connect(function(player, mode)
+			if GRAPHICS_SETTINGS[mode] then
+				player:SetAttribute("GraphicsMode", mode)
+			end
+		end)
+	end
 end
 
 -- Snake VFX Configuration with EXTREME effects
