@@ -534,33 +534,15 @@ local function createUltraSmoothSnake(character)
 
 	local segments = {}
 	local startPos = rootPart.Position
+	
+	-- Create all segments at the HEAD position first (no flash)
 	for i = 1, activeConfig.InitialLength do
-		-- Spawn segments closer together to prevent disconnection
-		local pos = startPos - rootPart.CFrame.LookVector * (i * activeConfig.SegmentSpacing * 0.8) -- Tighter initial spacing
 		local colorIndex = ((i - 1) % #activeConfig.BodyColors) + 1
 		local color = activeConfig.BodyColors[colorIndex]
-		local segment = createSegment(i, pos, color, activeConfig, snakeModel)
+		-- All segments start at head position
+		local segment = createSegment(i, rootPart.Position, color, activeConfig, snakeModel)
 		segments[i] = segment
-		
-		-- Start segments invisible to prevent flash
-		segment.Transparency = 1
-		if segment:FindFirstChild("Glow") then
-			segment.Glow.Enabled = false
-		end
 	end
-	
-	-- Fade in segments after spawn stabilization
-	task.spawn(function()
-		task.wait(0.1) -- Wait for initial positioning
-		for i = 1, #segments do
-			if segments[i] and segments[i].Parent then
-				segments[i].Transparency = 0
-				if segments[i]:FindFirstChild("Glow") then
-					segments[i].Glow.Enabled = true
-				end
-			end
-		end
-	end)
 
 	local currentLength = activeConfig.InitialLength
 	local maxHistorySize = mathMin(mathFloor(activeConfig.MaxSegments * 1.1) + 10, 2000)
