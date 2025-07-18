@@ -505,26 +505,6 @@ local function createUltraSmoothSnake(character)
 	end
 
 	local currentLength = activeConfig.InitialLength
-	local maxHistorySize = mathMin(mathFloor(activeConfig.MaxSegments * 1.1) + 10, 2000)
-	local positionHistory = table.create(maxHistorySize)
-	local historyHead = 1
-	local initialHistoryPoint = { position = rootPart.Position, lookVector = rootPart.CFrame.LookVector }
-	for i = 1, maxHistorySize do
-		positionHistory[i] = initialHistoryPoint
-	end
-
-	local function addToHistory(data)
-		positionHistory[historyHead] = data
-		historyHead = (historyHead % maxHistorySize) + 1
-	end
-
-	local function getFromHistory(stepsBack)
-		local index = historyHead - stepsBack
-		if index < 1 then
-			index = index + maxHistorySize
-		end
-		return positionHistory[index]
-	end
 
 	local connections = {}
 	local isActive = true
@@ -651,6 +631,15 @@ local function createUltraSmoothSnake(character)
 	table.insert(connections, diedConn)
 	table.insert(connections, ancestryConn)
 
+	-- SLITHER.IO STYLE DIRECT FOLLOWING SYSTEM
+	-- Each segment follows the one in front with proper spacing
+	local segmentTargets = {} -- Store target positions for each segment
+	
+	-- Initialize segment targets
+	for i = 1, currentLength do
+		segmentTargets[i] = segments[i] and segments[i].Position or rootPart.Position
+	end
+
 	local heartbeatConn
 	heartbeatConn = RunService.Heartbeat:Connect(function(dt)
 		if not isActive or not rootPart.Parent then return end
@@ -658,7 +647,16 @@ local function createUltraSmoothSnake(character)
 		updateCounter = updateCounter + 1
 
 		local isBoosting = humanoid.WalkSpeed > 16.1
-		local followSpeed = isBoosting and activeConfig.BoostFollowSpeed or activeConfig.FollowSpeed
+		
+		-- SMOOTH FOLLOWING PARAMETERS
+		local baseFollowSpeed = 0.92 -- High follow speed for smoothness
+		local boostFollowSpeed = 0.95 -- Even higher when boosting
+		local followSpeed = isBoosting and boostFollowSpeed or baseFollowSpeed
+		
+		-- Distance maintenance
+		local idealSpacing = activeConfig.SegmentSpacing
+		local maxSpacing = idealSpacing * 1.3 -- Maximum allowed gap
+		local minSpacing = idealSpacing * 0.7 -- Minimum spacing to prevent overlap
 
 		local currentPos = rootPart.Position
 		local currentCFrame = rootPart.CFrame
@@ -666,56 +664,100 @@ local function createUltraSmoothSnake(character)
 		local headOffset = lookVector * 1.5
 		local headPos = currentPos + headOffset
 
+		-- Update head visual
 		if headParts.head and headParts.head.Parent then
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
-		local lastHistoryPoint = getFromHistory(1)
-		local dist = (currentPos - lastHistoryPoint.position).Magnitude
-		if dist > 0.015 then
-			if dist > activeConfig.SegmentSpacing * 0.8 then
-				local numInterpolations = mathMin(mathFloor(dist / (activeConfig.SegmentSpacing * 0.6)), 3)
-				for i = 1, numInterpolations do
-					local fraction = i / (numInterpolations + 1)
-					local interpPos = lastHistoryPoint.position:Lerp(currentPos, fraction)
-					local interpLook = lastHistoryPoint.lookVector:Lerp(lookVector, fraction).Unit
-					addToHistory({ position = interpPos, lookVector = interpLook })
-				end
-			end
-			addToHistory({ position = currentPos, lookVector = lookVector })
-		end
-
-		local currentTime = tick()
-
+		-- DIRECT SEGMENT FOLLOWING - Each segment follows the previous one
 		for i = 1, currentLength do
 			local segment = segments[i]
 			if segment and segment.Parent then
-				local delay = mathFloor(i * 1.15)
-				local targetData = getFromHistory(delay)
-				if targetData then
-					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.08)
-					local currentSegmentPos = segment.Position
-					
-					-- ANTI-GAP FOR BOOSTING ONLY
-					local dynamicFollowSpeed = followSpeed
-					if isBoosting and i > 1 then
-						local prevSegment = segments[i - 1]
-						if prevSegment and prevSegment.Parent then
-							local gap = (currentSegmentPos - prevSegment.Position).Magnitude
-							if gap > activeConfig.SegmentSpacing * 1.3 then
-								-- Only when boosting and gap is too big, speed up the follow
-								dynamicFollowSpeed = mathMin(followSpeed + 0.02, 0.99)
+				local targetPos
+				local targetLookDir
+				
+				if i == 1 then
+					-- First segment follows the head
+					targetPos = headPos - lookVector * idealSpacing
+					targetLookDir = lookVector
+				else
+					-- Other segments follow the previous segment
+					local prevSegment = segments[i - 1]
+					if prevSegment and prevSegment.Parent then
+						local prevPos = prevSegment.Position
+						local dirToNext
+						
+						-- Calculate direction from previous segment
+						if i == 2 then
+							-- Second segment uses head direction
+							dirToNext = (prevPos - headPos).Unit
+						else
+							-- Other segments use direction from their previous segment
+							local prevPrevSegment = segments[i - 2]
+							if prevPrevSegment and prevPrevSegment.Parent then
+								dirToNext = (prevPos - prevPrevSegment.Position).Unit
+							else
+								dirToNext = (prevPos - headPos).Unit
 							end
 						end
+						
+						-- Target position with ideal spacing
+						targetPos = prevPos + dirToNext * idealSpacing
+						targetLookDir = -dirToNext
+					else
+						-- Fallback
+						targetPos = segmentTargets[i] or currentPos
+						targetLookDir = lookVector
 					end
-					
-					local newPos = currentSegmentPos:Lerp(segmentPos, dynamicFollowSpeed)
-
-					segment.CFrame = CFramenew(newPos)
 				end
+				
+				-- Get current position
+				local currentSegmentPos = segment.Position
+				
+				-- SMOOTH ANTI-GAP SYSTEM
+				-- Check actual distance to previous segment/head
+				local actualDistance = 0
+				local prevPos = nil
+				
+				if i == 1 then
+					prevPos = headPos
+					actualDistance = (currentSegmentPos - headPos).Magnitude
+				else
+					local prevSegment = segments[i - 1]
+					if prevSegment and prevSegment.Parent then
+						prevPos = prevSegment.Position
+						actualDistance = (currentSegmentPos - prevPos).Magnitude
+					end
+				end
+				
+				-- Dynamic follow speed based on gap size
+				local dynamicFollowSpeed = followSpeed
+				if actualDistance > maxSpacing and prevPos then
+					-- Gap is too large - increase follow speed smoothly
+					local gapRatio = mathMin(actualDistance / idealSpacing, 2.5)
+					dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * 0.05, 0.98)
+					
+					-- Also pull segment closer to ideal position
+					local pullDirection = (prevPos - currentSegmentPos).Unit
+					local idealPos = prevPos + pullDirection * idealSpacing
+					targetPos = currentSegmentPos:Lerp(idealPos, 0.2) -- Gentle correction
+				elseif actualDistance < minSpacing and prevPos then
+					-- Too close - push away slightly
+					local pushDirection = (currentSegmentPos - prevPos).Unit
+					targetPos = prevPos + pushDirection * idealSpacing
+					dynamicFollowSpeed = followSpeed * 0.9 -- Slower to create space
+				end
+				
+				-- Store target for next frame
+				segmentTargets[i] = targetPos
+				
+				-- Smooth movement to target
+				local newPos = currentSegmentPos:Lerp(targetPos, dynamicFollowSpeed)
+				segment.CFrame = CFramenew(newPos)
 			end
 		end
 
+		local currentTime = tick()
 		if currentTime - lastNetworkUpdate > 0.1 then
 			lastNetworkUpdate = currentTime
 		end

@@ -74,12 +74,12 @@ function PathSystem.new()
 
 		-- Enhanced performance optimization
 		lastRecordedPos = nil,
-		minRecordDistance = 0.5, -- Increased from 0.35 for less network traffic
+		minRecordDistance = 0.3, -- Reduced for smoother movement
 		networkUpdateCounter = 0,
 
 		-- Reduced memory usage
 		pointCount = 0,
-		maxPoints = 250, -- Reduced from 350 for better network performance
+		maxPoints = 300, -- Increased for smoother following
 
 		-- Smaller interpolation cache
 		interpolationCache = {},
@@ -88,7 +88,7 @@ function PathSystem.new()
 
 		-- Network throttling
 		lastNetworkUpdate = 0,
-		networkUpdateInterval = 1/30, -- 30 FPS max for network updates
+		networkUpdateInterval = 1/60, -- 60 FPS for smooth local movement
 	}, PathSystem)
 end
 
@@ -553,7 +553,7 @@ local function initializeForCharacter(character)
 	-- 🚀 NETWORK-OPTIMIZED MAIN MOVEMENT LOOP
 	local lastPosition = rootPart.Position
 	local updateCounter = 0
-	local networkUpdateInterval = 2 -- Update every 2 frames for network optimization
+	local networkUpdateInterval = 1 -- Update every frame for smoothness
 
 	heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
 		if not rootPart or not rootPart.Parent then
@@ -571,19 +571,17 @@ local function initializeForCharacter(character)
 			fpsCounter.lastUpdate = tick()
 		end
 
-		-- Mouse targeting (throttled)
-		if updateCounter % networkUpdateInterval == 0 then
-			local mousePos = getMouseWorldPosition()
-			local delta = mousePos - rootPart.Position
-			delta = Vector3.new(delta.X, 0, delta.Z)
+		-- Mouse targeting (every frame for responsiveness)
+		local mousePos = getMouseWorldPosition()
+		local delta = mousePos - rootPart.Position
+		delta = Vector3.new(delta.X, 0, delta.Z)
 
-			if delta.Magnitude > 1.8 then -- Increased from 1.5
-				State.targetDirection = delta.Unit
-			end
+		if delta.Magnitude > 1.5 then -- Reduced threshold
+			State.targetDirection = delta.Unit
 		end
 
-		-- Smooth direction changes
-		local turnRate = Config.TurnSpeed * dt
+		-- Smooth direction changes with faster turn rate
+		local turnRate = (Config.TurnSpeed * 1.2) * dt -- Increased turn speed
 		local newDirection = State.currentDirection:Lerp(State.targetDirection, turnRate)
 		-- CRITICAL FIX: Normalize the direction vector after lerping.
 		-- Without this, the vector's length shrinks during turns, causing the snake
@@ -592,8 +590,8 @@ local function initializeForCharacter(character)
 			State.currentDirection = newDirection.Unit
 		end
 
-		-- Smooth speed changes
-		local speedRate = 6 * dt -- Reduced from 8
+		-- Smooth speed changes with faster response
+		local speedRate = 10 * dt -- Increased from 6
 		State.smoothSpeed = State.smoothSpeed + (State.targetSpeed - State.smoothSpeed) * speedRate
 
 		-- Apply movement
@@ -603,10 +601,8 @@ local function initializeForCharacter(character)
 		-- Update position and rotation
 		rootPart.CFrame = CFrame.lookAt(newPosition, newPosition + State.currentDirection)
 
-		-- Record path point (throttled)
-		if updateCounter % networkUpdateInterval == 0 then
-			pathSystem:recordPoint(rootPart.Position, State.smoothSpeed, tick())
-		end
+		-- Record path point (every frame for smooth following)
+		pathSystem:recordPoint(rootPart.Position, State.smoothSpeed, tick())
 
 		-- Update globals and stats
 		_G.SnakeSpeed = State.smoothSpeed
