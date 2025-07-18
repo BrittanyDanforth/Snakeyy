@@ -616,18 +616,14 @@ function CharacterPreview.create(viewport)
 		local waveX = math.sin(slitherAngle * 3) * 2
 		head.Position = Vector3.new(headX + waveX, 0, headZ)
 		
-		-- Calculate head direction for eye positioning
-		local nextAngle = slitherAngle + 0.1
-		local nextX = math.sin(nextAngle) * radius
-		local nextZ = math.cos(nextAngle) * radius - 10
-		local lookDir = (Vector3.new(nextX, 0, nextZ) - head.Position).Unit
+		-- Update eyes - keep them stable and facing forward
+		-- Eyes stay in fixed position relative to head
+		leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
+		rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
 		
-		-- Update eyes to follow movement direction
-		local eyeOffset = Vector3.new(lookDir.X * 0.3, 0.5, lookDir.Z * 0.3 + 0.8)
-		leftEye.Position = head.Position + eyeOffset + Vector3.new(-0.6, 0, 0)
-		rightEye.Position = head.Position + eyeOffset + Vector3.new(0.6, 0, 0)
-		leftPupil.Position = leftEye.Position + lookDir * 0.2
-		rightPupil.Position = rightEye.Position + lookDir * 0.2
+		-- Pupils stay centered in eyes
+		leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
+		rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
 		
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
