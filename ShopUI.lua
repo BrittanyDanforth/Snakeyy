@@ -764,16 +764,22 @@ function CharacterPreview.create(viewport)
 	for i, seg in ipairs(segments) do
 		CharacterPreview.currentBody[i] = seg.part
 	end
+	
+	-- Initialize VFX storage
+	CharacterPreview.vfxEffects = CharacterPreview.vfxEffects or {}
 
 	return model
 end
 
--- OPTIMIZED: Update preview with no lag
+-- OPTIMIZED: Update preview with built-in VFX
 function CharacterPreview.update(skinName)
 	if not CharacterPreview.currentModel then return end
 
 	CharacterPreview.currentSkinName = skinName
 	local skin = SnakeSkinsData[skinName] or SnakeSkinsData["Default"]
+
+	-- Clean up existing VFX
+	CharacterPreview.clearVFX()
 
 	-- Update head
 	if CharacterPreview.currentHead then
@@ -786,7 +792,6 @@ function CharacterPreview.update(skinName)
 			light.Brightness = (skin.GlowIntensity or 2) * 1.5
 		end
 	end
-
 
 	-- Update segments
 	if CharacterPreview.currentSegments then
@@ -805,30 +810,216 @@ function CharacterPreview.update(skinName)
 		end
 	end
 	
-	-- Apply VFX if available
-	local VFXManager = game:GetService("ReplicatedStorage"):FindFirstChild("VFXManager")
-	if VFXManager then
-		print("✨ VFXManager found, applying VFX for:", skinName)
-		local VFXModule = require(VFXManager)
-		VFXModule.ApplySnakePreviewVFX(CharacterPreview.currentModel, skinName)
-	else
-		print("⚠️ VFXManager not found in ReplicatedStorage!")
+	-- BUILT-IN VFX FOR SPECIAL SKINS
+	if skinName == "Rainbow" then
+		CharacterPreview.applyRainbowVFX()
+	elseif skinName == "Dragon Lord" then
+		CharacterPreview.applyDragonVFX()
+	elseif skinName == "VIP" then
+		CharacterPreview.applyVIPVFX()
+	elseif skinName == "Neon Viper" then
+		CharacterPreview.applyNeonVFX()
 	end
 end
 
+-- Clear all VFX
+function CharacterPreview.clearVFX()
+	if CharacterPreview.vfxConnection then
+		CharacterPreview.vfxConnection:Disconnect()
+		CharacterPreview.vfxConnection = nil
+	end
+	
+	for _, effect in ipairs(CharacterPreview.vfxEffects or {}) do
+		if effect then effect:Destroy() end
+	end
+	CharacterPreview.vfxEffects = {}
+end
+
+-- RAINBOW VFX - Built directly into preview
+function CharacterPreview.applyRainbowVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+	
+	local head = CharacterPreview.currentHead
+	local model = CharacterPreview.currentModel
+	
+	-- Create rainbow orbs around head
+	local orbCount = 8
+	for i = 1, orbCount do
+		local angle = (i - 1) * (math.pi * 2 / orbCount)
+		local hue = (i - 1) / orbCount
+		
+		-- Create glowing orb
+		local orb = Instance.new("Part")
+		orb.Name = "RainbowOrb"..i
+		orb.Size = Vector3.new(1.2, 1.2, 1.2)
+		orb.Shape = Enum.PartType.Ball
+		orb.Material = Enum.Material.Neon
+		orb.Color = Color3.fromHSV(hue, 1, 1)
+		orb.Transparency = 0.2
+		orb.CanCollide = false
+		orb.Anchored = true
+		orb.Parent = model
+		
+		-- Add glow
+		local glow = Instance.new("PointLight")
+		glow.Color = orb.Color
+		glow.Brightness = 3
+		glow.Range = 8
+		glow.Parent = orb
+		
+		table.insert(CharacterPreview.vfxEffects, orb)
+	end
+	
+	-- Add rainbow particles to head
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = head
+	
+	local particles = Instance.new("ParticleEmitter")
+	particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	particles.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+		ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 165, 0)),
+		ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
+		ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 255)),
+		ColorSequenceKeypoint.new(0.83, Color3.fromRGB(130, 0, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
+	})
+	particles.Lifetime = NumberRange.new(1, 2)
+	particles.Rate = 100
+	particles.Speed = NumberRange.new(3, 6)
+	particles.SpreadAngle = Vector2.new(360, 360)
+	particles.LightEmission = 1
+	particles.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.5),
+		NumberSequenceKeypoint.new(0.5, 1.5),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	particles.Parent = attachment
+	
+	table.insert(CharacterPreview.vfxEffects, attachment)
+	
+	-- Animate the orbs
+	CharacterPreview.vfxConnection = RunService.Heartbeat:Connect(function()
+		local time = tick()
+		local orbs = {}
+		
+		-- Find all orbs
+		for _, child in ipairs(model:GetChildren()) do
+			if child.Name:match("RainbowOrb") then
+				table.insert(orbs, child)
+			end
+		end
+		
+		-- Animate each orb
+		for i, orb in ipairs(orbs) do
+			local angle = ((i - 1) / #orbs) * math.pi * 2 + time
+			local radius = 3 + math.sin(time * 2 + i) * 0.5
+			local height = math.sin(time * 3 + i * 0.5) * 1
+			
+			orb.Position = head.Position + Vector3.new(
+				math.cos(angle) * radius,
+				height,
+				math.sin(angle) * radius
+			)
+			
+			-- Cycle colors
+			local hue = (time * 0.3 + (i - 1) / #orbs) % 1
+			orb.Color = Color3.fromHSV(hue, 1, 1)
+			
+			local glow = orb:FindFirstChild("PointLight")
+			if glow then
+				glow.Color = orb.Color
+			end
+		end
+	end)
+end
+
+-- Dragon Lord VFX
+function CharacterPreview.applyDragonVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+	
+	local head = CharacterPreview.currentHead
+	
+	-- Fire particles
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = head
+	
+	local fire = Instance.new("ParticleEmitter")
+	fire.Texture = "rbxasset://textures/particles/fire_main.dds"
+	fire.Color = ColorSequence.new(Color3.fromRGB(255, 170, 0), Color3.fromRGB(255, 85, 0))
+	fire.Lifetime = NumberRange.new(0.5, 1.5)
+	fire.Rate = 50
+	fire.Speed = NumberRange.new(5, 10)
+	fire.SpreadAngle = Vector2.new(30, 30)
+	fire.LightEmission = 1
+	fire.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.5, 2),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	fire.Parent = attachment
+	
+	table.insert(CharacterPreview.vfxEffects, attachment)
+end
+
+-- VIP VFX
+function CharacterPreview.applyVIPVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+	
+	local head = CharacterPreview.currentHead
+	
+	-- Golden sparkles
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = head
+	
+	local sparkles = Instance.new("ParticleEmitter")
+	sparkles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	sparkles.Color = ColorSequence.new(Color3.fromRGB(255, 215, 0))
+	sparkles.Lifetime = NumberRange.new(1, 3)
+	sparkles.Rate = 75
+	sparkles.Speed = NumberRange.new(2, 5)
+	sparkles.SpreadAngle = Vector2.new(360, 360)
+	sparkles.LightEmission = 1
+	sparkles.Size = NumberSequence.new(1.5)
+	sparkles.Parent = attachment
+	
+	table.insert(CharacterPreview.vfxEffects, attachment)
+end
+
+-- Neon Viper VFX
+function CharacterPreview.applyNeonVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+	
+	local head = CharacterPreview.currentHead
+	
+	-- Electric particles
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = head
+	
+	local electric = Instance.new("ParticleEmitter")
+	electric.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	electric.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255), Color3.fromRGB(255, 0, 255))
+	electric.Lifetime = NumberRange.new(0.2, 0.5)
+	electric.Rate = 100
+	electric.Speed = NumberRange.new(10, 20)
+	electric.SpreadAngle = Vector2.new(360, 360)
+	electric.LightEmission = 1
+	electric.Size = NumberSequence.new(0.5)
+	electric.Parent = attachment
+	
+	table.insert(CharacterPreview.vfxEffects, attachment)
+end
+
 function CharacterPreview.destroy()
+	-- Clean up VFX first
+	CharacterPreview.clearVFX()
+	
 	if CharacterPreview.rotationConnection then
 		CharacterPreview.rotationConnection:Disconnect()
 	end
 
-	-- Remove VFX before destroying model
 	if CharacterPreview.currentModel then
-		local VFXManager = game:GetService("ReplicatedStorage"):FindFirstChild("VFXManager")
-		if VFXManager then
-			local VFXModule = require(VFXManager)
-			VFXModule.RemoveSnakeVFX(CharacterPreview.currentModel)
-		end
-		
 		CharacterPreview.currentModel:Destroy()
 	end
 
@@ -843,6 +1034,8 @@ function CharacterPreview.destroy()
 	CharacterPreview.rightEye = nil
 	CharacterPreview.leftPupil = nil
 	CharacterPreview.rightPupil = nil
+	CharacterPreview.vfxEffects = nil
+	CharacterPreview.vfxConnection = nil
 end
 
 -- Compatibility functions (already handled in create)
