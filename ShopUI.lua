@@ -443,21 +443,21 @@ local SnakeSkinsData = {
 
 -- FIX FOR LENGTH COMPRESSION IN REAL GAME
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 30, -- More segments for better length
-	SEGMENT_SPACING = 3.5, -- Increased spacing to prevent compression
+	SEGMENT_COUNT = 20, -- Good amount of segments
+	SEGMENT_SPACING = 2.5, -- Slightly increased spacing
 	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
 	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
 	SIZE_REDUCTION = 0.98, -- Normal taper
-	CAMERA_DISTANCE = 60, -- Further back to see full snake
-	CAMERA_HEIGHT = 20, -- Higher for better view
-	ROTATION_SPEED = 0.3,
+	CAMERA_DISTANCE = 25, -- Close enough to see details
+	CAMERA_HEIGHT = 10, -- Good viewing angle
+	ROTATION_SPEED = 0.4,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 4,
+	SLITHER_AMPLITUDE = 3,
 	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 1.0,
+	SLITHER_SPEED = 1.2,
 	SEGMENT_DELAY = 0.08,
 	-- Snake positioning
-	SNAKE_RADIUS = 12, -- Larger movement circle
+	SNAKE_RADIUS = 8, -- Normal movement circle
 	SNAKE_CENTER_Z = 0,
 }
 
@@ -584,8 +584,8 @@ function CharacterPreview.create(viewport)
 		segment.Anchored = true
 		segment.Parent = model
 		
-		-- Initial position - spread out in Z axis
-		segment.Position = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING * 3)
+		-- Initial position
+		segment.Position = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
 
 		-- Color pattern
 		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
@@ -598,10 +598,10 @@ function CharacterPreview.create(viewport)
 		glow.Color = segment.Color
 		glow.Parent = segment
 
-		-- Store segment data with PROPER Z offset
+		-- Store segment data
 		table.insert(segments, {
 			part = segment,
-			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING * 2), -- Double spacing in Z
+			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING),
 			size = currentSize,
 			colorIndex = colorIndex
 		})
