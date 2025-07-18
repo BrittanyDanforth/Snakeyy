@@ -441,27 +441,39 @@ local SnakeSkinsData = {
 	}
 }
 
--- ULTRA PREMIUM PREVIEW with AMAZING VFX
+-- ULTRA SMOOTH SLITHER.IO PREVIEW - NO LAG VERSION
+local PREVIEW_CONFIG = {
+	SEGMENT_COUNT = 15,
+	SEGMENT_SPACING = 1.2,
+	HEAD_SIZE = Vector3.new(3, 3, 3),
+	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8),
+	SIZE_REDUCTION = 0.95,
+	CAMERA_DISTANCE = 20,
+	CAMERA_HEIGHT = 8,
+	ROTATION_SPEED = 0.5,
+	WAVE_AMPLITUDE = 1.5,
+	WAVE_SPEED = 2,
+	FOLLOW_SPEED = 0.85,
+}
+
 function CharacterPreview.create(viewport)
 	if not viewport then return end
-
-	-- Clear existing content
-	for _, child in pairs(viewport:GetChildren()) do
-		child:Destroy()
-	end
-
+	
+	-- Clear viewport efficiently
+	viewport:ClearAllChildren()
+	
 	-- Create camera
 	local camera = Instance.new("Camera")
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
-
-	-- Create snake model container
-	local snakeModel = Instance.new("Model")
-	snakeModel.Name = "SnakePreview"
-	snakeModel.Parent = viewport
-
-	-- Use default config initially
-	local config = SnakeSkinsData["Default"] or {
+	
+	-- Create model
+	local model = Instance.new("Model")
+	model.Name = "SnakePreview"
+	model.Parent = viewport
+	
+	-- Get skin data
+	local skin = SnakeSkinsData["Default"] or {
 		HeadColor = Color3.fromRGB(76, 217, 100),
 		BodyColors = {
 			Color3.fromRGB(60, 180, 80),
@@ -470,307 +482,242 @@ function CharacterPreview.create(viewport)
 			Color3.fromRGB(80, 200, 100),
 			Color3.fromRGB(60, 180, 80),
 		},
-		HeadSize = Vector3.new(3, 3, 3),
-		SegmentSize = Vector3.new(2.5, 2.5, 2.5),
 		HeadMaterial = Enum.Material.ForceField,
 		BodyMaterial = Enum.Material.Neon,
-		GlowIntensity = 1.5,
-		GlowRange = 4,
+		GlowIntensity = 2,
+		GlowRange = 6,
 	}
-
-	-- Create a fake root part for the preview
-	local fakeRoot = Instance.new("Part")
-	fakeRoot.Name = "FakeRoot"
-	fakeRoot.Transparency = 1
-	fakeRoot.CanCollide = false
-	fakeRoot.Anchored = true
-	fakeRoot.Position = Vector3.new(0, 0, -10)
-	fakeRoot.Parent = snakeModel
-
-	-- Create head EXACTLY like CharacterSetup does
-	local headPart = Instance.new("Part")
-	headPart.Name = "SnakeHead"
-	headPart.Size = config.HeadSize
-	headPart.Material = config.HeadMaterial
-	headPart.Color = config.HeadColor
-	headPart.Shape = Enum.PartType.Ball
-	headPart.CanCollide = false
-	headPart.CanQuery = false
-	headPart.CanTouch = false
-	headPart.Anchored = true
-	headPart.TopSurface = Enum.SurfaceType.Smooth
-	headPart.BottomSurface = Enum.SurfaceType.Smooth
-	headPart.Parent = snakeModel
-
-	-- Add head glow
-	local headLight = Instance.new("PointLight")
-	headLight.Color = config.HeadColor
-	headLight.Brightness = config.GlowIntensity + 1
-	headLight.Range = config.GlowRange + 2
-	headLight.Parent = headPart
-
-	-- Add head outline
-	local headOutline = Instance.new("SelectionBox")
-	headOutline.Adornee = headPart
-	headOutline.Color3 = Color3.fromRGB(255, 255, 255)
-	headOutline.LineThickness = 0.08
-	headOutline.Transparency = 1
-	headOutline.Parent = headPart
-
-	-- Create eyes EXACTLY like CharacterSetup
-	local function createEye(name, position)
+	
+	-- Create head
+	local head = Instance.new("Part")
+	head.Name = "Head"
+	head.Size = PREVIEW_CONFIG.HEAD_SIZE
+	head.Shape = Enum.PartType.Ball
+	head.Material = skin.HeadMaterial
+	head.Color = skin.HeadColor
+	head.TopSurface = Enum.SurfaceType.Smooth
+	head.BottomSurface = Enum.SurfaceType.Smooth
+	head.CanCollide = false
+	head.CanQuery = false
+	head.CanTouch = false
+	head.Anchored = true
+	head.Position = Vector3.new(0, 0, -10)
+	head.Parent = model
+	
+	-- Head glow
+	local headGlow = Instance.new("PointLight")
+	headGlow.Brightness = skin.GlowIntensity * 1.5
+	headGlow.Range = skin.GlowRange * 1.5
+	headGlow.Color = skin.HeadColor
+	headGlow.Parent = head
+	
+	-- Create eyes
+	local function createEye(xOffset)
 		local eye = Instance.new("Part")
-		eye.Name = name
 		eye.Size = Vector3.new(0.6, 0.6, 0.6)
+		eye.Shape = Enum.PartType.Ball
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
-		eye.Shape = Enum.PartType.Ball
 		eye.CanCollide = false
 		eye.Anchored = true
-		eye.Parent = headPart
-		return eye
-	end
-
-	local function createPupil(name, parent)
+		eye.Parent = model
+		
 		local pupil = Instance.new("Part")
-		pupil.Name = name
-		pupil.Size = Vector3.new(0.25, 0.25, 0.25)
+		pupil.Size = Vector3.new(0.3, 0.3, 0.3)
+		pupil.Shape = Enum.PartType.Ball
 		pupil.Material = Enum.Material.Neon
 		pupil.Color = Color3.fromRGB(0, 0, 0)
-		pupil.Shape = Enum.PartType.Ball
 		pupil.CanCollide = false
 		pupil.Anchored = true
-		pupil.Parent = parent
-		return pupil
+		pupil.Parent = model
+		
+		return eye, pupil
 	end
-
-	local leftEye = createEye("LeftEye", Vector3.new(-0.6, 0.55, 0.8))
-	local rightEye = createEye("RightEye", Vector3.new(0.6, 0.55, 0.8))
-	local leftPupil = createPupil("LeftPupil", leftEye)
-	local rightPupil = createPupil("RightPupil", rightEye)
-
-	-- Position head
-	headPart.Position = fakeRoot.Position
-	leftEye.Position = headPart.Position + Vector3.new(-0.6, 0.55, 0.8)
-	rightEye.Position = headPart.Position + Vector3.new(0.6, 0.55, 0.8)
-	leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
-	rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
-
-	-- Set primary part
-	snakeModel.PrimaryPart = headPart
-
-	-- Create body segments EXACTLY like CharacterSetup
+	
+	local leftEye, leftPupil = createEye(-0.6)
+	local rightEye, rightPupil = createEye(0.6)
+	
+	-- Create body segments with proper spacing
 	local segments = {}
-	local startPos = fakeRoot.Position
-	for i = 1, 8 do
+	local currentSize = PREVIEW_CONFIG.SEGMENT_SIZE
+	
+	for i = 1, PREVIEW_CONFIG.SEGMENT_COUNT do
 		local segment = Instance.new("Part")
 		segment.Name = "Segment" .. i
-		segment.Size = config.SegmentSize
-		segment.Material = config.BodyMaterial
+		segment.Size = currentSize
 		segment.Shape = Enum.PartType.Ball
+		segment.Material = skin.BodyMaterial
+		segment.TopSurface = Enum.SurfaceType.Smooth
+		segment.BottomSurface = Enum.SurfaceType.Smooth
 		segment.CanCollide = false
 		segment.CanQuery = false
 		segment.CanTouch = false
 		segment.Anchored = true
-		segment.TopSurface = Enum.SurfaceType.Smooth
-		segment.BottomSurface = Enum.SurfaceType.Smooth
-		segment.Parent = snakeModel
-
-		-- Apply color pattern
-		local colorIndex = ((i - 1) % #config.BodyColors) + 1
-		segment.Color = config.BodyColors[colorIndex]
-
-		-- Position in a curve for preview
-		local angle = (i / 8) * math.pi * 0.5
-		segment.Position = startPos + Vector3.new(
-			math.sin(angle) * 3,
-			0,
-			-i * 2.2
+		segment.Parent = model
+		
+		-- Color pattern
+		local colorIndex = ((i - 1) % #skin.BodyColors) + 1
+		segment.Color = skin.BodyColors[colorIndex]
+		
+		-- Segment glow
+		local glow = Instance.new("PointLight")
+		glow.Brightness = skin.GlowIntensity
+		glow.Range = skin.GlowRange
+		glow.Color = segment.Color
+		glow.Parent = segment
+		
+		-- Store segment data
+		table.insert(segments, {
+			part = segment,
+			offset = Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING),
+			size = currentSize,
+			colorIndex = colorIndex
+		})
+		
+		-- Reduce size for taper effect
+		currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
+	end
+	
+	-- Animation variables
+	local time = 0
+	local rotationConnection
+	local segmentPositions = {}
+	
+	-- Initialize segment positions
+	for i, seg in ipairs(segments) do
+		segmentPositions[i] = head.Position + seg.offset
+		seg.part.Position = segmentPositions[i]
+	end
+	
+	-- Main animation loop - OPTIMIZED FOR NO LAG
+	rotationConnection = RunService.Heartbeat:Connect(function(dt)
+		time = time + dt
+		
+		-- Camera rotation
+		local camAngle = time * PREVIEW_CONFIG.ROTATION_SPEED
+		camera.CFrame = CFrame.lookAt(
+			head.Position + Vector3.new(
+				math.sin(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE,
+				PREVIEW_CONFIG.CAMERA_HEIGHT,
+				math.cos(camAngle) * PREVIEW_CONFIG.CAMERA_DISTANCE
+			),
+			head.Position
 		)
-
-		-- Add glow
-		local light = Instance.new("PointLight")
-		light.Name = "Glow"
-		light.Color = segment.Color
-		light.Brightness = config.GlowIntensity
-		light.Range = config.GlowRange
-		light.Enabled = true
-		light.Parent = segment
-
-		-- Add outline
-		local outline = Instance.new("SelectionBox")
-		outline.Name = "Outline"
-		outline.Adornee = segment
-		outline.Color3 = Color3.fromRGB(255, 255, 255)
-		outline.LineThickness = 0.03
-		outline.Transparency = 1
-		outline.Parent = segment
-
-		segments[i] = segment
-	end
-
-	-- Store head parts for update function
-	local headParts = {
-		head = headPart,
-		headLight = headLight,
-		headOutline = headOutline,
-		leftEye = leftEye,
-		rightEye = rightEye,
-		leftPupil = leftPupil,
-		rightPupil = rightPupil
-	}
-
-	-- EPIC VFX CONTAINER
-	local vfxContainer = Instance.new("Folder")
-	vfxContainer.Name = "VFXContainer"
-	vfxContainer.Parent = snakeModel
-
-	-- CREATE AMAZING ORBITAL PARTICLES
-	CharacterPreview.orbitalParticles = {}
-	for i = 1, 6 do
-		local orb = Instance.new("Part")
-		orb.Name = "OrbitalParticle"..i
-		orb.Size = Vector3.new(0.5, 0.5, 0.5)
-		orb.Material = Enum.Material.Neon
-		orb.Shape = Enum.PartType.Ball
-		orb.Color = Color3.fromHSV((i-1)/6, 1, 1)
-		orb.CanCollide = false
-		orb.Anchored = true
-		orb.Parent = vfxContainer
-
-		-- Add glow
-		local pointLight = Instance.new("PointLight")
-		pointLight.Color = orb.Color
-		pointLight.Brightness = 2
-		pointLight.Range = 3
-		pointLight.Parent = orb
-
-		-- Add particle emitter for trail
-		local emitter = Instance.new("ParticleEmitter")
-		emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		emitter.Rate = 20
-		emitter.Lifetime = NumberRange.new(0.5, 1)
-		emitter.Speed = NumberRange.new(1)
-		emitter.SpreadAngle = Vector2.new(10, 10)
-		emitter.Color = ColorSequence.new(orb.Color)
-		emitter.LightEmission = 1
-		emitter.LightInfluence = 0
-		emitter.Size = NumberSequence.new{
-			NumberSequenceKeypoint.new(0, 0.3),
-			NumberSequenceKeypoint.new(0.5, 0.2),
-			NumberSequenceKeypoint.new(1, 0)
-		}
-		emitter.Transparency = NumberSequence.new{
-			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(0.7, 0.3),
-			NumberSequenceKeypoint.new(1, 1)
-		}
-		emitter.Parent = orb
-
-		table.insert(CharacterPreview.orbitalParticles, orb)
-	end
-
-	-- CREATE ENERGY RINGS
-	CharacterPreview.energyRings = {}
-	for i = 1, 3 do
-		local ring = Instance.new("Part")
-		ring.Name = "EnergyRing"..i
-		ring.Size = Vector3.new(0.2, 0.2, 0.2)
-		ring.Transparency = 1
-		ring.CanCollide = false
-		ring.Anchored = true
-		ring.Parent = vfxContainer
-
-		local mesh = Instance.new("SpecialMesh")
-		mesh.MeshId = "rbxassetid://3270017"
-		mesh.Scale = Vector3.new(4 + i * 2, 4 + i * 2, 0.5)
-		mesh.Parent = ring
-
-		local decal = Instance.new("Decal")
-		decal.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		decal.Face = Enum.NormalId.Top
-		decal.Color3 = config.HeadColor
-		decal.Transparency = 0.7
-		decal.Parent = ring
-
-		table.insert(CharacterPreview.energyRings, ring)
-	end
-
-	-- Position camera for cinematic view
-	camera.CFrame = CFrame.new(Vector3.new(12, 8, -5), Vector3.new(0, 0, -10))
-	camera.FieldOfView = 35
-
+		
+		-- Head movement (subtle wave)
+		head.Position = Vector3.new(
+			math.sin(time * PREVIEW_CONFIG.WAVE_SPEED) * PREVIEW_CONFIG.WAVE_AMPLITUDE,
+			0,
+			-10
+		)
+		
+		-- Update eyes to follow head
+		leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
+		rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
+		leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
+		rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
+		
+		-- Smooth segment following (slither.io style)
+		local prevPos = head.Position
+		for i, seg in ipairs(segments) do
+			-- Calculate target position based on previous segment
+			local direction = (prevPos - seg.part.Position)
+			if direction.Magnitude > 0 then
+				local targetPos = prevPos - direction.Unit * PREVIEW_CONFIG.SEGMENT_SPACING
+				
+				-- Smooth interpolation for natural movement
+				seg.part.Position = seg.part.Position:Lerp(targetPos, PREVIEW_CONFIG.FOLLOW_SPEED)
+				
+				-- Add slight wave motion
+				local waveOffset = math.sin(time * PREVIEW_CONFIG.WAVE_SPEED - i * 0.3) * 0.3
+				seg.part.Position = seg.part.Position + Vector3.new(waveOffset, 0, 0)
+			end
+			
+			prevPos = seg.part.Position
+		end
+	end)
+	
 	-- Store references
-	CharacterPreview.currentModel = snakeModel
-	CharacterPreview.currentHead = headParts.head
-	CharacterPreview.currentHeadParts = headParts
-	CharacterPreview.currentBody = segments
+	CharacterPreview.currentModel = model
+	CharacterPreview.currentHead = head
+	CharacterPreview.currentSegments = segments
+	CharacterPreview.rotationConnection = rotationConnection
+	CharacterPreview.leftEye = leftEye
+	CharacterPreview.rightEye = rightEye
+	CharacterPreview.leftPupil = leftPupil
+	CharacterPreview.rightPupil = rightPupil
 	CharacterPreview.currentCamera = camera
-	CharacterPreview.vfxContainer = vfxContainer
 	CharacterPreview.currentSkinName = "Default"
-
-	-- Start animations
-	CharacterPreview.startRotation()
-	CharacterPreview.startVFXAnimations()
-	CharacterPreview.startBodyWave()
-
-	return snakeModel
+	
+	-- Compatibility properties
+	CharacterPreview.currentBody = {}
+	for i, seg in ipairs(segments) do
+		CharacterPreview.currentBody[i] = seg.part
+	end
+	
+	return model
 end
 
--- FIXED: Update preview with proper skin application
+-- OPTIMIZED: Update preview with no lag
 function CharacterPreview.update(skinName)
-	if not CharacterPreview.currentModel or not SnakeSkinsData[skinName] then 
-		print("❌ No model or skin data for:", skinName)
-		return 
-	end
-
-	-- Store current skin name for VFX
+	if not CharacterPreview.currentModel then return end
+	
 	CharacterPreview.currentSkinName = skinName
-
-	local skin = SnakeSkinsData[skinName]
-	local headParts = CharacterPreview.currentHeadParts
-	local bodyParts = CharacterPreview.currentBody
-
-	print("🎨 Updating preview with skin:", skinName)
-
+	local skin = SnakeSkinsData[skinName] or SnakeSkinsData["Default"]
+	
 	-- Update head
-	if headParts and headParts.head then
-		headParts.head.Color = skin.HeadColor
-		headParts.head.Material = skin.HeadMaterial
-
-		-- Update head light
-		if headParts.headLight then
-			headParts.headLight.Color = skin.HeadColor
-			headParts.headLight.Brightness = skin.GlowIntensity + 1
-			headParts.headLight.Range = skin.GlowRange + 2
+	if CharacterPreview.currentHead then
+		CharacterPreview.currentHead.Color = skin.HeadColor
+		CharacterPreview.currentHead.Material = skin.HeadMaterial or Enum.Material.ForceField
+		
+		local light = CharacterPreview.currentHead:FindFirstChild("PointLight")
+		if light then
+			light.Color = skin.HeadColor
+			light.Brightness = (skin.GlowIntensity or 2) * 1.5
 		end
 	end
 
-	-- Update body segments with proper colors from BodyColors array
-	for i, segment in ipairs(bodyParts) do
-		if segment and skin.BodyColors then
-			local colorIndex = ((i - 1) % #skin.BodyColors) + 1
-			segment.Color = skin.BodyColors[colorIndex]
-			segment.Material = skin.BodyMaterial
-
-			-- Update segment light
-			local light = segment:FindFirstChild("Glow")
-			if light then
-				light.Color = skin.BodyColors[colorIndex]
-				light.Brightness = skin.GlowIntensity
-				light.Range = skin.GlowRange
+	
+	-- Update segments
+	if CharacterPreview.currentSegments then
+		for i, seg in ipairs(CharacterPreview.currentSegments) do
+			local colorIndex = seg.colorIndex
+			if skin.BodyColors and skin.BodyColors[colorIndex] then
+				seg.part.Color = skin.BodyColors[colorIndex]
+				seg.part.Material = skin.BodyMaterial or Enum.Material.Neon
+				
+				local light = seg.part:FindFirstChild("PointLight")
+				if light then
+					light.Color = seg.part.Color
+					light.Brightness = skin.GlowIntensity or 2
+				end
 			end
 		end
 	end
-
-	print("✅ Preview updated successfully!")
 end
 
-function CharacterPreview.startRotation()
-	if not CharacterPreview.currentModel then return end
+function CharacterPreview.destroy()
+	if CharacterPreview.rotationConnection then
+		CharacterPreview.rotationConnection:Disconnect()
+	end
+	
+	if CharacterPreview.currentModel then
+		CharacterPreview.currentModel:Destroy()
+	end
+	
+	CharacterPreview.currentModel = nil
+	CharacterPreview.currentHead = nil
+	CharacterPreview.currentSegments = nil
+	CharacterPreview.rotationConnection = nil
+end
 
-	local rotationConnection
-	rotationConnection = RunService.Heartbeat:Connect(function()
+-- Compatibility functions (already handled in create)
+function CharacterPreview.startRotation() end
+function CharacterPreview.startVFXAnimations() end
+function CharacterPreview.startBodyWave() end
+
+-- Remove old duplicate functions below
+--[[
 		if CharacterPreview.currentModel and CharacterPreview.currentModel.Parent and CharacterPreview.currentModel.PrimaryPart then
 			local time = tick() * 0.5
 			pcall(function()
@@ -907,31 +854,7 @@ function CharacterPreview.startBodyWave()
 
 	CharacterPreview.waveConnection = waveConnection
 end
-
-function CharacterPreview.destroy(viewport)
-	if viewport then
-		for _, child in pairs(viewport:GetChildren()) do
-			child:Destroy()
-		end
-	end
-
-	-- Clean up all connections
-	if CharacterPreview.vfxConnection then
-		CharacterPreview.vfxConnection:Disconnect()
-	end
-	if CharacterPreview.waveConnection then
-		CharacterPreview.waveConnection:Disconnect()
-	end
-
-	CharacterPreview.currentModel = nil
-	CharacterPreview.currentHead = nil
-	CharacterPreview.currentHeadParts = nil
-	CharacterPreview.currentBody = nil
-	CharacterPreview.currentCamera = nil
-	CharacterPreview.orbitalParticles = nil
-	CharacterPreview.energyRings = nil
-	CharacterPreview.vfxContainer = nil
-end
+--]] -- END OF OLD FUNCTIONS
 
 -- UI State (moved to top to be accessible everywhere)
 local uiState = {
