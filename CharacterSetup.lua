@@ -680,6 +680,13 @@ local function createUltraSmoothSnake(character)
 	table.insert(connections, diedConn)
 	table.insert(connections, ancestryConn)
 
+	-- ADD SPAWN STABILIZATION DELAY
+	local spawnStabilizing = true
+	task.spawn(function()
+		task.wait(0.1) -- Small delay to let everything initialize
+		spawnStabilizing = false
+	end)
+
 	local heartbeatConn
 	heartbeatConn = RunService.Heartbeat:Connect(function(dt)
 		if not isActive or not rootPart.Parent then return end
@@ -699,6 +706,7 @@ local function createUltraSmoothSnake(character)
 			headParts.head.CFrame = CFramelookAt(headPos, headPos + lookVector)
 		end
 
+		-- ADD TO HISTORY
 		local lastHistoryPoint = getFromHistory(1)
 		local dist = (currentPos - lastHistoryPoint.position).Magnitude
 		if dist > 0.015 then
@@ -721,7 +729,8 @@ local function createUltraSmoothSnake(character)
 			local segment = segments[i]
 			if segment and segment.Parent then
 				-- CONSISTENT DELAY - Make segments follow closer together
-				local delay = mathFloor(i * 0.9) -- Reduced from 1.15 for tighter following
+				-- Special handling for first segment to prevent detachment
+				local delay = (i == 1) and 1 or mathFloor(i * 0.9)
 				local targetData = getFromHistory(delay)
 				if targetData then
 					local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05) -- Reduced offset
@@ -729,7 +738,11 @@ local function createUltraSmoothSnake(character)
 					
 					-- IMPROVED ANTI-GAP - Works for both normal and boost
 					local dynamicFollowSpeed = followSpeed
-					if i > 1 then
+					
+					-- During spawn stabilization, use very high follow speed
+					if spawnStabilizing then
+						dynamicFollowSpeed = 0.99 -- Very high follow speed to snap to position
+					elseif i > 1 then
 						local prevSegment = segments[i - 1]
 						if prevSegment and prevSegment.Parent then
 							local gap = (currentSegmentPos - prevSegment.Position).Magnitude
