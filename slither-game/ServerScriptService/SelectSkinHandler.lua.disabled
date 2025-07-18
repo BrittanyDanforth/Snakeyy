@@ -1,5 +1,7 @@
 -- DISABLED: Using UnifiedSkinSystem instead
-return
+-- Move this entire script to ServerStorage or delete it
+do return end -- Properly exit the script
+
 --[[
 -- SERVER SCRIPT: SelectSkin RemoteEvent Handler - FIXED VERSION
 -- This handles skin changes from the shop UI and applies them to the snake system
