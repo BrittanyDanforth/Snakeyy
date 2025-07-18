@@ -196,16 +196,36 @@ local function createMenu(onPlay)
 	shopCorner.CornerRadius = UDim.new(0.15, 0)
 	shopCorner.Parent = shopButton
 
-	-- Dark graphics button
+	-- Dark graphics button with visual styling
 	local graphicsButton = Instance.new("TextButton")
 	graphicsButton.Size = UDim2.new(0.25, 0, 0.06, 0)
 	graphicsButton.Position = UDim2.new(0.375, 0, 0.85, 0)
-	graphicsButton.BackgroundTransparency = 1
+	graphicsButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	graphicsButton.BackgroundTransparency = 0.7
 	graphicsButton.Text = "Graphics: High"
 	graphicsButton.Font = Enum.Font.SourceSans
 	graphicsButton.TextScaled = true
 	graphicsButton.TextColor3 = Color3.fromRGB(150, 150, 150)
 	graphicsButton.Parent = bgFrame
+	
+	local graphicsCorner = Instance.new("UICorner")
+	graphicsCorner.CornerRadius = UDim.new(0.15, 0)
+	graphicsCorner.Parent = graphicsButton
+	
+	-- Graphics button hover effect
+	graphicsButton.MouseEnter:Connect(function()
+		TweenService:Create(graphicsButton, TweenInfo.new(0.1), {
+			BackgroundTransparency = 0.5,
+			TextColor3 = Color3.fromRGB(200, 200, 200)
+		}):Play()
+	end)
+	
+	graphicsButton.MouseLeave:Connect(function()
+		TweenService:Create(graphicsButton, TweenInfo.new(0.1), {
+			BackgroundTransparency = 0.7,
+			TextColor3 = Color3.fromRGB(150, 150, 150)
+		}):Play()
+	end)
 
 	-- Dark leaderboard
 	local leaderboard = Instance.new("Frame")
@@ -432,18 +452,37 @@ local function createMenu(onPlay)
 		end)
 	end
 
-	-- Graphics toggle
+	-- Graphics toggle with Low/Medium/High support
 	local graphicsMode = LocalPlayer:GetAttribute("GraphicsMode") or "High"
+	local graphicsModes = {"Low", "Medium", "High"}
+	local currentModeIndex = table.find(graphicsModes, graphicsMode) or 3
+	
 	graphicsButton.Text = "Graphics: " .. graphicsMode
 	graphicsButton.MouseButton1Click:Connect(function()
-		if graphicsMode == "High" then
-			graphicsMode = "Low"
-		else
-			graphicsMode = "High"
-		end
+		-- Cycle through Low -> Medium -> High -> Low
+		currentModeIndex = currentModeIndex % 3 + 1
+		graphicsMode = graphicsModes[currentModeIndex]
+		
 		graphicsButton.Text = "Graphics: " .. graphicsMode
 		setGraphicsMode(graphicsMode)
+		
+		-- Visual feedback
+		local originalColor = graphicsButton.TextColor3
+		graphicsButton.TextColor3 = Color3.fromRGB(76, 217, 100)
+		TweenService:Create(graphicsButton, TweenInfo.new(0.3), {
+			TextColor3 = originalColor
+		}):Play()
 	end)
+	
+	-- Update graphics button when attribute changes
+	LocalPlayer.AttributeChanged:Connect(function(attr)
+		if attr == "GraphicsMode" then
+			local mode = LocalPlayer:GetAttribute("GraphicsMode") or "High"
+			graphicsButton.Text = "Graphics: " .. mode
+			currentModeIndex = table.find(graphicsModes, mode) or 3
+		end
+	end)
+	
 	-- Set initial graphics mode on menu open
 	setGraphicsMode(graphicsMode)
 
