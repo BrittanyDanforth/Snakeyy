@@ -441,13 +441,13 @@ local SnakeSkinsData = {
 	}
 }
 
--- MATCHING CHARACTERSETUP EXACTLY
+-- SMOOTH SLITHER.IO PREVIEW - NO LAG
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 15, -- Match CharacterSetup InitialLength
-	SEGMENT_SPACING = 2.2, -- EXACT same as CharacterSetup
-	HEAD_SIZE = Vector3.new(3, 3, 3), -- EXACT same as CharacterSetup
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- EXACT same as CharacterSetup
-	SIZE_REDUCTION = 1, -- No size reduction in CharacterSetup for preview
+	SEGMENT_COUNT = 20, -- More segments for smoother look
+	SEGMENT_SPACING = 1.5, -- Closer spacing for smooth appearance
+	HEAD_SIZE = Vector3.new(3, 3, 3),
+	SEGMENT_SIZE = Vector3.new(2.8, 2.8, 2.8), -- Slightly bigger for no gaps
+	SIZE_REDUCTION = 0.98, -- Slight taper for natural look
 	CAMERA_DISTANCE = 25,
 	CAMERA_HEIGHT = 8,
 	ROTATION_SPEED = 0.4,
@@ -455,7 +455,7 @@ local PREVIEW_CONFIG = {
 	SLITHER_AMPLITUDE = 3,
 	SLITHER_FREQUENCY = 1.5,
 	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.08, -- Tighter following
+	SEGMENT_DELAY = 0.08,
 	-- Snake positioning
 	SNAKE_RADIUS = 8,
 	SNAKE_CENTER_Z = -5,
@@ -586,8 +586,8 @@ function CharacterPreview.create(viewport)
 			colorIndex = colorIndex
 		})
 		
-		-- No size reduction - keep segments same size like CharacterSetup
-		-- currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
+		-- Slight size reduction for smooth taper
+		currentSize = currentSize * PREVIEW_CONFIG.SIZE_REDUCTION
 	end
 	
 	-- Animation variables
@@ -597,10 +597,16 @@ function CharacterPreview.create(viewport)
 	
 	-- Initialize segment positions in a straight line WITH PROPER SPACING
 	for i, seg in ipairs(segments) do
-		-- Exact same spacing as CharacterSetup
-		seg.part.Position = head.Position + Vector3.new(0, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
-		seg.part.Size = PREVIEW_CONFIG.SEGMENT_SIZE -- Force consistent size
-		segmentTrail[i] = {}
+		-- Start in a curved line for smooth appearance
+		local curve = math.sin((i / PREVIEW_CONFIG.SEGMENT_COUNT) * math.pi) * 2
+		seg.part.Position = head.Position + Vector3.new(curve, 0, -i * PREVIEW_CONFIG.SEGMENT_SPACING)
+		-- Size is already set during creation
+	end
+	
+	-- Initialize position history with starting positions
+	CharacterPreview.positionHistory = {}
+	for i = 1, 50 do
+		table.insert(CharacterPreview.positionHistory, head.Position)
 	end
 	
 	-- Main animation loop - PERFECT SLITHERING
@@ -660,14 +666,14 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 		
-		-- Update segments to follow the trail
+		-- Update segments to follow the trail SMOOTHLY
 		for i, seg in ipairs(segments) do
-			local historyIndex = math.floor(i * 4) -- MORE SPACING IN HISTORY - NO BUNCHING!
+			local historyIndex = math.floor(i * 2.8) -- Good spacing for smooth following
 			
 			if CharacterPreview.positionHistory[historyIndex] then
 				-- Follow the historical position
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
-				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.6) -- Faster lerp for responsiveness
+				seg.part.Position = seg.part.Position:Lerp(targetPos, 0.7) -- Smooth following
 			end
 		end
 	end)
