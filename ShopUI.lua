@@ -441,24 +441,24 @@ local SnakeSkinsData = {
 	}
 }
 
--- MATCHING CHARACTERSETUP EXACTLY
+-- EXTREME MASSIVE PREVIEW FIX FOR REAL GAME BUG
 local PREVIEW_CONFIG = {
-	SEGMENT_COUNT = 15, -- Match CharacterSetup InitialLength
-	SEGMENT_SPACING = 2.2, -- EXACT same as CharacterSetup
-	HEAD_SIZE = Vector3.new(3, 3, 3), -- EXACT same as CharacterSetup
-	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- EXACT same as CharacterSetup
-	SIZE_REDUCTION = 1, -- No size reduction in CharacterSetup for preview
-	CAMERA_DISTANCE = 25,
-	CAMERA_HEIGHT = 8,
-	ROTATION_SPEED = 0.4,
+	SEGMENT_COUNT = 80, -- TONS of segments for massive snake
+	SEGMENT_SPACING = 15, -- HUGE spacing between segments
+	HEAD_SIZE = Vector3.new(60, 60, 60), -- ABSOLUTELY GIGANTIC HEAD
+	SEGMENT_SIZE = Vector3.new(50, 50, 50), -- MASSIVE STARTING SEGMENT
+	SIZE_REDUCTION = 0.995, -- Very gradual size reduction
+	CAMERA_DISTANCE = 400, -- Camera SUPER far back
+	CAMERA_HEIGHT = 150, -- Very high camera
+	ROTATION_SPEED = 0.2,
 	-- Snake movement
-	SLITHER_AMPLITUDE = 3,
+	SLITHER_AMPLITUDE = 50, -- HUGE wave movements
 	SLITHER_FREQUENCY = 1.5,
-	SLITHER_SPEED = 1.2,
-	SEGMENT_DELAY = 0.08, -- Tighter following
+	SLITHER_SPEED = 0.6,
+	SEGMENT_DELAY = 0.04,
 	-- Snake positioning
-	SNAKE_RADIUS = 8,
-	SNAKE_CENTER_Z = -5,
+	SNAKE_RADIUS = 100, -- MASSIVE movement radius
+	SNAKE_CENTER_Z = 0,
 }
 
 function CharacterPreview.create(viewport)
@@ -466,18 +466,32 @@ function CharacterPreview.create(viewport)
 
 	-- Clear viewport efficiently
 	viewport:ClearAllChildren()
+	
+	-- CRITICAL FIX: Create WorldModel for proper rendering in real game
+	local worldModel = Instance.new("WorldModel")
+	worldModel.Parent = viewport
+	
+	-- Create massive reference part to establish scale
+	local scaleReference = Instance.new("Part")
+	scaleReference.Name = "ScaleReference"
+	scaleReference.Size = Vector3.new(1000, 1, 1000)
+	scaleReference.Position = Vector3.new(0, -100, 0)
+	scaleReference.Transparency = 1
+	scaleReference.Anchored = true
+	scaleReference.CanCollide = false
+	scaleReference.Parent = worldModel
 
-	-- Create camera with proper field of view
+	-- Create camera with EXTREME settings
 	local camera = Instance.new("Camera")
-	camera.FieldOfView = 50 -- Wider FOV to show snake better
+	camera.FieldOfView = 120 -- MAXIMUM FOV
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 
-	-- Create model
+	-- Create model INSIDE WorldModel
 	local model = Instance.new("Model")
 	model.Name = "SnakePreview"
-	model.Parent = viewport
+	model.Parent = worldModel
 
 	-- Get skin data
 	local skin = SnakeSkinsData["Default"] or {
@@ -511,26 +525,60 @@ function CharacterPreview.create(viewport)
 	head.Position = Vector3.new(0, 0, PREVIEW_CONFIG.SNAKE_CENTER_Z)
 	head.Parent = model
 
-	-- Head glow
-	local headGlow = Instance.new("PointLight")
-	headGlow.Brightness = skin.GlowIntensity * 1.5
-	headGlow.Range = skin.GlowRange * 1.5
-	headGlow.Color = skin.HeadColor
-	headGlow.Parent = head
+	-- EXTREME HEAD LIGHTING FOR VISIBILITY
+	local headGlow1 = Instance.new("PointLight")
+	headGlow1.Brightness = 10 -- MAXIMUM BRIGHTNESS
+	headGlow1.Range = 100 -- HUGE RANGE
+	headGlow1.Color = skin.HeadColor
+	headGlow1.Parent = head
+	
+	-- Add SpotLight for extra visibility
+	local headSpot = Instance.new("SpotLight")
+	headSpot.Brightness = 10
+	headSpot.Range = 150
+	headSpot.Angle = 180
+	headSpot.Face = Enum.NormalId.Front
+	headSpot.Color = skin.HeadColor
+	headSpot.Parent = head
+	
+	-- Add SurfaceLight on all faces
+	for _, face in pairs(Enum.NormalId:GetEnumItems()) do
+		local surfaceLight = Instance.new("SurfaceLight")
+		surfaceLight.Brightness = 5
+		surfaceLight.Range = 50
+		surfaceLight.Face = face
+		surfaceLight.Color = skin.HeadColor
+		surfaceLight.Parent = head
+	end
+	
+	-- Add SelectionBox for outline visibility
+	local headOutline = Instance.new("SelectionBox")
+	headOutline.Adornee = head
+	headOutline.Color3 = skin.HeadColor
+	headOutline.LineThickness = 0.2
+	headOutline.Transparency = 0.3
+	headOutline.Parent = head
 
-	-- Create eyes
+	-- Create MASSIVE eyes
 	local function createEye(xOffset)
 		local eye = Instance.new("Part")
-		eye.Size = Vector3.new(0.6, 0.6, 0.6)
+		eye.Size = Vector3.new(10, 10, 10) -- HUGE EYES
 		eye.Shape = Enum.PartType.Ball
 		eye.Material = Enum.Material.Neon
 		eye.Color = Color3.fromRGB(255, 255, 255)
 		eye.CanCollide = false
 		eye.Anchored = true
 		eye.Parent = model
+		
+		-- Eye glow for visibility
+		local eyeGlow = Instance.new("PointLight")
+		eyeGlow.Brightness = 8
+		eyeGlow.Range = 40
+		eyeGlow.Color = Color3.fromRGB(255, 255, 255)
+		eyeGlow.Parent = eye
 
 		local pupil = Instance.new("Part")
-		pupil.Size = Vector3.new(0.3, 0.3, 0.3)
+		pupil.Size = Vector3.new(4, 4, 4) -- Scaled up pupil
 		pupil.Shape = Enum.PartType.Ball
 		pupil.Material = Enum.Material.Neon
 		pupil.Color = Color3.fromRGB(0, 0, 0)
