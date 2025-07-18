@@ -38,8 +38,12 @@ end
 loadSnakeSkins()
 task.spawn(function()
 	for i = 1, 5 do
-		if SnakeSkins and next(SnakeSkins) then break end
+		if SnakeSkins and next(SnakeSkins) then 
+			print("✅ SnakeSkins loaded with", #getTableKeys(SnakeSkins), "skins")
+			break 
+		end
 		task.wait(2)
+		print("⏳ Retrying SnakeSkins load, attempt", i + 1)
 		loadSnakeSkins()
 	end
 end)
@@ -54,20 +58,20 @@ local mathFloor = math.floor
 local taskSpawn = task.spawn
 local taskWait = task.wait
 
--- ENHANCED: Base config with skin override capability
+-- ENHANCED: Base config with skin override capability (Classic green colors)
 local Config = {
 	HeadSize = Vector3new(3, 3, 3),
 	SegmentSize = Vector3new(2.5, 2.5, 2.5),
 	SegmentSpacing = 2.2,
 	InitialLength = 15,
 	MaxSegments = 2450,
-	HeadColor = Color3.fromRGB(180, 0, 255),
+	HeadColor = Color3.fromRGB(76, 217, 100), -- Classic green
 	BodyColors = {
-		Color3.fromRGB(180, 0, 255),
-		Color3.fromRGB(255, 0, 150),
-		Color3.fromRGB(255, 80, 200),
-		Color3.fromRGB(255, 0, 150),
-		Color3.fromRGB(180, 0, 255),
+		Color3.fromRGB(60, 180, 80),
+		Color3.fromRGB(80, 200, 100),
+		Color3.fromRGB(100, 220, 120),
+		Color3.fromRGB(80, 200, 100),
+		Color3.fromRGB(60, 180, 80),
 	},
 	FollowSpeed = 0.96,
 	UpdateRate = 30,
@@ -103,10 +107,11 @@ local function getActiveConfig(player)
 	if playerSkinName and playerSkinName ~= "" then
 		if not SnakeSkins then
 			warn("❌ SnakeSkins module not loaded!")
-		elseif not SnakeSkins[playerSkinName] then
-			warn("❌ Skin", playerSkinName, "not found in SnakeSkins module!")
-			warn("   Available skins:", table.concat(getTableKeys(SnakeSkins), ", "))
-		else
+			-- Try one more time
+			loadSnakeSkins()
+		end
+		
+		if SnakeSkins and SnakeSkins[playerSkinName] then
 			local skinData = SnakeSkins[playerSkinName]
 			for key, value in pairs(skinData) do
 				if key ~= "Price" and key ~= "Description" then
@@ -114,6 +119,21 @@ local function getActiveConfig(player)
 				end
 			end
 			print("✅ Applied skin config for", playerSkinName, "to player", player.Name)
+		else
+			warn("❌ Skin", playerSkinName, "not found in SnakeSkins module!")
+			if SnakeSkins then
+				warn("   Available skins:", table.concat(getTableKeys(SnakeSkins), ", "))
+			end
+			-- Try to apply Classic skin as fallback
+			if SnakeSkins and SnakeSkins["Classic"] then
+				print("⚠️ Applying Classic skin as fallback")
+				local classicData = SnakeSkins["Classic"]
+				for key, value in pairs(classicData) do
+					if key ~= "Price" and key ~= "Description" then
+						activeConfig[key] = value
+					end
+				end
+			end
 		end
 	end
 
@@ -401,6 +421,13 @@ end
 
 local function createUltraSmoothSnake(character)
 	print("🐍 Creating snake for character:", character.Name)
+	
+	-- ENSURE SnakeSkins is loaded before creating snake
+	if not SnakeSkins or not next(SnakeSkins) then
+		print("⏳ Waiting for SnakeSkins to load...")
+		loadSnakeSkins()
+		task.wait(0.5)
+	end
 	
 	local humanoid = character:FindFirstChild("Humanoid") or character:WaitForChild("Humanoid", 5)
 	local rootPart = character:FindFirstChild("HumanoidRootPart") or character:WaitForChild("HumanoidRootPart", 5)
