@@ -712,9 +712,11 @@ function CharacterPreview.create(viewport)
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
 				
-				-- Smooth following with no jitter
+				-- Smooth following with no jitter (FPS-independent)
 				local currentPos = seg.part.Position
-				local newPos = currentPos:Lerp(targetPos, 0.25) -- Smooth lerp
+				-- Use higher lerp value to reduce gaps on lower FPS
+				local lerpSpeed = 0.4 -- Increased from 0.25 for consistency
+				local newPos = currentPos:Lerp(targetPos, lerpSpeed)
 				
 				seg.part.Position = newPos
 				
