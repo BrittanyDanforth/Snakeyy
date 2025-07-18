@@ -691,32 +691,61 @@ function CharacterPreview.create(viewport)
 		-- Store head positions for trail
 		if not CharacterPreview.positionHistory then
 			CharacterPreview.positionHistory = {}
+			CharacterPreview.historyTimer = 0
 		end
 
-		-- Add current head position to history
-		table.insert(CharacterPreview.positionHistory, 1, head.Position)
+		-- Add positions at FIXED intervals (not every frame) for consistency
+		CharacterPreview.historyTimer = (CharacterPreview.historyTimer or 0) + dt
+		local historyInterval = 1/60 -- Record at 60Hz regardless of actual framerate
+		
+		if CharacterPreview.historyTimer >= historyInterval then
+			CharacterPreview.historyTimer = CharacterPreview.historyTimer - historyInterval
+			
+			-- Add current head position to history
+			table.insert(CharacterPreview.positionHistory, 1, head.Position)
 
-		-- Keep history limited to prevent memory issues
-		local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10 -- Much more history for bigger gaps
-		if #CharacterPreview.positionHistory > maxHistory then
-			table.remove(CharacterPreview.positionHistory)
+			-- Keep history limited to prevent memory issues
+			local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10
+			if #CharacterPreview.positionHistory > maxHistory then
+				table.remove(CharacterPreview.positionHistory)
+			end
 		end
 
 		-- SMOOTH SEGMENT FOLLOWING - THIS CONTROLS THE ACTUAL SPACING!
 		for i, seg in ipairs(segments) do
-			-- Each segment follows based on delay - THIS IS WHAT ACTUALLY CONTROLS GAPS
-			local delay = i * 6 -- MUCH bigger delay for real gaps in game!
+			-- Each segment follows based on delay
+			-- Lower delay = segments closer together (less gappy)
+			local delay = i * 3 -- Reduced from 6 for tighter following
 			local historyIndex = math.floor(delay)
 			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
 
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
 
-				-- Smooth following with no jitter (FPS-independent)
+				-- TRUE FRAMERATE-INDEPENDENT SMOOTH FOLLOWING
 				local currentPos = seg.part.Position
-				-- Use higher lerp value to reduce gaps on lower FPS
-				local lerpSpeed = 0.4 -- Increased from 0.25 for consistency
-				local newPos = currentPos:Lerp(targetPos, lerpSpeed)
+				
+				-- This formula makes it look IDENTICAL at 30, 60, or 240 FPS!
+				-- The key is using exponential decay based on delta time
+				local responsiveness = 8 -- How quickly segments follow (higher = faster)
+				local frameIndependentLerp = 1 - math.exp(-responsiveness * dt)
+				
+				-- Smooth movement that looks the same at ANY framerate
+				local newPos = currentPos:Lerp(targetPos, frameIndependentLerp)
+				
+				-- ANTI-GAP ENFORCEMENT - Keep segments together
+				if i > 1 then
+					local prevPos = segments[i-1].part.Position
+					local toNext = newPos - prevPos
+					local dist = toNext.Magnitude
+					
+					-- Force proper spacing like CharacterSetup
+					local idealSpacing = PREVIEW_CONFIG.SEGMENT_SPACING
+					if dist > idealSpacing * 1.2 then
+						-- Too far - pull closer
+						newPos = prevPos + toNext.Unit * idealSpacing
+					end
+				end
 
 				seg.part.Position = newPos
 
@@ -805,6 +834,7 @@ function CharacterPreview.destroy()
 	CharacterPreview.currentSegments = nil
 	CharacterPreview.rotationConnection = nil
 	CharacterPreview.positionHistory = nil
+	CharacterPreview.historyTimer = nil
 	CharacterPreview.lastHeadPos = nil
 	CharacterPreview.leftEye = nil
 	CharacterPreview.rightEye = nil
