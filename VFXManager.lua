@@ -198,6 +198,11 @@ local skinVFXConfigs = {
 			})
 		},
 		crystal = true -- Special crystalline effect
+	},
+	["Rainbow"] = {
+		headGlow = {color = Color3.fromRGB(255, 255, 255), brightness = 25, range = 35},
+		segmentGlow = {color = Color3.fromRGB(255, 255, 255), brightness = 15, range = 25},
+		rainbow = true -- Special rainbow effect with curved beams
 	}
 }
 
@@ -350,6 +355,125 @@ local function createElectricEffect(part)
 	return {attachment = electricAttachment, emitter = sparks}
 end
 
+-- Create AMAZING rainbow effect with curved light beams
+local function createRainbowEffect(part, isHead)
+	local effects = {}
+	
+	-- Create multiple beam attachments in a circle
+	local beamCount = isHead and 8 or 4
+	local radius = isHead and 2 or 1.5
+	
+	for i = 1, beamCount do
+		local angle = (i - 1) * (math.pi * 2 / beamCount)
+		
+		-- Create attachment on the part
+		local att1 = Instance.new("Attachment")
+		att1.Position = Vector3.new(
+			math.cos(angle) * radius,
+			0,
+			math.sin(angle) * radius
+		)
+		att1.Parent = part
+		
+		-- Create floating attachment above
+		local floatPart = Instance.new("Part")
+		floatPart.Name = "RainbowFloat"..i
+		floatPart.Size = Vector3.new(0.1, 0.1, 0.1)
+		floatPart.Transparency = 1
+		floatPart.CanCollide = false
+		floatPart.CanQuery = false
+		floatPart.CanTouch = false
+		floatPart.Anchored = true
+		floatPart.Parent = part.Parent
+		
+		local att2 = Instance.new("Attachment")
+		att2.Parent = floatPart
+		
+		-- Create the beam
+		local beam = Instance.new("Beam")
+		beam.Attachment0 = att1
+		beam.Attachment1 = att2
+		beam.Width0 = isHead and 2 or 1
+		beam.Width1 = 0.1
+		beam.CurveSize0 = 10
+		beam.CurveSize1 = -10
+		beam.FaceCamera = true
+		beam.Segments = 20
+		beam.LightEmission = 1
+		beam.LightInfluence = 0
+		beam.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.8),
+			NumberSequenceKeypoint.new(0.5, 0.3),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		
+		-- Rainbow color sequence
+		beam.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),      -- Red
+			ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 165, 0)), -- Orange
+			ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)), -- Yellow
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),    -- Green
+			ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 255)), -- Cyan
+			ColorSequenceKeypoint.new(0.83, Color3.fromRGB(130, 0, 255)), -- Purple
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))     -- Magenta
+		})
+		
+		beam.Parent = part
+		
+		table.insert(effects, {
+			beam = beam,
+			att1 = att1,
+			att2 = att2,
+			floatPart = floatPart,
+			baseAngle = angle,
+			index = i
+		})
+	end
+	
+	-- Add rainbow particle ring
+	if isHead then
+		local ringAttachment = Instance.new("Attachment")
+		ringAttachment.Parent = part
+		
+		local ringEmitter = Instance.new("ParticleEmitter")
+		ringEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		ringEmitter.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+			ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
+			ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
+			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
+			ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 0, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+		})
+		ringEmitter.Lifetime = NumberRange.new(2, 3)
+		ringEmitter.Rate = 100
+		ringEmitter.Speed = NumberRange.new(0, 0)
+		ringEmitter.VelocityInheritance = 0
+		ringEmitter.EmissionDirection = Enum.NormalId.Top
+		ringEmitter.SpreadAngle = Vector2.new(0, 0)
+		ringEmitter.LightEmission = 1
+		ringEmitter.LightInfluence = 0
+		ringEmitter.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.1, 2),
+			NumberSequenceKeypoint.new(0.5, 3),
+			NumberSequenceKeypoint.new(1, 0)
+		})
+		ringEmitter.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.2, 0),
+			NumberSequenceKeypoint.new(0.8, 0),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		ringEmitter.ZOffset = -2
+		ringEmitter.Parent = ringAttachment
+		
+		table.insert(effects, {emitter = ringEmitter, attachment = ringAttachment})
+	end
+	
+	return effects
+end
+
 -- Apply VFX to snake preview
 function VFXManager.ApplySnakePreviewVFX(model, skinName)
 	-- Remove any existing VFX first
@@ -387,6 +511,13 @@ function VFXManager.ApplySnakePreviewVFX(model, skinName)
 		if config.electricity then
 			local electricEffect = createElectricEffect(head)
 			table.insert(vfxData.specialEffects, electricEffect)
+		end
+		
+		if config.rainbow then
+			local rainbowEffects = createRainbowEffect(head, true)
+			for _, effect in ipairs(rainbowEffects) do
+				table.insert(vfxData.specialEffects, effect)
+			end
 		end
 	end
 	
@@ -438,13 +569,21 @@ function VFXManager.ApplySnakePreviewVFX(model, skinName)
 			local particleEffect = createParticleEmitter(segment, particleConfig)
 			table.insert(vfxData.particleEffects, particleEffect)
 		end
+		
+		-- Add rainbow beams to some segments
+		if config.rainbow and i % 5 == 1 then -- Every 5th segment
+			local rainbowEffects = createRainbowEffect(segment, false)
+			for _, effect in ipairs(rainbowEffects) do
+				table.insert(vfxData.specialEffects, effect)
+			end
+		end
 	end
 	
 	-- Store VFX data for later removal
 	activeVFX[model] = vfxData
 	
 	-- Start update loop for animated effects
-	if config.aura or config.electricity then
+	if config.aura or config.electricity or config.rainbow then
 		VFXManager.StartVFXAnimation(model, skinName)
 	end
 end
@@ -452,6 +591,8 @@ end
 -- Animate VFX effects
 function VFXManager.StartVFXAnimation(model, skinName)
 	local connection
+	local config = skinVFXConfigs[skinName]
+	
 	connection = RunService.Heartbeat:Connect(function()
 		if not model.Parent then
 			connection:Disconnect()
@@ -464,13 +605,46 @@ function VFXManager.StartVFXAnimation(model, skinName)
 			return
 		end
 		
+		local time = tick()
+		
 		-- Animate special effects
 		for _, effect in ipairs(vfxData.specialEffects) do
 			if effect.emitter then
-				-- Pulse effect
-				local time = tick()
+				-- Pulse effect for aura/electric
 				local pulse = math.sin(time * 2) * 0.5 + 0.5
 				effect.emitter.Rate = effect.emitter.Rate * (0.8 + pulse * 0.4)
+			elseif effect.beam and effect.floatPart then
+				-- Animate rainbow beams
+				local baseAngle = effect.baseAngle
+				local index = effect.index
+				
+				-- Make beams rotate and wave
+				local rotSpeed = 0.5
+				local waveHeight = 8
+				local waveSpeed = 2
+				local radius = 5
+				
+				local currentAngle = baseAngle + (time * rotSpeed)
+				local height = math.sin(time * waveSpeed + index) * waveHeight + 10
+				
+				-- Update float part position relative to the beam's parent part
+				if effect.beam.Parent then
+					local partPos = effect.beam.Parent.Position
+					effect.floatPart.CFrame = CFrame.new(
+						partPos.X + math.cos(currentAngle) * radius,
+						partPos.Y + height,
+						partPos.Z + math.sin(currentAngle) * radius
+					)
+				end
+				
+				-- Animate beam properties
+				local colorShift = (time * 0.5 + index * 0.2) % 1
+				effect.beam.CurveSize0 = math.sin(time * 3 + index) * 15 + 10
+				effect.beam.CurveSize1 = -math.sin(time * 3 + index + math.pi) * 15 - 10
+				
+				-- Pulse the width
+				local widthPulse = math.sin(time * 4 + index * 0.5) * 0.3 + 1
+				effect.beam.Width0 = (effect.beam.Parent == model:FindFirstChild("SnakeHead") and 2 or 1) * widthPulse
 			end
 		end
 	end)
@@ -514,6 +688,11 @@ function VFXManager.RemoveSnakeVFX(model)
 	-- Remove special effects
 	for _, effect in ipairs(vfxData.specialEffects or {}) do
 		if effect.attachment then effect.attachment:Destroy() end
+		if effect.beam then effect.beam:Destroy() end
+		if effect.att1 then effect.att1:Destroy() end
+		if effect.att2 then effect.att2:Destroy() end
+		if effect.floatPart then effect.floatPart:Destroy() end
+		if effect.emitter then effect.emitter:Destroy() end
 	end
 	
 	activeVFX[model] = nil
