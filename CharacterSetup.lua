@@ -547,9 +547,16 @@ local function createUltraSmoothSnake(character)
 	local maxHistorySize = mathMin(mathFloor(activeConfig.MaxSegments * 1.1) + 10, 2000)
 	local positionHistory = table.create(maxHistorySize)
 	local historyHead = 1
-	local initialHistoryPoint = { position = rootPart.Position, lookVector = rootPart.CFrame.LookVector }
+	
+	-- Initialize position history with proper trail positions to prevent spawn glitches
 	for i = 1, maxHistorySize do
-		positionHistory[i] = initialHistoryPoint
+		-- Create a gradual trail of positions behind the spawn point
+		local trailOffset = (i - 1) * activeConfig.SegmentSpacing * 0.05
+		local trailPos = rootPart.Position - rootPart.CFrame.LookVector * trailOffset
+		positionHistory[i] = { 
+			position = trailPos, 
+			lookVector = rootPart.CFrame.LookVector 
+		}
 	end
 
 	local function addToHistory(data)
