@@ -1,7 +1,7 @@
 
 -- SLITHER.IO ULTRA PREMIUM SHOP UI SYSTEM - COMPLETELY FIXED
 -- Modern, beautiful, and performance-optimized
--- Fully integrated with snakePreview and Slither.io Menu
+-- Fully integrated with CharacterPreview and Slither.io Menu
 -- FIXED: Using actual snake creation system for preview and skin application
 -- FIXED: Integrated with SelectSkin RemoteEvent and CharacterSetup system
 -- FIXED: All buttons working perfectly
@@ -44,20 +44,10 @@ pcall(function()
 	RespawnSnakeRemote = ReplicatedStorage:WaitForChild("RespawnSnake", 5)
 end)
 
--- INTEGRATED: Snake Preview System (no separate module)
-local snakePreview = {
-	model = nil,
-	head = nil,
-	segments = {},
-	connection = nil,
-	positionHistory = {},
-	historyTimer = 0,
-	vfxEffects = {},
-	vfxConnection = nil,
-	currentSkinName = "Default"
-}
+-- FIXED: Character Preview using YOUR EXACT CharacterSetup functions
+local CharacterPreview = {}
 
--- Snake creation functions for preview
+-- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
 	local headPart = Instance.new("Part")
 	headPart.Name = "SnakeHead"
@@ -458,7 +448,7 @@ local PREVIEW_CONFIG = {
 	HEAD_SIZE = Vector3.new(3, 3, 3), -- Normal head
 	SEGMENT_SIZE = Vector3.new(2.5, 2.5, 2.5), -- Normal segments
 	SIZE_REDUCTION = 0.98, -- Normal taper
-	CAMERA_DISTANCE = 25, -- Further back to see full snake
+	CAMERA_DISTANCE = 15, -- Further back to see full snake
 	CAMERA_HEIGHT = 20, -- Higher for better view
 	ROTATION_SPEED = 0.3,
 	-- Snake movement
@@ -471,7 +461,7 @@ local PREVIEW_CONFIG = {
 	SNAKE_CENTER_Z = 0,
 }
 
-function createSnakePreview(viewport)
+function CharacterPreview.create(viewport)
 	if not viewport then return end
 
 	-- Clear viewport efficiently
@@ -699,25 +689,25 @@ function createSnakePreview(viewport)
 
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
-		if not snakePreview.positionHistory then
-			snakePreview.positionHistory = {}
-			snakePreview.historyTimer = 0
+		if not CharacterPreview.positionHistory then
+			CharacterPreview.positionHistory = {}
+			CharacterPreview.historyTimer = 0
 		end
 
 		-- Add positions at FIXED intervals (not every frame) for consistency
-		snakePreview.historyTimer = (snakePreview.historyTimer or 0) + dt
+		CharacterPreview.historyTimer = (CharacterPreview.historyTimer or 0) + dt
 		local historyInterval = 1/60 -- Record at 60Hz regardless of actual framerate
 
-		if snakePreview.historyTimer >= historyInterval then
-			snakePreview.historyTimer = snakePreview.historyTimer - historyInterval
+		if CharacterPreview.historyTimer >= historyInterval then
+			CharacterPreview.historyTimer = CharacterPreview.historyTimer - historyInterval
 
 			-- Add current head position to history
-			table.insert(snakePreview.positionHistory, 1, head.Position)
+			table.insert(CharacterPreview.positionHistory, 1, head.Position)
 
 			-- Keep history limited to prevent memory issues
 			local maxHistory = PREVIEW_CONFIG.SEGMENT_COUNT * 10
-			if #snakePreview.positionHistory > maxHistory then
-				table.remove(snakePreview.positionHistory)
+			if #CharacterPreview.positionHistory > maxHistory then
+				table.remove(CharacterPreview.positionHistory)
 			end
 		end
 
@@ -727,10 +717,10 @@ function createSnakePreview(viewport)
 			-- Lower delay = segments closer together (less gappy)
 			local delay = i * 3 -- Reduced from 6 for tighter following
 			local historyIndex = math.floor(delay)
-			historyIndex = math.clamp(historyIndex, 1, #snakePreview.positionHistory)
+			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
 
-			if snakePreview.positionHistory[historyIndex] then
-				local targetPos = snakePreview.positionHistory[historyIndex]
+			if CharacterPreview.positionHistory[historyIndex] then
+				local targetPos = CharacterPreview.positionHistory[historyIndex]
 
 				-- TRUE FRAMERATE-INDEPENDENT SMOOTH FOLLOWING
 				local currentPos = seg.part.Position
@@ -757,48 +747,46 @@ function createSnakePreview(viewport)
 		end
 	end)
 
-	-- Store references in snakePreview
-	snakePreview.model = model
-	snakePreview.head = head
-	snakePreview.segments = segments
-	snakePreview.connection = rotationConnection
-	snakePreview.leftEye = leftEye
-	snakePreview.rightEye = rightEye
-	snakePreview.leftPupil = leftPupil
-	snakePreview.rightPupil = rightPupil
-	snakePreview.camera = camera
-	snakePreview.currentSkinName = "Default"
-	snakePreview.positionHistory = {}
-	snakePreview.historyTimer = 0
+	-- Store references
+	CharacterPreview.currentModel = model
+	CharacterPreview.currentHead = head
+	CharacterPreview.currentSegments = segments
+	CharacterPreview.rotationConnection = rotationConnection
+	CharacterPreview.leftEye = leftEye
+	CharacterPreview.rightEye = rightEye
+	CharacterPreview.leftPupil = leftPupil
+	CharacterPreview.rightPupil = rightPupil
+	CharacterPreview.currentCamera = camera
+	CharacterPreview.currentSkinName = "Default"
 
 	-- Compatibility properties
-	snakePreview.body = {}
+	CharacterPreview.currentBody = {}
 	for i, seg in ipairs(segments) do
-		snakePreview.body[i] = seg.part
+		CharacterPreview.currentBody[i] = seg.part
 	end
-	
+
 	-- Initialize VFX storage
-	snakePreview.vfxEffects = snakePreview.vfxEffects or {}
+	CharacterPreview.vfxEffects = CharacterPreview.vfxEffects or {}
 
 	return model
 end
 
--- Update preview with built-in VFX
-function updateSnakePreview(skinName)
-	if not snakePreview.model then return end
+-- OPTIMIZED: Update preview with built-in VFX
+function CharacterPreview.update(skinName)
+	if not CharacterPreview.currentModel then return end
 
-	snakePreview.currentSkinName = skinName
+	CharacterPreview.currentSkinName = skinName
 	local skin = SnakeSkinsData[skinName] or SnakeSkinsData["Default"]
 
 	-- Clean up existing VFX
-	clearPreviewVFX()
+	CharacterPreview.clearVFX()
 
 	-- Update head
-	if snakePreview.head then
-		snakePreview.head.Color = skin.HeadColor
-		snakePreview.head.Material = skin.HeadMaterial or Enum.Material.ForceField
+	if CharacterPreview.currentHead then
+		CharacterPreview.currentHead.Color = skin.HeadColor
+		CharacterPreview.currentHead.Material = skin.HeadMaterial or Enum.Material.ForceField
 
-		local light = snakePreview.head:FindFirstChild("PointLight")
+		local light = CharacterPreview.currentHead:FindFirstChild("PointLight")
 		if light then
 			light.Color = skin.HeadColor
 			light.Brightness = (skin.GlowIntensity or 2) * 1.5
@@ -806,8 +794,8 @@ function updateSnakePreview(skinName)
 	end
 
 	-- Update segments
-	if snakePreview.segments then
-		for i, seg in ipairs(snakePreview.segments) do
+	if CharacterPreview.currentSegments then
+		for i, seg in ipairs(CharacterPreview.currentSegments) do
 			local colorIndex = seg.colorIndex
 			if skin.BodyColors and skin.BodyColors[colorIndex] then
 				seg.part.Color = skin.BodyColors[colorIndex]
@@ -821,264 +809,142 @@ function updateSnakePreview(skinName)
 			end
 		end
 	end
-	
+
 	-- BUILT-IN VFX FOR SPECIAL SKINS
 	if skinName == "Rainbow" then
-		applyRainbowVFX()
-	elseif skinName == "Dragon Lord" or skinName == "Dragon" then
-		applyDragonVFX()
-	elseif skinName:find("VIP") then
-		applyVIPVFX()
-	elseif skinName == "Neon Viper" or skinName == "Cyber" then
-		applyNeonVFX()
+		CharacterPreview.applyRainbowVFX()
+	elseif skinName == "Dragon Lord" then
+		CharacterPreview.applyDragonVFX()
+	elseif skinName == "VIP" then
+		CharacterPreview.applyVIPVFX()
+	elseif skinName == "Neon Viper" then
+		CharacterPreview.applyNeonVFX()
 	end
 end
 
 -- Clear all VFX
-function clearPreviewVFX()
-	if snakePreview.vfxConnection then
-		snakePreview.vfxConnection:Disconnect()
-		snakePreview.vfxConnection = nil
+function CharacterPreview.clearVFX()
+	if CharacterPreview.vfxConnection then
+		CharacterPreview.vfxConnection:Disconnect()
+		CharacterPreview.vfxConnection = nil
 	end
-	
-	for _, effect in ipairs(snakePreview.vfxEffects or {}) do
+
+	for _, effect in ipairs(CharacterPreview.vfxEffects or {}) do
 		if effect then effect:Destroy() end
 	end
-	snakePreview.vfxEffects = {}
+	CharacterPreview.vfxEffects = {}
 end
 
--- RAINBOW VFX - PROPER CIRCULAR AURA WITH CURVES
-function applyRainbowVFX()
-	if not snakePreview.head or not snakePreview.model then return end
-	
-	local head = snakePreview.head
-	local model = snakePreview.model
-	
-	-- Configuration
-	local EMITTER_COUNT = 8 -- Number of emitters in circle
-	local RADIUS = 4 -- Circle radius
-	local PARTICLE_RATE = 50 -- Particles per second per emitter
-	
-	-- Create circular arrangement of particle emitters
-	snakePreview.rainbowEmitters = {}
-	
-	for i = 1, EMITTER_COUNT do
-		local angle = (i - 1) * (math.pi * 2 / EMITTER_COUNT)
-		
-		-- Create attachment for this position
-		local attachment = Instance.new("Attachment")
-		attachment.Name = "RainbowAttachment"..i
-		attachment.Position = Vector3.new(
-			math.cos(angle) * RADIUS,
-			0,
-			math.sin(angle) * RADIUS
-		)
-		attachment.Parent = head
-		
-		-- Create particle emitter
-		local emitter = Instance.new("ParticleEmitter")
-		emitter.Name = "RainbowEmitter"..i
-		emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		
-		-- Start with initial color (will be animated)
-		local hue = (i - 1) / EMITTER_COUNT
-		emitter.Color = ColorSequence.new(Color3.fromHSV(hue, 1, 1))
-		
-		-- Particle properties for good flow
-		emitter.Lifetime = NumberRange.new(1, 2)
-		emitter.Rate = PARTICLE_RATE
-		emitter.Speed = NumberRange.new(3, 6)
-		emitter.SpreadAngle = Vector2.new(30, 30) -- Controlled spread
-		emitter.VelocityInheritance = 0
-		
-		-- Emission direction - outward from center
-		emitter.EmissionDirection = Enum.NormalId.Front
-		
-		-- Size animation (small → big → small)
-		emitter.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.3),
-			NumberSequenceKeypoint.new(0.3, 1.5),
-			NumberSequenceKeypoint.new(0.7, 1.2),
-			NumberSequenceKeypoint.new(1, 0)
-		})
-		
-		-- Transparency fade
-		emitter.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.8),
-			NumberSequenceKeypoint.new(0.2, 0),
-			NumberSequenceKeypoint.new(0.8, 0.2),
-			NumberSequenceKeypoint.new(1, 1)
-		})
-		
-		emitter.LightEmission = 1
-		emitter.LightInfluence = 0
-		emitter.ZOffset = 1
-		emitter.Parent = attachment
-		
-		-- Store reference
-		snakePreview.rainbowEmitters[i] = {
-			attachment = attachment,
-			emitter = emitter,
-			baseHue = hue,
-			angle = angle
-		}
-		
-		table.insert(snakePreview.vfxEffects, attachment)
+-- RAINBOW VFX - Built directly into preview
+function CharacterPreview.applyRainbowVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+
+	local head = CharacterPreview.currentHead
+	local model = CharacterPreview.currentModel
+
+	-- Create rainbow orbs around head
+	local orbCount = 8
+	for i = 1, orbCount do
+		local angle = (i - 1) * (math.pi * 2 / orbCount)
+		local hue = (i - 1) / orbCount
+
+		-- Create glowing orb
+		local orb = Instance.new("Part")
+		orb.Name = "RainbowOrb"..i
+		orb.Size = Vector3.new(1.2, 1.2, 1.2)
+		orb.Shape = Enum.PartType.Ball
+		orb.Material = Enum.Material.Neon
+		orb.Color = Color3.fromHSV(hue, 1, 1)
+		orb.Transparency = 0.2
+		orb.CanCollide = false
+		orb.Anchored = true
+		orb.Parent = model
+
+		-- Add glow
+		local glow = Instance.new("PointLight")
+		glow.Color = orb.Color
+		glow.Brightness = 3
+		glow.Range = 8
+		glow.Parent = orb
+
+		table.insert(CharacterPreview.vfxEffects, orb)
 	end
-	
-	-- Create curved beams between emitters
-	for i = 1, EMITTER_COUNT do
-		local nextIndex = i % EMITTER_COUNT + 1
-		local currentAttachment = snakePreview.rainbowEmitters[i].attachment
-		local nextAttachment = snakePreview.rainbowEmitters[nextIndex].attachment
-		
-		local beam = Instance.new("Beam")
-		beam.Name = "RainbowBeam"..i
-		beam.Attachment0 = currentAttachment
-		beam.Attachment1 = nextAttachment
-		
-		-- Beam properties for nice curves
-		beam.CurveSize0 = 2 -- Curve at start
-		beam.CurveSize1 = -2 -- Curve at end
-		beam.FaceCamera = true
-		beam.Segments = 10
-		beam.Width0 = 0.5
-		beam.Width1 = 0.5
-		
-		-- Initial color
-		local hue = (i - 1) / EMITTER_COUNT
-		beam.Color = ColorSequence.new(Color3.fromHSV(hue, 1, 1))
-		
-		beam.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.6),
-			NumberSequenceKeypoint.new(0.5, 0.3),
-			NumberSequenceKeypoint.new(1, 0.6)
-		})
-		
-		beam.LightEmission = 1
-		beam.LightInfluence = 0
-		beam.Parent = head
-		
-		snakePreview.rainbowEmitters[i].beam = beam
-		table.insert(snakePreview.vfxEffects, beam)
-	end
-	
-	-- Add central glow
-	local centerGlow = Instance.new("PointLight")
-	centerGlow.Color = Color3.fromRGB(255, 255, 255)
-	centerGlow.Brightness = 2
-	centerGlow.Range = 15
-	centerGlow.Parent = head
-	table.insert(snakePreview.vfxEffects, centerGlow)
-	
-	-- Add aura particle effect
-	local auraAttachment = Instance.new("Attachment")
-	auraAttachment.Parent = head
-	
-	local aura = Instance.new("ParticleEmitter")
-	aura.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	aura.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
-	aura.Lifetime = NumberRange.new(2, 3)
-	aura.Rate = 20
-	aura.Speed = NumberRange.new(1, 2)
-	aura.SpreadAngle = Vector2.new(360, 360)
-	aura.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 2),
-		NumberSequenceKeypoint.new(0.5, 4),
-		NumberSequenceKeypoint.new(1, 6)
+
+	-- Add rainbow particles to head
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = head
+
+	local particles = Instance.new("ParticleEmitter")
+	particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	particles.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+		ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 165, 0)),
+		ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
+		ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 255)),
+		ColorSequenceKeypoint.new(0.83, Color3.fromRGB(130, 0, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
 	})
-	aura.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.9),
-		NumberSequenceKeypoint.new(0.5, 0.7),
-		NumberSequenceKeypoint.new(1, 1)
+	particles.Lifetime = NumberRange.new(1, 2)
+	particles.Rate = 100
+	particles.Speed = NumberRange.new(3, 6)
+	particles.SpreadAngle = Vector2.new(360, 360)
+	particles.LightEmission = 1
+	particles.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.5),
+		NumberSequenceKeypoint.new(0.5, 1.5),
+		NumberSequenceKeypoint.new(1, 0)
 	})
-	aura.LightEmission = 0.5
-	aura.ZOffset = -1
-	aura.Parent = auraAttachment
-	
-	table.insert(snakePreview.vfxEffects, auraAttachment)
-	
-	-- Start color cycling animation
-	local colorUpdateCounter = 0
-	snakePreview.vfxConnection = RunService.Heartbeat:Connect(function()
+	particles.Parent = attachment
+
+	table.insert(CharacterPreview.vfxEffects, attachment)
+
+	-- Animate the orbs
+	CharacterPreview.vfxConnection = RunService.Heartbeat:Connect(function()
 		local time = tick()
-		colorUpdateCounter = colorUpdateCounter + 1
-		
-		-- Update colors every 3 frames for performance
-		if colorUpdateCounter % 3 == 0 then
-			-- Cycle through rainbow using HSV
-			for i, data in ipairs(snakePreview.rainbowEmitters) do
-				-- Calculate current hue with offset for spiral effect
-				local hue = (data.baseHue + time * 0.2) % 1
-				local color = Color3.fromHSV(hue, 1, 1)
-				
-				-- Update emitter color
-				data.emitter.Color = ColorSequence.new(color)
-				
-				-- Update beam color with gradient
-				if data.beam then
-					local nextHue = ((data.baseHue + 1/EMITTER_COUNT) + time * 0.2) % 1
-					data.beam.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0, color),
-						ColorSequenceKeypoint.new(0.5, Color3.fromHSV((hue + nextHue) / 2, 1, 1)),
-						ColorSequenceKeypoint.new(1, Color3.fromHSV(nextHue, 1, 1))
-					})
-				end
-			end
-			
-			-- Update center glow to cycle through rainbow
-			local centerGlow = head:FindFirstChild("PointLight")
-			if centerGlow then
-				local hue = (time * 0.3) % 1
-				centerGlow.Color = Color3.fromHSV(hue, 1, 1)
-				centerGlow.Brightness = 2 + math.sin(time * 2) * 0.5
+		local orbs = {}
+
+		-- Find all orbs
+		for _, child in ipairs(model:GetChildren()) do
+			if child.Name:match("RainbowOrb") then
+				table.insert(orbs, child)
 			end
 		end
-		
-		-- Animate attachment positions for swirling effect
-		for i, data in ipairs(snakePreview.rainbowEmitters) do
-			local wobble = math.sin(time * 1.5 + i * 0.5) * 0.5
-			local lift = math.sin(time * 2 + i * 0.3) * 1
-			
-			data.attachment.Position = Vector3.new(
-				math.cos(data.angle) * (RADIUS + wobble),
-				lift,
-				math.sin(data.angle) * (RADIUS + wobble)
+
+		-- Animate each orb
+		for i, orb in ipairs(orbs) do
+			local angle = ((i - 1) / #orbs) * math.pi * 2 + time
+			local radius = 3 + math.sin(time * 2 + i) * 0.5
+			local height = math.sin(time * 3 + i * 0.5) * 1
+
+			orb.Position = head.Position + Vector3.new(
+				math.cos(angle) * radius,
+				height,
+				math.sin(angle) * radius
 			)
-			
-			-- Adjust emission direction for outward spiral
-			local angleOffset = time * 0.5
-			data.attachment.CFrame = CFrame.lookAt(
-				data.attachment.Position,
-				data.attachment.Position + Vector3.new(
-					math.cos(data.angle + angleOffset),
-					0.5,
-					math.sin(data.angle + angleOffset)
-				)
-			)
-		end
-		
-		-- Animate beam curves for organic feel
-		for i, data in ipairs(snakePreview.rainbowEmitters) do
-			if data.beam then
-				local curve = math.sin(time * 3 + i) * 3
-				data.beam.CurveSize0 = curve
-				data.beam.CurveSize1 = -curve
+
+			-- Cycle colors
+			local hue = (time * 0.3 + (i - 1) / #orbs) % 1
+			orb.Color = Color3.fromHSV(hue, 1, 1)
+
+			local glow = orb:FindFirstChild("PointLight")
+			if glow then
+				glow.Color = orb.Color
 			end
 		end
 	end)
 end
 
 -- Dragon Lord VFX
-function snakePreview.applyDragonVFX()
-	if not snakePreview.currentHead or not snakePreview.currentModel then return end
-	
-	local head = snakePreview.currentHead
-	
+function CharacterPreview.applyDragonVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+
+	local head = CharacterPreview.currentHead
+
 	-- Fire particles
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = head
-	
+
 	local fire = Instance.new("ParticleEmitter")
 	fire.Texture = "rbxasset://textures/particles/fire_main.dds"
 	fire.Color = ColorSequence.new(Color3.fromRGB(255, 170, 0), Color3.fromRGB(255, 85, 0))
@@ -1093,20 +959,20 @@ function snakePreview.applyDragonVFX()
 		NumberSequenceKeypoint.new(1, 0)
 	})
 	fire.Parent = attachment
-	
-	table.insert(snakePreview.vfxEffects, attachment)
+
+	table.insert(CharacterPreview.vfxEffects, attachment)
 end
 
 -- VIP VFX
-function snakePreview.applyVIPVFX()
-	if not snakePreview.currentHead or not snakePreview.currentModel then return end
-	
-	local head = snakePreview.currentHead
-	
+function CharacterPreview.applyVIPVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+
+	local head = CharacterPreview.currentHead
+
 	-- Golden sparkles
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = head
-	
+
 	local sparkles = Instance.new("ParticleEmitter")
 	sparkles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 	sparkles.Color = ColorSequence.new(Color3.fromRGB(255, 215, 0))
@@ -1117,20 +983,20 @@ function snakePreview.applyVIPVFX()
 	sparkles.LightEmission = 1
 	sparkles.Size = NumberSequence.new(1.5)
 	sparkles.Parent = attachment
-	
-	table.insert(snakePreview.vfxEffects, attachment)
+
+	table.insert(CharacterPreview.vfxEffects, attachment)
 end
 
 -- Neon Viper VFX
-function snakePreview.applyNeonVFX()
-	if not snakePreview.currentHead or not snakePreview.currentModel then return end
-	
-	local head = snakePreview.currentHead
-	
+function CharacterPreview.applyNeonVFX()
+	if not CharacterPreview.currentHead or not CharacterPreview.currentModel then return end
+
+	local head = CharacterPreview.currentHead
+
 	-- Electric particles
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = head
-	
+
 	local electric = Instance.new("ParticleEmitter")
 	electric.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 	electric.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255), Color3.fromRGB(255, 0, 255))
@@ -1141,69 +1007,69 @@ function snakePreview.applyNeonVFX()
 	electric.LightEmission = 1
 	electric.Size = NumberSequence.new(0.5)
 	electric.Parent = attachment
-	
-	table.insert(snakePreview.vfxEffects, attachment)
+
+	table.insert(CharacterPreview.vfxEffects, attachment)
 end
 
-function destroySnakePreview()
+function CharacterPreview.destroy()
 	-- Clean up VFX first
-	clearPreviewVFX()
-	
-	if snakePreview.rotationConnection then
-		snakePreview.rotationConnection:Disconnect()
+	CharacterPreview.clearVFX()
+
+	if CharacterPreview.rotationConnection then
+		CharacterPreview.rotationConnection:Disconnect()
 	end
 
-	if snakePreview.currentModel then
-		snakePreview.currentModel:Destroy()
+	if CharacterPreview.currentModel then
+		CharacterPreview.currentModel:Destroy()
 	end
 
-	snakePreview.currentModel = nil
-	snakePreview.currentHead = nil
-	snakePreview.currentSegments = nil
-	snakePreview.rotationConnection = nil
-	snakePreview.positionHistory = nil
-	snakePreview.historyTimer = nil
-	snakePreview.lastHeadPos = nil
-	snakePreview.leftEye = nil
-	snakePreview.rightEye = nil
-	snakePreview.leftPupil = nil
-	snakePreview.rightPupil = nil
-	snakePreview.vfxEffects = nil
-	snakePreview.vfxConnection = nil
+	CharacterPreview.currentModel = nil
+	CharacterPreview.currentHead = nil
+	CharacterPreview.currentSegments = nil
+	CharacterPreview.rotationConnection = nil
+	CharacterPreview.positionHistory = nil
+	CharacterPreview.historyTimer = nil
+	CharacterPreview.lastHeadPos = nil
+	CharacterPreview.leftEye = nil
+	CharacterPreview.rightEye = nil
+	CharacterPreview.leftPupil = nil
+	CharacterPreview.rightPupil = nil
+	CharacterPreview.vfxEffects = nil
+	CharacterPreview.vfxConnection = nil
 end
 
 -- Compatibility functions (already handled in create)
-function snakePreview.startRotation() end
-function snakePreview.startVFXAnimations() end
-function snakePreview.startBodyWave() end
+function CharacterPreview.startRotation() end
+function CharacterPreview.startVFXAnimations() end
+function CharacterPreview.startBodyWave() end
 
 -- Remove old duplicate functions below
 --[[
-		if snakePreview.currentModel and snakePreview.currentModel.Parent and snakePreview.currentModel.PrimaryPart then
+		if CharacterPreview.currentModel and CharacterPreview.currentModel.Parent and CharacterPreview.currentModel.PrimaryPart then
 			local time = tick() * 0.5
 			pcall(function()
 				-- Rotate the whole model
-				snakePreview.currentModel:SetPrimaryPartCFrame(
+				CharacterPreview.currentModel:SetPrimaryPartCFrame(
 					CFrame.new(0, math.sin(time) * 0.5, -10) * CFrame.Angles(0, time, 0)
 				)
 
 				-- Update eye positions to follow head
-				if snakePreview.currentHeadParts then
-					local head = snakePreview.currentHeadParts.head
+				if CharacterPreview.currentHeadParts then
+					local head = CharacterPreview.currentHeadParts.head
 					if head then
 						local headCF = head.CFrame
 
-						if snakePreview.currentHeadParts.leftEye then
-							snakePreview.currentHeadParts.leftEye.CFrame = headCF * CFrame.new(-0.6, 0.55, 0.8)
+						if CharacterPreview.currentHeadParts.leftEye then
+							CharacterPreview.currentHeadParts.leftEye.CFrame = headCF * CFrame.new(-0.6, 0.55, 0.8)
 						end
-						if snakePreview.currentHeadParts.rightEye then
-							snakePreview.currentHeadParts.rightEye.CFrame = headCF * CFrame.new(0.6, 0.55, 0.8)
+						if CharacterPreview.currentHeadParts.rightEye then
+							CharacterPreview.currentHeadParts.rightEye.CFrame = headCF * CFrame.new(0.6, 0.55, 0.8)
 						end
-						if snakePreview.currentHeadParts.leftPupil and snakePreview.currentHeadParts.leftEye then
-							snakePreview.currentHeadParts.leftPupil.CFrame = snakePreview.currentHeadParts.leftEye.CFrame * CFrame.new(0, 0, -0.2)
+						if CharacterPreview.currentHeadParts.leftPupil and CharacterPreview.currentHeadParts.leftEye then
+							CharacterPreview.currentHeadParts.leftPupil.CFrame = CharacterPreview.currentHeadParts.leftEye.CFrame * CFrame.new(0, 0, -0.2)
 						end
-						if snakePreview.currentHeadParts.rightPupil and snakePreview.currentHeadParts.rightEye then
-							snakePreview.currentHeadParts.rightPupil.CFrame = snakePreview.currentHeadParts.rightEye.CFrame * CFrame.new(0, 0, -0.2)
+						if CharacterPreview.currentHeadParts.rightPupil and CharacterPreview.currentHeadParts.rightEye then
+							CharacterPreview.currentHeadParts.rightPupil.CFrame = CharacterPreview.currentHeadParts.rightEye.CFrame * CFrame.new(0, 0, -0.2)
 						end
 					end
 				end
@@ -1215,21 +1081,21 @@ function snakePreview.startBodyWave() end
 end
 
 -- AMAZING VFX ANIMATIONS
-function snakePreview.startVFXAnimations()
-	if not snakePreview.orbitalParticles then return end
+function CharacterPreview.startVFXAnimations()
+	if not CharacterPreview.orbitalParticles then return end
 
 	local vfxConnection
 	vfxConnection = RunService.Heartbeat:Connect(function()
 		local time = tick()
 
 		-- Animate orbital particles
-		if snakePreview.currentHead and snakePreview.orbitalParticles then
-			for i, orb in ipairs(snakePreview.orbitalParticles) do
+		if CharacterPreview.currentHead and CharacterPreview.orbitalParticles then
+			for i, orb in ipairs(CharacterPreview.orbitalParticles) do
 				if orb and orb.Parent then
-					local angle = (time * 2) + ((i-1) * math.pi * 2 / #snakePreview.orbitalParticles)
+					local angle = (time * 2) + ((i-1) * math.pi * 2 / #CharacterPreview.orbitalParticles)
 					local radius = 4 + math.sin(time * 3 + i) * 0.5
 					local height = math.sin(time * 4 + i * 0.5) * 1
-					local headPos = snakePreview.currentHead.Position
+					local headPos = CharacterPreview.currentHead.Position
 
 					orb.Position = headPos + Vector3.new(
 						math.cos(angle) * radius,
@@ -1242,7 +1108,7 @@ function snakePreview.startVFXAnimations()
 					orb.Size = Vector3.new(0.5, 0.5, 0.5) * scale
 
 					-- Color shift for VIP skins
-					if snakePreview.currentSkinName and snakePreview.currentSkinName:match("VIP") then
+					if CharacterPreview.currentSkinName and CharacterPreview.currentSkinName:match("VIP") then
 						orb.Color = Color3.fromHSV((time * 0.5 + i/6) % 1, 1, 1)
 						local light = orb:FindFirstChild("PointLight")
 						if light then
@@ -1256,10 +1122,10 @@ function snakePreview.startVFXAnimations()
 		end
 
 		-- Animate energy rings
-		if snakePreview.currentHead and snakePreview.energyRings then
-			for i, ring in ipairs(snakePreview.energyRings) do
+		if CharacterPreview.currentHead and CharacterPreview.energyRings then
+			for i, ring in ipairs(CharacterPreview.energyRings) do
 				if ring and ring.Parent then
-					local headPos = snakePreview.currentHead.Position
+					local headPos = CharacterPreview.currentHead.Position
 					ring.Position = headPos
 					ring.CFrame = CFrame.new(headPos) * CFrame.Angles(
 						math.rad(90),
@@ -1278,19 +1144,19 @@ function snakePreview.startVFXAnimations()
 		end
 	end)
 
-	snakePreview.vfxConnection = vfxConnection
+	CharacterPreview.vfxConnection = vfxConnection
 end
 
 -- SMOOTH SNAKE BODY WAVE
-function snakePreview.startBodyWave()
-	if not snakePreview.currentBody then return end
+function CharacterPreview.startBodyWave()
+	if not CharacterPreview.currentBody then return end
 
 	local waveConnection
 	waveConnection = RunService.Heartbeat:Connect(function()
 		local time = tick()
 
-		if snakePreview.currentBody then
-			for i, segment in ipairs(snakePreview.currentBody) do
+		if CharacterPreview.currentBody then
+			for i, segment in ipairs(CharacterPreview.currentBody) do
 				if segment and segment.Parent then
 					local offset = math.sin(time * 3 - i * 0.5) * 0.5
 					local angle = (i / 8) * math.pi * 0.5
@@ -1302,7 +1168,7 @@ function snakePreview.startBodyWave()
 					segment.Position = basePos + Vector3.new(offset, 0, 0)
 
 					-- Subtle size pulse for premium skins
-					if snakePreview.currentSkinName and ShopUI.SKIN_DATA and ShopUI.SKIN_DATA[snakePreview.currentSkinName] and ShopUI.SKIN_DATA[snakePreview.currentSkinName].robux then
+					if CharacterPreview.currentSkinName and ShopUI.SKIN_DATA and ShopUI.SKIN_DATA[CharacterPreview.currentSkinName] and ShopUI.SKIN_DATA[CharacterPreview.currentSkinName].robux then
 						local scale = 1 + math.sin(time * 4 - i * 0.3) * 0.05
 						segment.Size = Vector3.new(2.5, 2.5, 2.5) * scale
 					end
@@ -1313,7 +1179,7 @@ function snakePreview.startBodyWave()
 		end
 	end)
 
-	snakePreview.waveConnection = waveConnection
+	CharacterPreview.waveConnection = waveConnection
 end
 --]] -- END OF OLD FUNCTIONS
 
@@ -1448,7 +1314,7 @@ ShopUI.SKIN_DATA = {
 	["VIP Inferno"] = {price = 0, robux = 399, tag = "VIP"},
 	["VIP Nebula"] = {price = 0, robux = 599, tag = "VIP"},
 	["VIP Crystal"] = {price = 0, robux = 699, tag = "VIP"},
-	
+
 	-- NEW ADDITIONS
 	["Golden"] = {price = 200, robux = nil, tag = "Shiny"},
 	["Phoenix"] = {price = 8000, robux = 150, tag = "Legendary"},
@@ -2230,7 +2096,7 @@ local function createCategoryButton(category, index)
 
 		uiState.currentCategory = index
 		ShopUI.updateSkinGrid()
-		
+
 		-- Hide/show preview based on category
 		local isGamepass = SKIN_CATEGORIES[index].name == "Gamepasses"
 		if isGamepass then
@@ -2397,16 +2263,16 @@ local function createGamepassCard(passName, index)
 	-- Click to purchase
 	card.MouseButton1Click:Connect(function()
 		playSound("SELECT")
-		
+
 		if passData.id then
 			-- Prompt gamepass purchase
 			local MarketplaceService = game:GetService("MarketplaceService")
 			local player = game:GetService("Players").LocalPlayer
-			
+
 			local success, err = pcall(function()
 				MarketplaceService:PromptGamePassPurchase(player, passData.id)
 			end)
-			
+
 			if not success then
 				warn("Failed to prompt gamepass purchase:", err)
 			end
@@ -2414,7 +2280,7 @@ local function createGamepassCard(passName, index)
 			-- Show message that gamepass ID needs to be configured
 			warn("⚠️ Gamepass ID not configured for:", passName)
 			warn("Add the gamepass ID to GAMEPASS_DATA['"..passName.."'].id")
-			
+
 			-- Create a temporary notification
 			local notification = Instance.new("TextLabel")
 			notification.Size = UDim2.new(0.3, 0, 0.1, 0)
@@ -2423,7 +2289,7 @@ local function createGamepassCard(passName, index)
 			notification.Text = "Gamepass ID not configured!"
 			notification.TextScaled = true
 			notification.Parent = ShopUI.uiElements.screenGui
-			
+
 			task.wait(2)
 			notification:Destroy()
 		end
@@ -2693,14 +2559,14 @@ end
 function ShopUI.updatePreview()
 	if uiState.selectedSkin and ShopUI.uiElements and ShopUI.uiElements.viewport then
 		print("🔄 Updating preview for:", uiState.selectedSkin)
-		updateSnakePreview(uiState.selectedSkin)
+		CharacterPreview.update(uiState.selectedSkin)
 	end
 end
 
 -- Update preview for selected skin (with full UI update)
 function ShopUI.updatePreviewForSkin(skinName)
 	if not skinName then return end
-	
+
 	-- Wait for UI to be ready
 	if not ShopUI.uiElements or not ShopUI.playerData then
 		warn("Shop not fully initialized, waiting...")
@@ -2710,12 +2576,12 @@ function ShopUI.updatePreviewForSkin(skinName)
 			return
 		end
 	end
-	
+
 	uiState.selectedSkin = skinName
-	
+
 	-- Update preview
 	ShopUI.updatePreview()
-	
+
 	-- Update info with stability checks
 	ShopUI.updateInfo()
 end
@@ -2727,7 +2593,7 @@ function ShopUI.updateInfo()
 		warn("UI elements not ready")
 		return 
 	end
-	
+
 	if not ShopUI.playerData then
 		warn("Player data not loaded")
 		return
@@ -2738,7 +2604,7 @@ function ShopUI.updateInfo()
 		warn("No skin data for:", uiState.selectedSkin)
 		return 
 	end
-	
+
 	-- Ensure all required UI elements exist
 	local required = {"skinName", "skinTag", "priceLabel", "purchaseBtn", "robuxBtn", "applyBtn", "favoriteBtn"}
 	for _, elem in ipairs(required) do
@@ -3044,7 +2910,7 @@ function ShopUI.init()
 
 	-- Initialize preview with PROPER snake creation
 	print("🎬 Creating preview with proper snake system...")
-	createSnakePreview(ShopUI.uiElements.viewport)
+	CharacterPreview.create(ShopUI.uiElements.viewport)
 	uiState.previewViewport = ShopUI.uiElements.viewport
 
 	-- Connect buttons
@@ -3096,10 +2962,10 @@ function ShopUI.init()
 	task.spawn(function()
 		-- Small delay to ensure everything is loaded
 		task.wait(0.1)
-		
+
 		-- Update grid
 		ShopUI.updateSkinGrid()
-		
+
 		-- Check if we're starting on gamepasses and hide preview if so
 		local isGamepass = SKIN_CATEGORIES[uiState.currentCategory].name == "Gamepasses"
 		if isGamepass then
@@ -3185,7 +3051,7 @@ function ShopUI.close()
 			ShopUI.uiElements.blur:Destroy()
 		end
 
-		destroySnakePreview()
+		CharacterPreview.destroy(uiState.previewViewport)
 		ShopUI.uiElements.screenGui:Destroy()
 
 		-- FIXED: Reset state properly
