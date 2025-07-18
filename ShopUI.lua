@@ -616,11 +616,21 @@ function CharacterPreview.create(viewport)
 		local waveX = math.sin(slitherAngle * 3) * 2
 		head.Position = Vector3.new(headX + waveX, 0, headZ)
 		
+		-- ROTATE HEAD TO FACE MOVEMENT DIRECTION
+		-- Calculate where head will be next to get direction
+		local nextAngle = slitherAngle + 0.1
+		local nextX = math.sin(nextAngle) * radius + math.sin(nextAngle * 3) * 2
+		local nextZ = math.cos(nextAngle) * radius - 10
+		
+		-- Make head face the direction it's moving
+		local lookAtPos = Vector3.new(nextX, 0, nextZ)
+		head.CFrame = CFrame.lookAt(head.Position, lookAtPos)
+		
 		-- Eyes are simply positioned relative to head - they automatically face forward
-		leftEye.Position = head.Position + Vector3.new(-0.6, 0.5, 0.8)
-		rightEye.Position = head.Position + Vector3.new(0.6, 0.5, 0.8)
-		leftPupil.Position = leftEye.Position + Vector3.new(0, 0, -0.2)
-		rightPupil.Position = rightEye.Position + Vector3.new(0, 0, -0.2)
+		leftEye.CFrame = head.CFrame * CFrame.new(-0.6, 0.5, -0.8)
+		rightEye.CFrame = head.CFrame * CFrame.new(0.6, 0.5, -0.8)
+		leftPupil.CFrame = leftEye.CFrame * CFrame.new(0, 0, -0.2)
+		rightPupil.CFrame = rightEye.CFrame * CFrame.new(0, 0, -0.2)
 		
 		-- SMOOTH FOLLOWING ANIMATION
 		-- Store head positions for trail
