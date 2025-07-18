@@ -779,29 +779,47 @@ local function createUltraSmoothSnake(character)
 					-- CONSISTENT DELAY - Make segments follow closer together
 					-- Special handling for first segment to prevent detachment
 					
-					-- POSITION CALCULATION
-					local delay = (i == 1) and 1 or mathFloor(i * 0.9)
-					local targetData = getFromHistory(delay)
-					if targetData then
-						local segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05)
-						local currentSegmentPos = segment.Position
-						
-						-- HARD LIMIT ON STRETCHING WHEN BOOSTING OR EATING
-						local isGrowing = tick() < growthResetTime and recentGrowth > 0
-						if (isBoosting or isGrowing) and i > 1 then
+					-- FUCK THE HISTORY SYSTEM WHEN BOOSTING - DIRECT FOLLOWING
+					local segmentPos
+					local currentSegmentPos = segment.Position
+					
+					if isBoosting then
+						-- When boosting, segments directly follow the previous segment
+						if i == 1 then
+							-- First segment follows head directly
+							segmentPos = headPos - lookVector * activeConfig.SegmentSpacing
+						else
+							-- Other segments follow previous segment
 							local prevSegment = segments[i - 1]
 							if prevSegment and prevSegment.Parent then
-								local distToPrev = (segmentPos - prevSegment.Position).Magnitude
-								-- Even tighter when eating orbs
-								local maxAllowedDist = isGrowing and activeConfig.SegmentSpacing * 1.2 or activeConfig.SegmentSpacing * 1.5
-								
-								-- If target position would stretch too far, clamp it
-								if distToPrev > maxAllowedDist then
-									local dirToPrev = (prevSegment.Position - segmentPos).Unit
-									segmentPos = prevSegment.Position - dirToPrev * activeConfig.SegmentSpacing
+								local prevPos = prevSegment.Position
+								-- Calculate direction from previous segment
+								local dir
+								if i == 2 then
+									dir = (prevPos - headPos).Unit
+								else
+									local prevPrevSegment = segments[i - 2]
+									if prevPrevSegment and prevPrevSegment.Parent then
+										dir = (prevPos - prevPrevSegment.Position).Unit
+									else
+										dir = (prevPos - headPos).Unit
+									end
 								end
+								segmentPos = prevPos + dir * activeConfig.SegmentSpacing
+							else
+								segmentPos = currentSegmentPos -- Stay in place if no previous
 							end
 						end
+					else
+						-- Normal movement - use history
+						local delay = (i == 1) and 1 or mathFloor(i * 0.9)
+						local targetData = getFromHistory(delay)
+						if targetData then
+							segmentPos = targetData.position - targetData.lookVector * (activeConfig.SegmentSpacing * 0.05)
+						else
+							segmentPos = currentSegmentPos
+						end
+					end
 						
 						-- IMPROVED ANTI-GAP - Works for both normal and boost
 						local dynamicFollowSpeed = followSpeed
