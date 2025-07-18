@@ -12,6 +12,15 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Helper function to get table keys (moved up to be available)
+local function getTableKeys(tbl)
+	local keys = {}
+	for k, _ in pairs(tbl or {}) do
+		table.insert(keys, tostring(k))
+	end
+	return keys
+end
+
 -- ENHANCED: Direct SnakeSkins loading from server module
 local SnakeSkins = nil
 local function loadSnakeSkins()
@@ -22,8 +31,13 @@ local function loadSnakeSkins()
 	
 	if success and result then
 		SnakeSkins = result
-		print("✅ SnakeSkins loaded directly from server module")
+		print("✅ SnakeSkins loaded directly from server module with", #getTableKeys(result), "skins")
+		for name, _ in pairs(result) do
+			print("  - Found skin:", name)
+		end
 		return
+	else
+		warn("❌ Failed to load SnakeSkinsData:", tostring(result))
 	end
 	
 	-- Fallback to ReplicatedStorage
@@ -93,15 +107,6 @@ local Config = {
 	GlowRange = 4,
 }
 
--- Helper function to get table keys
-local function getTableKeys(tbl)
-	local keys = {}
-	for k, _ in pairs(tbl or {}) do
-		table.insert(keys, tostring(k))
-	end
-	return keys
-end
-
 -- ENHANCED: Get active config with skin overrides
 local function getActiveConfig(player)
 	local activeConfig = {}
@@ -134,6 +139,8 @@ local function getActiveConfig(player)
 			end
 			print("✅ Applied skin config for", playerSkinName, "to player", player.Name)
 			print("   Final HeadColor:", tostring(activeConfig.HeadColor))
+			print("   Final BodyColors count:", #activeConfig.BodyColors)
+			print("   First body color:", tostring(activeConfig.BodyColors[1]))
 		else
 			warn("❌ Skin", playerSkinName, "not found in SnakeSkins module!")
 			if SnakeSkins then
