@@ -533,18 +533,8 @@ local function createUltraSmoothSnake(character)
 	local headParts = createVisualHead(rootPart, activeConfig, snakeModel)
 
 	local segments = {}
-	local startPos = rootPart.Position
-	
-	-- Create all segments at the HEAD position first (no flash)
-	for i = 1, activeConfig.InitialLength do
-		local colorIndex = ((i - 1) % #activeConfig.BodyColors) + 1
-		local color = activeConfig.BodyColors[colorIndex]
-		-- All segments start at head position
-		local segment = createSegment(i, rootPart.Position, color, activeConfig, snakeModel)
-		segments[i] = segment
-	end
-
-	local currentLength = activeConfig.InitialLength
+	local currentLength = 0 -- Start with 0 segments
+	local targetLength = activeConfig.InitialLength
 	local maxHistorySize = mathMin(mathFloor(activeConfig.MaxSegments * 1.1) + 10, 2000)
 	local positionHistory = table.create(maxHistorySize)
 	local historyHead = 1
@@ -728,6 +718,28 @@ local function createUltraSmoothSnake(character)
 
 		local currentTime = tick()
 
+		-- GRADUAL SEGMENT CREATION TO PREVENT FLASH AND LAG
+		if currentLength < targetLength and framesSinceSpawn > 5 then
+			-- Add 3 segments per frame until we reach target
+			local segmentsToAdd = math.min(3, targetLength - currentLength)
+			for j = 1, segmentsToAdd do
+				currentLength = currentLength + 1
+				local colorIndex = ((currentLength - 1) % #activeConfig.BodyColors) + 1
+				local color = activeConfig.BodyColors[colorIndex]
+				-- Create segment at head position
+				local segment = createSegment(currentLength, headPos, color, activeConfig, snakeModel)
+				segments[currentLength] = segment
+			end
+			
+			-- Update length display
+			if leaderstats then
+				local lengthValue = leaderstats:FindFirstChild("Length")
+				if lengthValue then
+					lengthValue.Value = currentLength
+				end
+			end
+		end
+		
 		-- POSITION HISTORY BASED MOVEMENT WITH ANTI-GAP FOR BOOSTING
 		framesSinceSpawn = framesSinceSpawn + 1
 		
