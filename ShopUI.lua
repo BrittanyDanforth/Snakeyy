@@ -732,20 +732,6 @@ function CharacterPreview.create(viewport)
 				
 				-- Smooth movement that looks the same at ANY framerate
 				local newPos = currentPos:Lerp(targetPos, frameIndependentLerp)
-				
-				-- ANTI-GAP ENFORCEMENT - Keep segments together
-				if i > 1 then
-					local prevPos = segments[i-1].part.Position
-					local toNext = newPos - prevPos
-					local dist = toNext.Magnitude
-					
-					-- Force proper spacing like CharacterSetup
-					local idealSpacing = PREVIEW_CONFIG.SEGMENT_SPACING
-					if dist > idealSpacing * 1.2 then
-						-- Too far - pull closer
-						newPos = prevPos + toNext.Unit * idealSpacing
-					end
-				end
 
 				seg.part.Position = newPos
 
