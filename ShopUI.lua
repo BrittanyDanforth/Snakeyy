@@ -702,23 +702,33 @@ function CharacterPreview.create(viewport)
 			table.remove(CharacterPreview.positionHistory)
 		end
 
-		-- SMOOTH SEGMENT FOLLOWING - THIS CONTROLS THE ACTUAL SPACING!
+		-- SMOOTH SEGMENT FOLLOWING - FIXED FOR ALL FPS
 		for i, seg in ipairs(segments) do
-			-- Each segment follows based on delay - THIS IS WHAT ACTUALLY CONTROLS GAPS
-			local delay = i * 6 -- MUCH bigger delay for real gaps in game!
+			-- Each segment follows based on delay
+			local delay = i * 6
 			local historyIndex = math.floor(delay)
 			historyIndex = math.clamp(historyIndex, 1, #CharacterPreview.positionHistory)
 
 			if CharacterPreview.positionHistory[historyIndex] then
 				local targetPos = CharacterPreview.positionHistory[historyIndex]
 				
-				-- Smooth following with no jitter (FPS-independent)
+				-- FPS-INDEPENDENT SMOOTH FOLLOWING
 				local currentPos = seg.part.Position
-				-- Use higher lerp value to reduce gaps on lower FPS
-				local lerpSpeed = 0.4 -- Increased from 0.25 for consistency
-				local newPos = currentPos:Lerp(targetPos, lerpSpeed)
 				
-				seg.part.Position = newPos
+				-- Calculate distance to target
+				local distance = (targetPos - currentPos).Magnitude
+				
+				-- If we're far away, just snap closer (prevents gaps)
+				if distance > PREVIEW_CONFIG.SEGMENT_SPACING * 2 then
+					-- Snap to a position closer to target
+					local direction = (targetPos - currentPos).Unit
+					seg.part.Position = targetPos - direction * PREVIEW_CONFIG.SEGMENT_SPACING
+				else
+					-- Smooth movement when close
+					-- This formula works the same regardless of FPS
+					local smoothFactor = math.min(1, 15 * dt) -- dt makes it frame-independent
+					seg.part.Position = currentPos:Lerp(targetPos, smoothFactor)
+				end
 				
 				-- Orient segment to face previous segment
 				if i > 1 then
