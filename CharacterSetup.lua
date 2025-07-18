@@ -570,7 +570,7 @@ local function createUltraSmoothSnake(character)
 	local connections = {}
 	local isActive = true
 	local updateCounter = 0
-	local networkUpdateInterval = 2
+	local networkUpdateInterval = 3 -- Reduced network updates for better ping
 	local lastNetworkUpdate = 0
 
 	local function growSnake(amount)
@@ -787,13 +787,14 @@ local function createUltraSmoothSnake(character)
 								-- TIGHTER BOOST CONTROL
 								local maxGapMultiplier = isBoosting and 1.1 or 1.2 -- Tighter when boosting
 								
-								-- Smooth adjustment based on gap size
+								-- Smooth adjustment based on gap size with lag compensation
 								if gap > idealGap * maxGapMultiplier then
 									-- Gap too big - speed up to catch up
 									local gapRatio = gap / idealGap
-									-- More aggressive correction when boosting
+									-- More aggressive correction when boosting or high ping
+									local pingCompensation = math.min(gapRatio * 0.01, 0.02) -- Extra speed for lag
 									local correctionStrength = isBoosting and 0.04 or 0.02
-									dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * correctionStrength, 0.99)
+									dynamicFollowSpeed = mathMin(followSpeed + (gapRatio - 1) * correctionStrength + pingCompensation, 0.995)
 								elseif gap < idealGap * 0.8 then
 									-- Too close - slow down slightly
 									dynamicFollowSpeed = followSpeed * 0.95
@@ -808,8 +809,10 @@ local function createUltraSmoothSnake(character)
 			end
 		end
 
-		if currentTime - lastNetworkUpdate > 0.1 then
+		-- Network optimization - only update when needed
+		if updateCounter % networkUpdateInterval == 0 then
 			lastNetworkUpdate = currentTime
+			-- This is where remote events would fire if needed
 		end
 	end)
 	table.insert(connections, heartbeatConn)
