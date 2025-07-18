@@ -510,10 +510,10 @@ function CharacterPreview.create(viewport)
 		GlowRange = 6,
 	}
 
-	-- Create head
+	-- Create head using ACTUAL skin size
 	local head = Instance.new("Part")
 	head.Name = "Head"
-	head.Size = PREVIEW_CONFIG.HEAD_SIZE
+	head.Size = skin.HeadSize or PREVIEW_CONFIG.HEAD_SIZE -- Use skin's head size!
 	head.Shape = Enum.PartType.Ball
 	head.Material = skin.HeadMaterial
 	head.Color = skin.HeadColor
