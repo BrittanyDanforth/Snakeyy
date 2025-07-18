@@ -1880,29 +1880,51 @@ local function createCategoryButton(category, index)
 		
 		-- Hide/show preview based on category
 		local isGamepass = SKIN_CATEGORIES[index].name == "Gamepasses"
-		if ShopUI.uiElements.previewContainer then
-			ShopUI.uiElements.previewContainer.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.skinName then
-			ShopUI.uiElements.skinName.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.skinTag then
-			ShopUI.uiElements.skinTag.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.priceLabel then
-			ShopUI.uiElements.priceLabel.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.applyBtn then
-			ShopUI.uiElements.applyBtn.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.purchaseBtn then
-			ShopUI.uiElements.purchaseBtn.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.robuxBtn then
-			ShopUI.uiElements.robuxBtn.Visible = not isGamepass
-		end
-		if ShopUI.uiElements.favoriteBtn then
-			ShopUI.uiElements.favoriteBtn.Visible = not isGamepass
+		if isGamepass then
+			-- Hide everything for gamepasses
+			if ShopUI.uiElements.previewContainer then
+				ShopUI.uiElements.previewContainer.Visible = false
+			end
+			if ShopUI.uiElements.skinName then
+				ShopUI.uiElements.skinName.Visible = false
+			end
+			if ShopUI.uiElements.skinTag then
+				ShopUI.uiElements.skinTag.Visible = false
+			end
+			if ShopUI.uiElements.priceLabel then
+				ShopUI.uiElements.priceLabel.Visible = false
+			end
+			if ShopUI.uiElements.applyBtn then
+				ShopUI.uiElements.applyBtn.Visible = false
+			end
+			if ShopUI.uiElements.purchaseBtn then
+				ShopUI.uiElements.purchaseBtn.Visible = false
+			end
+			if ShopUI.uiElements.robuxBtn then
+				ShopUI.uiElements.robuxBtn.Visible = false
+			end
+			if ShopUI.uiElements.favoriteBtn then
+				ShopUI.uiElements.favoriteBtn.Visible = false
+			end
+		else
+			-- Show everything for skins and let updatePreviewForSkin handle specific visibility
+			if ShopUI.uiElements.previewContainer then
+				ShopUI.uiElements.previewContainer.Visible = true
+			end
+			if ShopUI.uiElements.skinName then
+				ShopUI.uiElements.skinName.Visible = true
+			end
+			if ShopUI.uiElements.skinTag then
+				ShopUI.uiElements.skinTag.Visible = true
+			end
+			if ShopUI.uiElements.priceLabel then
+				ShopUI.uiElements.priceLabel.Visible = true
+			end
+			-- Refresh the current skin selection to update button states properly
+			if uiState.selectedSkin then
+				wait() -- Small delay to let UI update
+				updatePreviewForSkin(uiState.selectedSkin)
+			end
 		end
 
 		-- Update indicators
