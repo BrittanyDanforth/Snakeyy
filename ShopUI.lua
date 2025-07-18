@@ -48,22 +48,6 @@ end)
 local CharacterPreviewModule = nil
 local CharacterPreview = nil
 
--- Try to load the external CharacterPreview module
-pcall(function()
-	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 2))
-	if CharacterPreviewModule then
-		-- Pass our skin data to the module
-		CharacterPreviewModule.setSkinData(SnakeSkinsData)
-		print("✅ CharacterPreview module loaded successfully")
-	end
-end)
-
--- If no external module, use built-in preview
-if not CharacterPreviewModule then
-	print("⚠️ Using built-in preview system")
-	CharacterPreview = {}
-end
-
 -- Import your CharacterSetup functions directly
 local function createVisualHead(rootPart, config, parentModel)
 	local headPart = Instance.new("Part")
@@ -457,6 +441,22 @@ local SnakeSkinsData = {
 		Description = "All colors of the rainbow!"
 	}
 }
+
+-- Initialize CharacterPreview module after SnakeSkinsData is defined
+pcall(function()
+	CharacterPreviewModule = require(ReplicatedStorage:WaitForChild("CharacterPreview", 2))
+	if CharacterPreviewModule then
+		-- Pass our skin data to the module
+		CharacterPreviewModule.setSkinData(SnakeSkinsData)
+		print("✅ CharacterPreview module loaded successfully")
+	end
+end)
+
+-- If no external module, use built-in preview
+if not CharacterPreviewModule then
+	print("⚠️ Using built-in preview system")
+	CharacterPreview = {}
+end
 
 -- Create wrapper functions for CharacterPreview
 if CharacterPreviewModule then
