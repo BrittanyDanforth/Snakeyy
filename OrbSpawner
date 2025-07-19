@@ -56,7 +56,9 @@ local function getPlayerGraphicsMode()
 	if RunService:IsClient() then
 		local localPlayer = Players.LocalPlayer
 		if localPlayer then
-			return localPlayer:GetAttribute("GraphicsMode") or "High"
+			local mode = localPlayer:GetAttribute("GraphicsMode") or "High"
+			print("[OrbSpawner] Current graphics mode:", mode)
+			return mode
 		end
 	end
 	return "High"
@@ -64,7 +66,8 @@ end
 
 -- EXTREME config changes for performance
 local function updateConfigForGraphicsMode()
-	if not RunService:IsClient() then return end
+	-- Only works on client
+	if RunService:IsServer() then return end
 	
 	local mode = getPlayerGraphicsMode()
 	print("[EXTREME GRAPHICS] Mode changed to:", mode)
@@ -377,27 +380,9 @@ local function createSafeOrb(position, value, name, color, material)
 	orb.BottomSurface = Enum.SurfaceType.Smooth
 	orb.Transparency = 1  -- Start invisible
 	
-	-- EXTREME MATERIAL CHANGES FOR PERFORMANCE
-	if RunService:IsClient() then
-		local mode = getPlayerGraphicsMode()
-		
-		if mode == "Low" then
-			-- POTATO MODE - NO FANCY MATERIALS
-			orb.Material = Enum.Material.SmoothPlastic
-			orb.CastShadow = false  -- No shadows!
-			-- Make orbs more visible without glow
-			orb.Color = color:Lerp(Color3.new(1,1,1), 0.3) or Color3.new(1, 1, 0):Lerp(Color3.new(1,1,1), 0.3)
-		elseif mode == "Medium" then
-			orb.Material = Enum.Material.Neon
-			orb.CastShadow = false
-		else
-			orb.Material = material or Enum.Material.ForceField
-			orb.CastShadow = true
-		end
-	else
-		-- Server always uses high quality
-		orb.Material = material or Enum.Material.ForceField
-	end
+	-- Server always creates standard orbs
+	orb.Material = material or Enum.Material.Neon
+	orb.CastShadow = true
 	
 	orb.Parent = Workspace
 
