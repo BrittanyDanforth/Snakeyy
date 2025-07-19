@@ -1,29 +1,33 @@
--- OrbGraphicsClient: Handles client-side orb rendering based on graphics mode
+-- OrbGraphicsClient: Put this LocalScript in StarterPlayer > StarterPlayerScripts
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
+
+-- Wait for character
+LocalPlayer.CharacterAdded:Wait()
 
 -- Graphics configurations
 local GRAPHICS_CONFIG = {
 	Low = {
 		material = Enum.Material.SmoothPlastic,
 		removeGlow = true,
-		hideFarOrbs = true,
-		hideDistance = 50,
+		maxDistance = 50,
+		transparency = 0.3,
 	},
 	Medium = {
 		material = Enum.Material.Neon,
 		removeGlow = false,
-		hideFarOrbs = true,
-		hideDistance = 100,
+		maxDistance = 100,
+		transparency = 0,
 	},
 	High = {
 		material = Enum.Material.ForceField,
 		removeGlow = false,
-		hideFarOrbs = false,
-		hideDistance = 200,
+		maxDistance = 150,
+		transparency = 0,
 	}
 }
 
@@ -39,17 +43,29 @@ local function applyGraphicsToOrb(orb, mode)
 	local light = orb:FindFirstChild("PointLight")
 	if light then
 		if config.removeGlow then
-			light:Destroy()
+			light.Enabled = false
+			light.Brightness = 0
 		else
+			light.Enabled = true
 			light.Shadows = false
 			light.Brightness = mode == "High" and 2 or 1
 			light.Range = mode == "High" and 8 or 4
 		end
 	end
 	
-	-- Make orbs more visible without glow in low mode
-	if mode == "Low" and orb.Material == Enum.Material.SmoothPlastic then
-		orb.Color = orb.Color:Lerp(Color3.new(1,1,1), 0.3)
+	-- Make orbs brighter in low mode for visibility
+	if mode == "Low" then
+		local originalColor = orb:GetAttribute("OriginalColor")
+		if not originalColor then
+			orb:SetAttribute("OriginalColor", orb.Color)
+			originalColor = orb.Color
+		end
+		orb.Color = originalColor:Lerp(Color3.new(1,1,1), 0.4)
+	else
+		local originalColor = orb:GetAttribute("OriginalColor")
+		if originalColor then
+			orb.Color = originalColor
+		end
 	end
 end
 
@@ -69,8 +85,8 @@ end
 -- Watch for new orbs
 Workspace.DescendantAdded:Connect(function(obj)
 	if obj:IsA("Part") and obj.Name == "Orb" then
-		-- Wait for Value to be added
-		task.wait(0.1)
+		-- Wait a frame for Value to be added
+		RunService.Heartbeat:Wait()
 		if obj:FindFirstChild("Value") then
 			local mode = LocalPlayer:GetAttribute("GraphicsMode") or "High"
 			applyGraphicsToOrb(obj, mode)
@@ -85,22 +101,20 @@ LocalPlayer.AttributeChanged:Connect(function(attr)
 	end
 end)
 
--- Hide far orbs based on mode
+-- Distance-based hiding for performance
 local lastUpdate = 0
 RunService.Heartbeat:Connect(function()
 	local now = tick()
-	if now - lastUpdate < 0.5 then return end -- Update every 0.5 seconds
+	if now - lastUpdate < 0.2 then return end -- Update 5 times per second
 	lastUpdate = now
 	
 	local mode = LocalPlayer:GetAttribute("GraphicsMode") or "High"
 	local config = GRAPHICS_CONFIG[mode]
 	
-	if not config.hideFarOrbs then return end
-	
 	local character = LocalPlayer.Character
 	if not character then return end
 	
-	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head")
 	if not humanoidRootPart then return end
 	
 	local playerPos = humanoidRootPart.Position
@@ -110,18 +124,25 @@ RunService.Heartbeat:Connect(function()
 		if obj:IsA("Part") and obj.Name == "Orb" and obj:FindFirstChild("Value") then
 			local distance = (obj.Position - playerPos).Magnitude
 			
-			if distance > config.hideDistance then
-				-- Far orb - make more transparent
-				obj.Transparency = 0.7
+			if distance > config.maxDistance then
+				-- Far orb - hide it
+				obj.Transparency = 1
+				local light = obj:FindFirstChild("PointLight")
+				if light then light.Enabled = false end
 			else
-				-- Near orb - normal transparency
-				obj.Transparency = 0
+				-- Near orb - show it
+				obj.Transparency = config.transparency
+				local light = obj:FindFirstChild("PointLight")
+				if light and not config.removeGlow then 
+					light.Enabled = true 
+				end
 			end
 		end
 	end
 end)
 
--- Initial update
+-- Initial update after a short delay
+task.wait(1)
 updateAllOrbs()
 
 print("[OrbGraphicsClient] Loaded - Graphics mode support active!")
