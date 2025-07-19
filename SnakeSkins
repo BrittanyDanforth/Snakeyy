@@ -1,0 +1,172 @@
+-- SnakeSkins (ModuleScript in ReplicatedStorage)
+
+local SnakeSkins = {
+	-- Free Skins
+	["Classic"] = {
+		PreviewImageId = "rbxassetid://12345678",
+		Rarity = "Common",
+		Owned = true,
+		Price = 0,
+		HeadColor = Color3.fromRGB(100, 200, 100),
+		BodyColor = Color3.fromRGB(80, 160, 80),
+		Stats = {}
+	},
+
+	["Ocean Blue"] = {
+		PreviewImageId = "rbxassetid://12345679",
+		Rarity = "Common",
+		Owned = false,
+		Price = 100,
+		HeadColor = Color3.fromRGB(70, 130, 180),
+		BodyColor = Color3.fromRGB(50, 110, 160),
+		Stats = {}
+	},
+
+	["Lava Red"] = {
+		PreviewImageId = "rbxassetid://12345680",
+		Rarity = "Common",
+		Owned = false,
+		Price = 150,
+		HeadColor = Color3.fromRGB(220, 50, 50),
+		BodyColor = Color3.fromRGB(180, 40, 40),
+		Stats = {}
+	},
+
+	-- Rare Skins
+	["Electric Purple"] = {
+		PreviewImageId = "rbxassetid://12345681",
+		Rarity = "Rare",
+		Owned = false,
+		Price = 500,
+		HeadColor = Color3.fromRGB(155, 89, 182),
+		BodyColor = Color3.fromRGB(125, 59, 152),
+		Stats = {
+			SpeedBonus = 1.1, -- 10% speed boost
+		},
+		Trail = "Electric"
+	},
+
+	["Toxic Green"] = {
+		PreviewImageId = "rbxassetid://12345682",
+		Rarity = "Rare",
+		Owned = false,
+		Price = 600,
+		HeadColor = Color3.fromRGB(50, 205, 50),
+		BodyColor = Color3.fromRGB(40, 175, 40),
+		Stats = {
+			MassMultiplier = 1.15, -- 15% more mass from orbs
+		},
+		Trail = "Toxic"
+	},
+
+	-- Epic Skins
+	["Galaxy"] = {
+		PreviewImageId = "rbxassetid://12345683",
+		Rarity = "Epic",
+		Owned = false,
+		Price = 1500,
+		HeadColor = Color3.fromRGB(25, 25, 112),
+		BodyColor = Color3.fromRGB(0, 0, 139),
+		Stats = {
+			SpeedBonus = 1.15,
+			TurnRadius = 1.2, -- Better turning
+		},
+		Trail = "Galaxy",
+		Pattern = "Stars"
+	},
+
+	["Cyberpunk"] = {
+		PreviewImageId = "rbxassetid://12345684",
+		Rarity = "Epic",
+		Owned = false,
+		Price = 2000,
+		HeadColor = Color3.fromRGB(255, 0, 255),
+		BodyColor = Color3.fromRGB(0, 255, 255),
+		Stats = {
+			SpeedBonus = 1.2,
+			MassMultiplier = 1.2,
+		},
+		Trail = "Neon",
+		Pattern = "Circuit"
+	},
+
+	-- Legendary Skins
+	["Dragon Lord"] = {
+		PreviewImageId = "rbxassetid://12345685",
+		Rarity = "Legendary",
+		Owned = false,
+		Price = 5000,
+		HeadColor = Color3.fromRGB(255, 215, 0),
+		BodyColor = Color3.fromRGB(255, 140, 0),
+		Stats = {
+			SpeedBonus = 1.3,
+			MassMultiplier = 1.3,
+			TurnRadius = 1.3,
+			KillBonus = 2, -- 2x mass from kills
+		},
+		Trail = "Fire",
+		Pattern = "Scales",
+		SpecialEffect = "DragonBreath"
+	},
+
+	["Phantom Viper"] = {
+		PreviewImageId = "rbxassetid://12345686",
+		Rarity = "Legendary",
+		Owned = false,
+		Price = 6000,
+		HeadColor = Color3.fromRGB(148, 0, 211),
+		BodyColor = Color3.fromRGB(75, 0, 130),
+		Stats = {
+			SpeedBonus = 1.35,
+			MassMultiplier = 1.25,
+			TurnRadius = 1.4,
+			Invisibility = true, -- Goes semi-transparent when not moving
+		},
+		Trail = "Shadow",
+		Pattern = "Void",
+		SpecialEffect = "PhaseShift"
+	},
+
+	-- VIP Exclusive Skins
+	["Golden Emperor"] = {
+		PreviewImageId = "rbxassetid://12345687",
+		Rarity = "Legendary",
+		Owned = false,
+		RequiresVIP = true,
+		Price = 1000, -- Still costs coins but needs VIP
+		HeadColor = Color3.fromRGB(255, 223, 0),
+		BodyColor = Color3.fromRGB(255, 193, 37),
+		Stats = {
+			SpeedBonus = 1.5,
+			MassMultiplier = 1.5,
+			TurnRadius = 1.5,
+			KillBonus = 3,
+			CoinMultiplier = 2,
+		},
+		Trail = "Gold",
+		Pattern = "Crown",
+		SpecialEffect = "GoldRush"
+	},
+
+	["Rainbow Prism"] = {
+		PreviewImageId = "rbxassetid://12345688",
+		Rarity = "Legendary",
+		Owned = false,
+		RequiresVIP = true,
+		Price = 2000,
+		HeadColor = Color3.fromRGB(255, 255, 255),
+		BodyColor = Color3.fromRGB(255, 255, 255),
+		Stats = {
+			SpeedBonus = 1.4,
+			MassMultiplier = 1.4,
+			TurnRadius = 1.35,
+			OrbMagnet = 50, -- Attracts orbs within 50 studs
+		},
+		Trail = "Rainbow",
+		Pattern = "Prismatic",
+		SpecialEffect = "ChromaShift",
+		AnimatedColors = true
+	},
+}
+
+return SnakeSkins
