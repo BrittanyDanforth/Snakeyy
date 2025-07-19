@@ -14,19 +14,19 @@ local GRAPHICS_CONFIG = {
 	Low = {
 		material = Enum.Material.SmoothPlastic,
 		removeGlow = true,
-		maxDistance = 50,
-		transparency = 0.3,
+		maxDistance = 80,  -- Only close orbs show
+		transparency = 0,
 	},
 	Medium = {
 		material = Enum.Material.Neon,
-		removeGlow = false,
-		maxDistance = 100,
+		removeGlow = true,  -- NO GLOW in medium
+		maxDistance = 120,  -- Medium view distance
 		transparency = 0,
 	},
 	High = {
-		material = Enum.Material.ForceField,
-		removeGlow = false,
-		maxDistance = 150,
+		material = Enum.Material.Neon,  -- Keep default neon, NOT ForceField
+		removeGlow = false,  -- Full glow
+		maxDistance = 200,  -- Orbs show farther
 		transparency = 0,
 	}
 }
@@ -125,16 +125,36 @@ RunService.Heartbeat:Connect(function()
 			local distance = (obj.Position - playerPos).Magnitude
 			
 			if distance > config.maxDistance then
-				-- Far orb - hide it
+				-- Far orb - COMPLETELY HIDE IT
 				obj.Transparency = 1
+				obj.Size = Vector3.new(0.1, 0.1, 0.1) -- Make tiny too
 				local light = obj:FindFirstChild("PointLight")
-				if light then light.Enabled = false end
+				if light then 
+					light.Enabled = false 
+					light.Brightness = 0
+				end
 			else
-				-- Near orb - show it
+				-- Near orb - show it normally
 				obj.Transparency = config.transparency
+				
+				-- Restore normal size if it was hidden
+				local value = obj:FindFirstChild("Value")
+				if value and obj.Size.X < 1 then
+					-- Restore to normal orb size based on value
+					local baseSize = math.clamp(value.Value / 10, 0.5, 2)
+					obj.Size = Vector3.new(baseSize, baseSize, baseSize)
+				end
+				
 				local light = obj:FindFirstChild("PointLight")
-				if light and not config.removeGlow then 
-					light.Enabled = true 
+				if light then
+					if config.removeGlow then
+						light.Enabled = false
+						light.Brightness = 0
+					else
+						light.Enabled = true
+						light.Brightness = 2
+						light.Range = 8
+					end
 				end
 			end
 		end
